@@ -1021,10 +1021,6 @@
             // Service Worker Registration - Fixed to prevent unsupported MIME type error
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-      .then((registration) => {
-        console.log('SW registered successfully:', registration);
-      })
                 // Check for sw.js availability before attempting to register
                 fetch('/scripts/sw.js', { method: 'HEAD' })
                   .then(response => {
@@ -2042,14 +2038,116 @@
 
               // NOTIFICATION CHANGE: This function is now called on page load and on data save (in saveAll).
               // It now sends separate notifications for each category if they have content.
-              async function checkNotifications() {
-  if (Notification.permission !== 'granted') return;
+<!-- ✅ Notification Logic Section -->
 
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration) {
-    console.warn('Service Worker not registered. Cannot show persistent notifications.');
+// === SAFE PLACEHOLDER (to avoid errors from old calls) ===
+function checkNotifications() {
+  console.log("checkNotifications() called — old logic disabled, replaced by new smart notification system.");
+  // old notification logic removed intentionally
+}
+
+
+// === ANDROID LOCAL NOTIFICATION FUNCTION ===
+function showAndroidNotification(title, body, icon = 'assets/icon.png') {
+  if (!('Notification' in window)) {
+    alert("Notifications not supported on this device.");
     return;
   }
+
+  if (Notification.permission === 'granted') {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.showNotification(title, {
+          body: body,
+          icon: icon,
+          badge: icon,
+          requireInteraction: true, // stays until user clears
+          vibrate: [200, 100, 200],
+          tag: 'nothing-reminder',
+          actions: [
+            { action: 'open', title: 'Open App' }
+          ]
+        });
+      } else {
+        new Notification(title, { body, icon, requireInteraction: true });
+      }
+    });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') showAndroidNotification(title, body, icon);
+    });
+  } else {
+    alert("Notification permission denied. Please enable manually in settings.");
+  }
+}
+
+
+// === MULTI-SECTION SMART NOTIFICATION LOGIC ===
+function triggerSectionNotifications() {
+  // --- Reminders ---
+  if (appData.reminders && appData.reminders.length > 0) {
+    const dueReminders = appData.reminders.filter(r => {
+      const diff = daysLeft(r.endDate);
+      return diff <= 0; // expired or due today
+    });
+    if (dueReminders.length > 0) {
+      const first = dueReminders[0];
+      showAndroidNotification("⏰ Reminder Alert", `Reminder: "${first.title}" expired or due today.`);
+    }
+  }
+
+  // --- Budgets ---
+  if (appData.budget && appData.budget.length > 0) {
+    const b = appData.budget[0];
+    const cost = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+    showAndroidNotification("💰 Budget Overview", `"${b.title}" • ₹${cost}/day • Total ₹${b.amount}`);
+  }
+
+  // --- Notes ---
+  if (appData.notes && appData.notes.length > 0) {
+    const latest = appData.notes[appData.notes.length - 1];
+    const preview = (latest.text || '').substring(0, 40);
+    showAndroidNotification("📝 Notes Update", `Note: ${preview || 'Empty note added'}`);
+  }
+
+  // --- Checklist ---
+  if (appData.checklists && appData.checklists.length > 0) {
+    const openChecks = appData.checklists.filter(c => c.status === 'open' || c.status === '');
+    if (openChecks.length > 0) {
+      const ch = openChecks[0];
+      const pendingCount = ch.items ? ch.items.length : 0;
+      showAndroidNotification("✒ Checklist Update", `"${ch.title}" has ${pendingCount} items open.`);
+    }
+  }
+}
+
+
+// === MODIFY SAVE FUNCTION TO TRIGGER NEW LOGIC ===
+async function saveAll() {
+  try {
+    const dataStr = JSON.stringify(appData);
+    localStorage.setItem(STORAGE_KEY, dataStr);
+    console.log("Data saved successfully to localStorage.");
+
+    renderNotificationPage();
+
+    checkNotifications();          // now harmless placeholder ✅
+    triggerSectionNotifications(); // triggers smart Android notifications ✅
+
+  } catch (err) {
+    console.error("Save failed:", err);
+  }
+}
+
+<!-- ✅ End Notification Logic -->
+
+              
+              function checkNotifications(){
+                // 1. Check global browser permission first
+                if(!(Notification && Notification.permission === 'granted')) {
+                   console.log("Global notification permission not granted. Skipping custom checks.");
+                   return;
+                }
 
                 // 1. REMINDERS Summary
                 if (appData.notifReminders) {
@@ -2104,11 +2202,6 @@
                             requireInteraction: true,
                             tag: 'notes' // Use a tag to replace
                         });
-                        // This is the CRITICAL line for background/PWA on Android:
-  for (const notif of notifsToShow) {
-    registration.showNotification(notif.title, notif.options);
-  }
-
                     }
                 }
               }
@@ -2509,8 +2602,6 @@ function calculateDateDifference() {
               if ('serviceWorker' in navigator) {
                   navigator.serviceWorker.register('service-worker.js');
               }
-
-              
               // ---------- End Initial Render Code ----------
 
             })();
