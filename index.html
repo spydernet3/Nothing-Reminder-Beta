@@ -2117,7 +2117,11 @@ showAndroidNotification("💰 Budget Alert!", "Your daily limit has reached, che
                   return summary.length > 0 ? summary.join('\n') : "No active budget overview available.";
               }
 
-                function checkNotifications(){
+                // ✅ Simplified placeholder to prevent errors (Old logic disabled)
+function checkNotifications() {
+  console.log("checkNotifications() called — old logic disabled, using new triggerSectionNotifications() instead.");
+  // Do nothing (replaced by new notification system)
+            }
                 // 1. Check global browser permission first
                 if(!(Notification && Notification.permission === 'granted')) {
                    console.log("Global notification permission not granted. Skipping custom checks.");
