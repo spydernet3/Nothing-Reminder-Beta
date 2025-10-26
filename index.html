@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Nothing Reminder</title>
   <link rel="icon" type="image/png" href="assets/icon.png" />
-    <link rel="icon" type="image/png" href="assets/icon.png" />
-    <link rel="manifest" href="manifest.json"
+  <link rel="icon" type="image/png" href="assets/icon.png" />
+  <link rel="manifest" href="manifest.json"
   <style>
           :root {
             --bg: #ffffff;
@@ -2568,10 +2568,7 @@ saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = $
     msgEl.textContent = message;
     toast.style.opacity = '1';
     
-    // Hide after 4 seconds
-    setTimeout(() => {
-        toast.style.opacity = '0';
-    }, 4000);
+    
   }
 
   // Modified checkNotifications logic to use the new mobile concept
