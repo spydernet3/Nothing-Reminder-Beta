@@ -2117,16 +2117,6 @@ showAndroidNotification("💰 Budget Alert!", "Your daily limit has reached, che
                   return summary.length > 0 ? summary.join('\n') : "No active budget overview available.";
               }
 
-
-              // NOTIFICATION CHANGE: This function is now called on page load and on data save (in saveAll).
-              // It now sends separate notifications for each category if they have content.
-              function checkNotifications(){
-                // 1. Check global browser permission first
-                if(!(Notification && Notification.permission === 'granted')) {
-                   console.log("Global notification permission not granted. Skipping custom checks.");
-                   return;
-                }
-
                 // 1. REMINDERS Summary
                 if (appData.notifReminders) {
                     const reminderSummary = buildReminderSummary();
