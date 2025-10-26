@@ -1026,6 +1026,41 @@ function showAndroidNotification(title, body, icon = 'assets/icon.png') {
     alert("Notifications not supported on this device.");
     return;
   }
+
+// ✅ Check all sections & trigger notifications based on available content
+function triggerSectionNotifications() {
+  // --- Reminders ---
+  const dueReminders = appData.reminders.filter(r => {
+    const diff = daysLeft(r.endDate);
+    return diff <= 0; // expired or today
+  });
+  if (dueReminders.length > 0) {
+    const first = dueReminders[0];
+    showAndroidNotification("⏰ Reminder Alert", `Reminder: "${first.title}" expired or due today.`);
+  }
+
+  // --- Budgets ---
+  if (appData.budget.length > 0) {
+    const b = appData.budget[0];
+    const cost = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+    showAndroidNotification("💰 Budget Overview", `"${b.title}" || ₹${cost}/day | Total ₹${b.amount}`);
+  }
+
+  // --- Notes ---
+  if (appData.notes.length > 0) {
+    const latest = appData.notes[appData.notes.length - 1];
+    const preview = (latest.text || '').substring(0, 40);
+    showAndroidNotification("📝 Notes Update", `Note: ${preview || 'Empty note added'}`);
+  }
+
+  // --- Checklist ---
+  const openChecks = appData.checklists.filter(c => c.status === 'open');
+  if (openChecks.length > 0) {
+    const ch = openChecks[0];
+    showAndroidNotification("✒ Checklist Update", `"${ch.title}" has ${ch.items.length} items open.`);
+  }
+}
+
   
   if (Notification.permission === 'granted') {
     navigator.serviceWorker.getRegistration().then(reg => {
@@ -1208,6 +1243,8 @@ showAndroidNotification("💰 Budget Alert!", "Your daily limit has reached, che
                   renderNotificationPage();
                   // NOTIFICATION CHANGE: Trigger notification check on every data save.
                   checkNotifications();
+                  // ✅ NEW: Trigger High Priority Notifications
+                  triggerSectionNotifications();
                 } catch (err) {
                   console.error("Save failed:", err);
                   if (err.name === 'QuotaExceededError') {
