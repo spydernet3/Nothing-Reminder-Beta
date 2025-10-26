@@ -1018,6 +1018,45 @@
     </div>
 
     <script>
+
+
+// --- Android Notification Trigger Function ---
+function showAndroidNotification(title, body, icon = 'assets/icon.png') {
+  if (!('Notification' in window)) {
+    alert("Notifications not supported on this device.");
+    return;
+  }
+  
+  if (Notification.permission === 'granted') {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.showNotification(title, {
+          body: body,
+          icon: icon,
+          badge: icon,
+          requireInteraction: true, // 👈 stays until user clears
+          vibrate: [200, 100, 200],
+          tag: 'nothing-reminder', 
+          actions: [
+            { action: 'open', title: 'Open App' }
+          ]
+        });
+      } else {
+        new Notification(title, { body, icon, requireInteraction: true });
+      }
+    });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') showAndroidNotification(title, body, icon);
+    });
+  } else {
+    alert("Notification permission denied. Please enable manually in settings.");
+  }
+}
+
+showAndroidNotification("Reminder Active!", "Check your saved reminders now.");
+
+      
             // Service Worker Registration - Fixed to prevent unsupported MIME type error
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', () => {
@@ -2498,49 +2537,6 @@ function calculateDateDifference() {
               if ('serviceWorker' in navigator) {
                   navigator.serviceWorker.register('service-worker.js');
               }
-
-
-  // Function to show the custom in-app toast notification
-  function showMobileNotification(message) {
-    const toast = byId('mobile-notification-toast');
-    const msgEl = byId('notification-message');
-    
-    msgEl.textContent = message;
-    toast.style.opacity = '1';
-    
-  }
-
-  // Modified checkNotifications logic to use the new mobile concept
-  function checkNotifications() {
-    let notificationCount = 0;
-    let notificationMessage = '';
-    
-    // --- 1. Reminders Check ---
-    const pendingReminders = appData.reminders.filter(r => 
-        r.dueDate && new Date(r.dueDate) <= new Date()
-    );
-
-    if (pendingReminders.length > 0 && appData.notificationSettings.reminders === '1') {
-        notificationCount += pendingReminders.length;
-        // Show a message for the most urgent item/category
-        if (!notificationMessage) { 
-            notificationMessage = `You have ${pendingReminders.length} Reminder(s) due!`;
-        }
-    }
-    
-    // --- 2. Add Logic for Notes, Checklist, Budget here ---
-    // ... existing code ...
-    
-    // --- 3. Final Action ---
-    if (notificationCount > 0) {
-        showMobileNotification(notificationMessage); // Show the toast (if app is open)
-        updateAppBadge(notificationCount);          // Update the PWA icon count
-    } else {
-        updateAppBadge(0); // Clear the badge
-    }
-  }
-
-
               // ---------- End Initial Render Code ----------
 
             })();
