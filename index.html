@@ -1018,121 +1018,144 @@
     </div>
 
     <script>
-            // Service Worker Registration - Fixed to prevent unsupported MIME type error
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                // Check for sw.js availability before attempting to register
-                fetch('/scripts/sw.js', { method: 'HEAD' })
-                  .then(response => {
-                    // Only attempt registration if the file exists and is accessible
-                    if (response.ok && response.headers.get('content-type').includes('javascript')) {
-                      return navigator.serviceWorker.register('/sw.js')
-                        .then((registration) => {
-                          console.log('SW registered: ', registration);
-                        })
-                        .catch((error) => {
-                          console.log('SW registration failed: ', error);
-                        });
-                    } else {
-                       console.log('SW registration skipped: sw.js file not found or wrong MIME type.');
-                    }
-                  })
-                  .catch(error => {
-                    console.log('SW registration failed (network error): ', error);
-                  });
-              });
-            }
+             // Service Worker Registration - CONSOLIDATED AND CLEANED UP
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('service-worker.js')
+            .then((registration) => {
+              console.log('SW registered successfully:', registration);
+            })
+            .catch((error) => {
+              console.error('SW registration failed. Ensure service-worker.js is in the root directory:', error);
+            });
+        });
+      }
 
-            (function () {
-              // ---------- Helpers ----------
-              function byId(id){ return document.getElementById(id); }
+(function () {
+        // ---------- Helpers ----------
+        function byId(id) {
+          return document.getElementById(id);
+        }
 
-              // ---------- NEW: Notification Settings Logic ----------
-              // MOVED HERE TO FIX REFERENCE ERROR
-              function updateBrowserPermissionUI() {
-                  const status = Notification.permission;
-                  const textEl = byId('browserPermissionText');
-                  const boxEl = byId('globalNotifStatus');
-                  const btnEl = byId('requestPermissionBtn');
+        // ---------- NEW: Notification Settings Logic ----------
+        function updateBrowserPermissionUI() {
+          const status = Notification.permission;
+          const textEl = byId('browserPermissionText');
+          const boxEl = byId('globalNotifStatus');
+          const btnEl = byId('requestPermissionBtn');
 
-                  boxEl.classList.remove('denied');
+          boxEl.classList.remove('denied');
 
-                  if (status === 'granted') {
-                      textEl.innerHTML = 'Status: <b style="color: var(--accent);">Granted (ON)</b>';
-                      btnEl.textContent = 'Permission Granted';
-                      btnEl.disabled = true;
-                  } else if (status === 'denied') {
-                      textEl.innerHTML = 'Status: <b style="color: #f44336;">Denied (OFF)</b>. Please change in browser settings.';
-                      btnEl.textContent = 'Permission Denied';
-                      btnEl.disabled = true;
-                      boxEl.classList.add('denied');
-                  } else { // 'default' or not supported
-                      textEl.innerHTML = 'Status: <b style="color: #ff9800;">Not Requested (OFF)</b>';
-                      btnEl.textContent = 'Request Permission';
-                      btnEl.disabled = false;
-                  }
-              }
+          if (status === 'granted') {
+            textEl.innerHTML =
+              'Status: <b style="color: var(--accent);">Granted (ON)</b>';
+            btnEl.textContent = 'Permission Granted';
+            btnEl.disabled = true;
+          } else if (status === 'denied') {
+            textEl.innerHTML =
+              'Status: <b style="color: #f44336;">Denied (OFF)</b>. Please change in browser settings.';
+            btnEl.textContent = 'Permission Denied';
+            btnEl.disabled = true;
+            boxEl.classList.add('denied');
+          } else {
+            // 'default' or not supported
+            textEl.innerHTML =
+              'Status: <b style="color: #ff9800;">Not Requested (OFF)</b>';
+            btnEl.textContent = 'Request Permission';
+            btnEl.disabled = false;
+          }
+        }
 
-              function requestNotificationPermission() {
-                if (!("Notification" in window)) {
-                    console.error("This browser does not support desktop notification");
-                    return;
-                }
-                if (Notification.permission === 'granted' || Notification.permission === 'denied') {
-                   updateBrowserPermissionUI();
-                   return;
-                }
+        function requestNotificationPermission() {
+          if (!('Notification' in window)) {
+            console.error('This browser does not support desktop notification');
+            return;
+          }
+          if (
+            Notification.permission === 'granted' ||
+            Notification.permission === 'denied'
+          ) {
+            updateBrowserPermissionUI();
+            return;
+          }
 
-                Notification.requestPermission().then(function(permission) {
-                    updateBrowserPermissionUI();
-                });
-              }
+          Notification.requestPermission().then(function (permission) {
+            updateBrowserPermissionUI();
+          });
+        }
 
-              function renderNotificationPage() {
-                  if (!("Notification" in window)) {
-                      byId('globalNotifStatus').innerHTML = '<h3>Browser Permission</h3><p style="color: #f44336;">Notifications are not supported by your browser.</p>';
-                      return;
-                  }
+        function renderNotificationPage() {
+          if (!('Notification' in window)) {
+            byId('globalNotifStatus').innerHTML =
+              '<h3>Browser Permission</h3><p style="color: #f44336;">Notifications are not supported by your browser.</p>';
+            return;
+          }
 
-                  updateBrowserPermissionUI();
+          updateBrowserPermissionUI();
 
-                  // Setup custom category toggles based on appData
-                  byId('toggleReminders').checked = appData.notifReminders;
-                  byId('toggleNotes').checked = appData.notifNotes;
-                  byId('toggleChecklist').checked = appData.notifChecklist;
-                  byId('toggleBudget').checked = appData.notifBudget;
-              }
+          // Setup custom category toggles based on appData
+          byId('toggleReminders').checked = appData.notifReminders;
+          byId('toggleNotes').checked = appData.notifNotes;
+          byId('toggleChecklist').checked = appData.notifChecklist;
+          byId('toggleBudget').checked = appData.notifBudget;
+        }
 
-              // Function to handle custom toggle changes
-              function handleCustomNotifToggle(category, event) {
-                  appData[category] = event.target.checked;
-                  saveAll();
-                  // Re-check notifications immediately if a new category is toggled on
-                  if (event.target.checked) checkNotifications();
-              }
-              // ---------- END MOVED BLOCK ----------
+        // Function to handle custom toggle changes
+        function handleCustomNotifToggle(category, event) {
+          appData[category] = event.target.checked;
+          saveAll();
+          // Re-check notifications immediately if a new category is toggled on
+          if (event.target.checked) checkNotifications();
+        }
 
-              // ---------- Storage ----------
+        // ---------- NEW: CORE NOTIFICATION DISPLAY LOGIC (FIX FOR ANDROID) ----------
+        async function checkNotifications() {
+          if (Notification.permission !== 'granted') return;
 
-              // Enhanced storage with quota handling
-              const STORAGE_KEY = 'smart_reminder_app_v1';
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (!registration) {
+            console.warn('Service Worker not registered. Cannot show persistent notifications.');
+            return;
+          }
 
-              const defaultData = {
-                reminders: [],
-                notes: [],
-                profileName: '',
-                profilePhoto: '',
-                darkMode: '0',
-                budget: [],
-                checklists: [],
-                // NEW: Notification preferences
-                notifReminders: true,
-                notifNotes: true,
-                notifChecklist: true,
-                notifBudget: true,
-                // NEW: Calculation History
-                calculationHistory: []
+          const now = new Date();
+          const todayStr = now.toISOString().split('T')[0];
+          const tomorrow = new Date(now);
+          tomorrow.setDate(now.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+          let notifsToShow = [];
+
+          // 1. Reminders (Due Today or Tomorrow, or Expired)
+          if (appData.notifReminders) {
+            appData.reminders.forEach((r) => {
+              const diff = daysLeft(r.endDate);
+              if (diff <= 1) {
+                // Today, Tomorrow, or Expired
+                const title = `⚠️ Reminder Due!`;
+                const options = {
+                  body: `"${r.title}" is due ${diff === 0 ? 'TODAY' : diff === 1 ? 'tomorrow' : 'and has expired'}.`,
+                  icon: 'assets/icon.png',
+                  badge: 'assets/icon.png',
+                  tag: `reminder-${r.title}-${r.endDate}`,
+                };
+                notifsToShow.push({ title, options });
+              }    
+});
+          }
+
+          // 2. Open Checklists
+          if (appData.notifChecklist) {
+            const openChecklists = appData.checklists.filter(c => c.status === 'open');
+            if (openChecklists.length > 0) {
+              const title = `✒️ Open Checklists (${openChecklists.length})`;
+              const options = {
+                body: `You have ${openChecklists.length} checklists that are still open. Time to check them off!`,
+                icon: 'assets/icon.png',
+                badge: 'assets/icon.png',
+                tag: 'open-checklists',
               };
+              
 
               let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
               // Merge with defaults to ensure new notif keys are present on load
@@ -1357,6 +1380,24 @@
                 });
 
                 container.appendChild(frag);
+               notifsToShow.push({ title, options });
+            }
+          }
+
+          // 3. Budget (Simple reminder for budget period end date)
+          if (appData.notifBudget) {
+            appData.budget.forEach((b) => {
+              const diff = daysLeft(b.endDate);
+              if (diff === 0) {
+                const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+                const title = `💰 Budget "${b.title}" Ends TODAY!`;
+                const options = {
+                  body: `Your budget period ends today. Daily spending limit was ₹${costPerDay}.`,
+                  icon: 'assets/icon.png',
+                  badge: 'assets/icon.png',
+                  tag: `budget-end-${b.title}`,
+                };
+                notifsToShow.push({ title, options });
               }
 
               // Update renderNotes function to handle table formatting
@@ -1463,7 +1504,17 @@
                 });
                 list.appendChild(frag);
               }
+// 4. Notes (Simple reminder for note creation, not implemented a date field for notes yet)
+          if (appData.notifNotes) {
+            // Placeholder: Could add logic if notes had a 'remindDate' field.
+          }
 
+          // Show all unique notifications via Service Worker
+          for (const notif of notifsToShow) {
+            // Using showNotification via registration ensures it works in background/PWA on Android
+            registration.showNotification(notif.title, notif.options);
+          }
+        }
               // ---------- Budget Functions ----------
               function renderBudgets(){
                 const list = byId('budgetList'); list.innerHTML = '';
