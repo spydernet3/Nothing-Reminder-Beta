@@ -1055,6 +1055,13 @@ function showAndroidNotification(title, body, icon = 'assets/icon.png') {
 }
 
 showAndroidNotification("Reminder Active!", "Check your saved reminders now.");
+// On Reminder Save
+saveReminder = function() {
+  showAndroidNotification("New Reminder Added!", "You created a new reminder successfully.");
+}
+
+// On Budget Alert
+showAndroidNotification("💰 Budget Alert!", "Your daily limit has reached, check budget page.");
 
       
             // Service Worker Registration - Fixed to prevent unsupported MIME type error
