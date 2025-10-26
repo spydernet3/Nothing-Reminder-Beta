@@ -19,8 +19,7 @@ self.addEventListener('push', event => {
   const title = data.title || 'New Notification';
   const options = {
     body: data.body || 'You have a new message!',
-    icon: './icons/icon-192x192.png', // Replace with your icon path
-    badge: './icons/badge-72x72.png', // Optional badge icon
+    icon: './assets/icon.png', // Replace with your icon path // Optional badge icon
     data: {
       url: data.url || './' // URL to open when notification is clicked
     }
