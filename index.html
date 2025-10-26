@@ -1241,8 +1241,7 @@ showAndroidNotification("💰 Budget Alert!", "Your daily limit has reached, che
                   console.log("Data saved successfully to localStorage.");
                   // Re-render the notification page whenever data changes
                   renderNotificationPage();
-                  // NOTIFICATION CHANGE: Trigger notification check on every data save.
-                  checkNotifications();
+                  
                   // ✅ NEW: Trigger High Priority Notifications
                   triggerSectionNotifications();
                 } catch (err) {
