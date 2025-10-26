@@ -1,100 +1,113 @@
 // service-worker.js
 
-// --- Caching Strategy ---
-const CACHE_NAME = 'nothing-reminder-cache-v1';
-// List of files to pre-cache on install
+const CACHE_NAME = 'nothing-reminder-v1';
+// List the core assets your app needs to function offline
 const urlsToCache = [
-    './',
-    './index.html',
-    'assets/icon.png', // Assuming this path is correct for your app's icon
-    'manifest.json'
-    // Add other essential static assets (CSS, JS if they were separate files) here
+  './',
+  './index.html',
+  './manifest.json',
+  // You should add all your CSS, JS, and image assets here:
+  'assets/icon.png',
+  // Add any other files like 'style.css', 'app.js', etc.
 ];
 
+// 1. Installation: Cache the essential assets
 self.addEventListener('install', (event) => {
-    // Perform installation steps
-    console.log('[Service Worker] Install');
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching app shell');
-            return cache.addAll(urlsToCache);
-        })
-    );
+  console.log('[Service Worker] Install');
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[Service Worker] Caching app shell');
+      return cache.addAll(urlsToCache);
+    })
+  );
+  self.skipWaiting(); // Forces the waiting service worker to become the active service worker
 });
 
+// 2. Activation: Clean up old caches
 self.addEventListener('activate', (event) => {
-    // Claim control of clients immediately on activation
-    console.log('[Service Worker] Activate');
-    event.waitUntil(self.clients.claim());
-});
-
-// --- Fetch Strategy (Serve cached content first, fall back to network) ---
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            // Cache hit - return response
-            if (response) {
-                return response;
-            }
-            // Not in cache - fetch from network
-            return fetch(event.request);
+  console.log('[Service Worker] Activate');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[Service Worker] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
         })
-    );
+      );
+    })
+  );
+  return self.clients.claim(); // Immediately take control of clients
 });
 
+// 3. Fetch: Serve content from cache first, then fall back to network
+self.addEventListener('fetch', (event) => {
+  // Only handle GET requests and skip cross-origin requests for simplicity
+  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
 
-// --- Push Notification Logic (Detailed Mobile Notifications) ---
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Return cached response if found
+      if (response) {
+        return response;
+      }
+
+      // Fall back to network
+      return fetch(event.request);
+    })
+  );
+});
+
+// --- Detailed Push Notification Logic (For Background Notifications) ---
 
 self.addEventListener('push', (event) => {
-    console.log('[Service Worker] Push Received');
-    
-    // 1. Get the payload (detailed data) from the server/push provider
+    // 1. Get the payload (detailed notification data)
+    // NOTE: This requires a backend server or push service to send the data.
     const data = event.data ? event.data.json() : {};
     
-    // Fallback/Default settings
+    // Default notification if no specific payload is received
     let title = 'Nothing Reminder App Notification';
     let options = {
         body: 'You have new activity. Open the app for details.',
         icon: 'assets/icon.png',
-        badge: 'assets/icon.png',
-        data: {
-            urlToOpen: '/' // Default page to open on click
-        }
+        tag: 'general-app-notification', // Helps group generic notifications
+        badge: 'assets/icon.png'
     };
 
     // 2. Process the push payload for detailed notifications
     if (data.type) {
         switch (data.type) {
             case 'REMINDER_DUE':
-                title = `⏰ REMINDER DUE/EXPIRED: ${data.title}`;
-                options.body = data.details || `Expires on: ${data.endDate}`;
-                options.tag = 'reminder-notification';
-                options.renotify = true; // Ensures OS shows a new notification even if one exists with the same tag
+                title = `⏰ REMINDER DUE: ${data.title}`;
+                // data.details should contain specific info like due date
+                options.body = data.details || "A reminder is due or expired. Check your list!";
+                options.tag = 'reminder-notification'; 
                 break;
             
             case 'BUDGET_OVERVIEW':
                 title = `💰 Budget Alert: ${data.title}`;
+                // data.costPerDay and data.daysLeft must be sent in the payload
                 options.body = `Daily limit: ₹${data.costPerDay} | Days Left: ${data.daysLeft}`;
                 options.tag = 'budget-notification';
-                options.renotify = true;
                 break;
                 
             case 'CHECKLIST_OPEN':
                 title = `✒ Checklist: ${data.title} is Open`;
-                options.body = data.details || 'Time to complete your tasks!';
+                options.body = data.details || "You have an open checklist waiting for completion.";
                 options.tag = 'checklist-notification';
-                options.renotify = true;
                 break;
                 
             case 'NOTE_UPDATE':
                 title = `📝 Note Updated/Reminder: ${data.title}`;
-                options.body = data.details || 'Check the recent changes to your note.';
+                options.body = data.details || "A note with a set reminder has been updated.";
                 options.tag = 'note-notification';
-                options.renotify = true;
                 break;
 
             default:
-                // Use generic data if type is unknown
+                // Use custom title/body if provided in the data
                 title = data.title || title;
                 options.body = data.body || options.body;
         }
@@ -106,25 +119,23 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// --- Notification Click Handling ---
+// 4. Notification Click: Handle user interaction
 self.addEventListener('notificationclick', (event) => {
-    console.log('[Service Worker] Notification click received');
+    console.log('[Service Worker] Notification click received.');
     event.notification.close();
 
-    const urlToOpen = event.notification.data ? event.notification.data.urlToOpen : '/';
-
-    // Open the app or focus the existing tab when the user clicks the notification
+    // Open the app when the user clicks the notification
     event.waitUntil(
         clients.matchAll({ type: 'window' }).then((clientList) => {
-            // Try to find an existing client (tab) that is already open
             for (const client of clientList) {
-                if (client.url.includes(urlToOpen) && 'focus' in client) {
+                // Check if the app is already open
+                if (client.url.includes('index.html') && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // If no window is open, open a new one
+            // If no window is open, open a new one to the app's root
             if (clients.openWindow) {
-                return clients.openWindow(urlToOpen);
+                return clients.openWindow('/');
             }
         })
     );
