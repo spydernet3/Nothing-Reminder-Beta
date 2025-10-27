@@ -212,35 +212,35 @@
             }
 
             /* Add this to your existing <style> block */
-      .calendar-day {
-          padding: 8px 4px;
-          border: 1px solid #eee;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: default;
-      }
-      .calendar-day.today {
-          background: var(--accent);
-          color: white;
-          font-weight: bold;
-          border-radius: 50%;
-      }
-      .calendar-day.spacer {
-          background: transparent;
-          border: none;
-      }
-      .calculator-mode.hidden { display: none; }
-      .normal-btn {
-          padding: 10px;
-          font-size: 16px;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-      }
-      .normal-btn.primary { background: #e0e0e0; color: #000; }
-      .normal-btn.secondary { background: #ccc; color: #000; }
+            .calendar-day {
+                padding: 8px 4px;
+                border: 1px solid #eee;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: default;
+            }
+            .calendar-day.today {
+                background: var(--accent);
+                color: white;
+                font-weight: bold;
+                border-radius: 50%;
+            }
+            .calendar-day.spacer {
+                background: transparent;
+                border: none;
+            }
+            .calculator-mode.hidden { display: none; }
+            .normal-btn {
+                padding: 10px;
+                font-size: 16px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+            .normal-btn.primary { background: #e0e0e0; color: #000; }
+            .normal-btn.secondary { background: #ccc; color: #000; }
 
             /* Scrollable lists */
             .scrollable-list {
@@ -915,7 +915,6 @@
             </div>
           </div>
         </div>
-
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -1016,7 +1015,6 @@
         </div>
       </div>
     </div>
-
 <script>
     // <!-- NOTIFICATION FIX 1: Cleaned up Service Worker Registration -->
     // Uses the standard registration method, pointing to 'service-worker.js' in the root.
@@ -1037,7 +1035,6 @@
       function byId(id){ return document.getElementById(id); }
 
       // ---------- NEW: Notification Settings Logic ----------
-      // MOVED HERE TO FIX REFERENCE ERROR
       function updateBrowserPermissionUI() {
           const status = Notification.permission;
           const textEl = byId('browserPermissionText');
@@ -1102,7 +1099,6 @@
           // Re-check notifications immediately if a new category is toggled on
           if (event.target.checked) checkNotifications();
       }
-      // ---------- END MOVED BLOCK ----------
 
       // ---------- Storage ----------
 
@@ -1131,8 +1127,7 @@
       appData = { ...defaultData, ...appData };
       // Ensure new property is initialized if old data exists
       if (!appData.calculationHistory) appData.calculationHistory = [];
-
-
+      
       let editingIndex = null;
       let editingBudgetIndex = null;
       let editingCheckIndex = null;
@@ -1141,8 +1136,6 @@
 
       let currentMonth = new Date().getMonth(); // NEW: Calendar state
       let currentYear = new Date().getFullYear(); // NEW: Calendar state
-      // ... rest of the script ...
-
 
       // <!-- NOTIFICATION FIX 3: Modified saveAll to be async and call checkNotifications -->
       // Modified save function to use localStorage only
@@ -1604,7 +1597,7 @@
         renderHomeNotes();
       }
 
-      // Updated editNote (removed AI-related code)
+      // Updated editNote
       function editNote(index){
         const note = appData.notes[index];
         editingNoteIndex = index;
@@ -1645,7 +1638,6 @@
           createdAt: noteDate,
           file: null,
           isTable: isTableFormat,
-          // Removed: aiSummary: temporaryAISummary
         };
 
         const finalizeSave = (noteObj) => {
@@ -1955,7 +1947,6 @@
         }
       });
 
-      // <!-- NOTIFICATION FIX 2: Defining the correct async checkNotifications function -->
       // Helper 4: Notes (Summary of recent notes)
       function buildNotesSummary() {
           let summary = [];
@@ -2069,7 +2060,7 @@
                 });
             }
         }
-      } // <<<--- This was the missing brace causing the SyntaxError
+      } 
 
       // ---------- Calculation History Functions ----------
               function renderHistory() {
@@ -2226,30 +2217,30 @@
               }
 
               // ---------- Date Difference Calculator Logic ----------
-function calculateDateDifference() {
-  const startStr = byId('dateDiffStart').value;
-  const endStr = byId('dateDiffEnd').value;
-  const resultEl = byId('dateDiffResult');
-
-  if (!startStr || !endStr) {
-    resultEl.textContent = 'Please enter both start and end dates.';
-    return;
-  }
-
-  const startDate = new Date(startStr);
-  const endDate = new Date(endStr);
-
-  // Calculate the difference in time
-  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-
-  // Convert to days and add 1 to include both start and end dates
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-  const result = `Difference: ${diffDays} day(s).`;
-  resultEl.textContent = result;
-
-  saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${diffDays} day(s)`, result);
-}
+              function calculateDateDifference() {
+                const startStr = byId('dateDiffStart').value;
+                const endStr = byId('dateDiffEnd').value;
+                const resultEl = byId('dateDiffResult');
+              
+                if (!startStr || !endStr) {
+                  resultEl.textContent = 'Please enter both start and end dates.';
+                  return;
+                }
+              
+                const startDate = new Date(startStr);
+                const endDate = new Date(endStr);
+              
+                // Calculate the difference in time
+                const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+              
+                // Convert to days and add 1 to include both start and end dates
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+              
+                const result = `Difference: ${diffDays} day(s).`;
+                resultEl.textContent = result;
+              
+                saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${diffDays} day(s)`, result);
+              }
 
               // ---------- Calculator Mode Switcher ----------
               function switchCalculatorMode() {
@@ -2314,10 +2305,9 @@ function calculateDateDifference() {
                   renderCalendar(currentMonth, currentYear);
               }
 
-
               // ---------- Event Listeners ----------
 
-      // Utilities Listeners
+              // Utilities Listeners
               byId('monthlyCalendarToggle').addEventListener('click', function() {
                 toggleCollapse(byId('monthlyCalendarContainer'), byId('monthlyCalendarToggle'));
                 renderCalendar(currentMonth, currentYear); // Render on opening
@@ -2420,8 +2410,6 @@ function calculateDateDifference() {
                 byId('saveCheckBtn').textContent = 'Save';
               });
 
-
-
               byId('saveCheckBtn').addEventListener('click', saveCheck);
 
               byId('viewCheckToggle').addEventListener('click', function() {
@@ -2455,10 +2443,8 @@ function calculateDateDifference() {
 
               // NEW: Initialize calculator mode
               switchCalculatorMode();
-              // ... rest of the initial render code ...
 
               // 3. Setup notifications
-              // NOTIFICATION CHANGE: Removed periodic check (setInterval).
               // Notifications are now checked on page load (below) and on every data save (in saveAll).
               if ("Notification" in window) {
                   updateBrowserPermissionUI();
@@ -2468,7 +2454,5 @@ function calculateDateDifference() {
 
             })();
     </script>
-
-
   </body>
 </html>
