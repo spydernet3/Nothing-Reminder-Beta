@@ -1017,1245 +1017,1059 @@
       </div>
     </div>
 
-    <script>
-             // Service Worker Registration - CONSOLIDATED AND CLEANED UP
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('service-worker.js')
-            .then((registration) => {
-              console.log('SW registered successfully:', registration);
-            })
-            .catch((error) => {
-              console.error('SW registration failed. Ensure service-worker.js is in the root directory:', error);
-            });
-        });
-      }
+<script>
+    // <!-- NOTIFICATION FIX 1: Cleaned up Service Worker Registration -->
+    // Uses the standard registration method, pointing to 'service-worker.js' in the root.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then((registration) => {
+            console.log('SW registered successfully:', registration);
+          })
+          .catch((error) => {
+            console.error('SW registration failed:', error);
+          });
+      });
+    }
 
-(function () {
-        // ---------- Helpers ----------
-        function byId(id) {
-          return document.getElementById(id);
-        }
+    (function () {
+      // ---------- Helpers ----------
+      function byId(id){ return document.getElementById(id); }
 
-        // ---------- NEW: Notification Settings Logic ----------
-        function updateBrowserPermissionUI() {
+      // ---------- NEW: Notification Settings Logic ----------
+      // MOVED HERE TO FIX REFERENCE ERROR
+      function updateBrowserPermissionUI() {
           const status = Notification.permission;
           const textEl = byId('browserPermissionText');
           const boxEl = byId('globalNotifStatus');
           const btnEl = byId('requestPermissionBtn');
 
+          if (!textEl || !boxEl || !btnEl) return; // Add guards for elements
+
           boxEl.classList.remove('denied');
 
           if (status === 'granted') {
-            textEl.innerHTML =
-              'Status: <b style="color: var(--accent);">Granted (ON)</b>';
-            btnEl.textContent = 'Permission Granted';
-            btnEl.disabled = true;
+              textEl.innerHTML = 'Status: <b style="color: var(--accent);">Granted (ON)</b>';
+              btnEl.textContent = 'Permission Granted';
+              btnEl.disabled = true;
           } else if (status === 'denied') {
-            textEl.innerHTML =
-              'Status: <b style="color: #f44336;">Denied (OFF)</b>. Please change in browser settings.';
-            btnEl.textContent = 'Permission Denied';
-            btnEl.disabled = true;
-            boxEl.classList.add('denied');
-          } else {
-            // 'default' or not supported
-            textEl.innerHTML =
-              'Status: <b style="color: #ff9800;">Not Requested (OFF)</b>';
-            btnEl.textContent = 'Request Permission';
-            btnEl.disabled = false;
+              textEl.innerHTML = 'Status: <b style="color: #f44336;">Denied (OFF)</b>. Please change in browser settings.';
+              btnEl.textContent = 'Permission Denied';
+              btnEl.disabled = true;
+              boxEl.classList.add('denied');
+          } else { // 'default' or not supported
+              textEl.innerHTML = 'Status: <b style="color: #ff9800;">Not Requested (OFF)</b>';
+              btnEl.textContent = 'Request Permission';
+              btnEl.disabled = false;
           }
+      }
+
+      function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            console.error("This browser does not support desktop notification");
+            return;
+        }
+        if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+           updateBrowserPermissionUI();
+           return;
         }
 
-        function requestNotificationPermission() {
-          if (!('Notification' in window)) {
-            console.error('This browser does not support desktop notification');
-            return;
-          }
-          if (
-            Notification.permission === 'granted' ||
-            Notification.permission === 'denied'
-          ) {
+        Notification.requestPermission().then(function(permission) {
             updateBrowserPermissionUI();
-            return;
-          }
+        });
+      }
 
-          Notification.requestPermission().then(function (permission) {
-            updateBrowserPermissionUI();
-          });
-        }
-
-        function renderNotificationPage() {
-          if (!('Notification' in window)) {
-            byId('globalNotifStatus').innerHTML =
-              '<h3>Browser Permission</h3><p style="color: #f44336;">Notifications are not supported by your browser.</p>';
-            return;
+      function renderNotificationPage() {
+          if (!("Notification" in window)) {
+              const statusBox = byId('globalNotifStatus');
+              if (statusBox) statusBox.innerHTML = '<h3>Browser Permission</h3><p style="color: #f44336;">Notifications are not supported by your browser.</p>';
+              return;
           }
 
           updateBrowserPermissionUI();
 
           // Setup custom category toggles based on appData
-          byId('toggleReminders').checked = appData.notifReminders;
-          byId('toggleNotes').checked = appData.notifNotes;
-          byId('toggleChecklist').checked = appData.notifChecklist;
-          byId('toggleBudget').checked = appData.notifBudget;
-        }
+          if(byId('toggleReminders')) byId('toggleReminders').checked = appData.notifReminders;
+          if(byId('toggleNotes')) byId('toggleNotes').checked = appData.notifNotes;
+          if(byId('toggleChecklist')) byId('toggleChecklist').checked = appData.notifChecklist;
+          if(byId('toggleBudget')) byId('toggleBudget').checked = appData.notifBudget;
+      }
 
-        // Function to handle custom toggle changes
-        function handleCustomNotifToggle(category, event) {
+      // Function to handle custom toggle changes
+      function handleCustomNotifToggle(category, event) {
           appData[category] = event.target.checked;
           saveAll();
           // Re-check notifications immediately if a new category is toggled on
           if (event.target.checked) checkNotifications();
-        }
-
-        // ---------- NEW: CORE NOTIFICATION DISPLAY LOGIC (FIX FOR ANDROID) ----------
-        async function checkNotifications() {
-          if (Notification.permission !== 'granted') return;
-
-          const registration = await navigator.serviceWorker.getRegistration();
-          if (!registration) {
-            console.warn('Service Worker not registered. Cannot show persistent notifications.');
-            return;
-          }
-
-          const now = new Date();
-          const todayStr = now.toISOString().split('T')[0];
-          const tomorrow = new Date(now);
-          tomorrow.setDate(now.getDate() + 1);
-          const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
-          let notifsToShow = [];
-
-          // 1. Reminders (Due Today or Tomorrow, or Expired)
-          if (appData.notifReminders) {
-            appData.reminders.forEach((r) => {
-              const diff = daysLeft(r.endDate);
-              if (diff <= 1) {
-                // Today, Tomorrow, or Expired
-                const title = `⚠️ Reminder Due!`;
-                const options = {
-                  body: `"${r.title}" is due ${diff === 0 ? 'TODAY' : diff === 1 ? 'tomorrow' : 'and has expired'}.`,
-                  icon: 'assets/icon.png',
-                  badge: 'assets/icon.png',
-                  tag: `reminder-${r.title}-${r.endDate}`,
-                };
-                notifsToShow.push({ title, options });
-              }    
-});
-          }
-
-          // 2. Open Checklists
-          if (appData.notifChecklist) {
-            const openChecklists = appData.checklists.filter(c => c.status === 'open');
-            if (openChecklists.length > 0) {
-              const title = `✒️ Open Checklists (${openChecklists.length})`;
-              const options = {
-                body: `You have ${openChecklists.length} checklists that are still open. Time to check them off!`,
-                icon: 'assets/icon.png',
-                badge: 'assets/icon.png',
-                tag: 'open-checklists',
-              };
-              
-
-              let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
-              // Merge with defaults to ensure new notif keys are present on load
-              appData = { ...defaultData, ...appData };
-              // Ensure new property is initialized if old data exists
-              if (!appData.calculationHistory) appData.calculationHistory = [];
-
-
-              let editingIndex = null;
-              let editingBudgetIndex = null;
-              let editingCheckIndex = null;
-              let editingNoteIndex = null;
-              let editingHistoryIndex = null; // NEW: for history editing
-
-              let currentMonth = new Date().getMonth(); // NEW: Calendar state
-              let currentYear = new Date().getFullYear(); // NEW: Calendar state
-              // ... rest of the script ...
-
-
-              // Modified save function to use localStorage only
-              async function saveAll() {
-                try {
-                  const dataStr = JSON.stringify(appData);
-                  localStorage.setItem(STORAGE_KEY, dataStr);
-                  console.log("Data saved successfully to localStorage.");
-                  // Re-render the notification page whenever data changes
-                  renderNotificationPage();
-                  // NOTIFICATION CHANGE: Trigger notification check on every data save.
-                  checkNotifications();
-                } catch (err) {
-                  console.error("Save failed:", err);
-                  if (err.name === 'QuotaExceededError') {
-                    console.error("Storage is full. Please delete some data to make space.");
-                  }
-                }
-              }
-
-              function daysLeft(endDateStr){
-                if(!endDateStr) return null;
-                const [y,m,d] = endDateStr.split('-').map(Number);
-                const end = new Date(y,m-1,d);
-                const now = new Date();
-                const diffTime = end.setHours(0,0,0,0) - now.setHours(0,0,0,0);
-                return Math.floor(diffTime / (1000*60*60*24));
-              }
-
-              function formatDMY(dateStr){
-                if(!dateStr) return '';
-                const [y,m,d] = dateStr.split('-');
-                return `${d.toString().padStart(2,'0')}/${m.toString().padStart(2,'0')}/${y}`;
-              }
-
-              // Format date as DD-MMM-YYYY with IST time (12-hour format)
-              function formatDateDMYWithTime(date) {
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = months[date.getMonth()];
-                const year = date.getFullYear();
-
-                // Get IST time (UTC+5:30)
-                const istHours = date.getHours();
-                const istMinutes = date.getMinutes().toString().padStart(2, '0');
-                const ampm = istHours >= 12 ? 'PM' : 'AM';
-                const displayHours = istHours % 12 || 12;
-
-                return `${day}-${month}-${year} ${displayHours}:${istMinutes} ${ampm}`;
-              }
-
-              // Calculate days between two dates
-              function daysBetween(startDateStr, endDateStr) {
-                if (!startDateStr || !endDateStr) return 0;
-                const [startY, startM, startD] = startDateStr.split('-').map(Number);
-                const [endY, endM, endD] = endDateStr.split('-').map(Number);
-                const start = new Date(startY, startM-1, startD);
-                const end = new Date(endY, endM-1, endD);
-                const diffTime = end.setHours(0,0,0,0) - start.setHours(0,0,0,0);
-                return Math.floor(diffTime / (1000*60*60*24)) + 1; // +1 to include both start and end dates
-              }
-
-              // Calculate cost per day
-              function calculateCostPerDay(amount, startDate, endDate) {
-                const days = daysBetween(startDate, endDate);
-                if (days <= 0 || amount <= 0) return 0;
-                return (amount / days).toFixed(2);
-              }
-
-              function renderReminders(){
-                const list = byId('reminderList'); list.innerHTML = '';
-                  if(appData.reminders.length === 0){
-                  const li = document.createElement('li'); li.textContent='No reminders yet.'; li.style.opacity='0.7'; list.appendChild(li);
-                  renderHomeReminders(); renderHomeNotes(); renderHomeCheck(); return;
-                }
-                const frag = document.createDocumentFragment();
-                appData.reminders.forEach((r,i)=>{
-                  const li=document.createElement('li');
-                  const left=document.createElement('div'); left.className='item-left';
-                  const title=document.createElement('div'); title.textContent=r.title; title.style.fontWeight='600';
-                  const dates=document.createElement('div'); dates.style.fontSize='13px'; dates.style.opacity='0.85'; dates.textContent=`Start: ${formatDMY(r.startDate)} | End: ${formatDMY(r.endDate)}`;
-                  left.appendChild(title); left.appendChild(dates);
-
-                  const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
-                  const badge=document.createElement('div'); badge.className='badge';
-                  const diff = daysLeft(r.endDate);
-                  if(diff === null){ badge.textContent='No date'; }
-                  else if(diff < 0){ badge.textContent='Expired'; }
-                  else if(diff === 0){ badge.textContent='Today'; }
-                  else{ badge.textContent=`${diff} days left`; }
-
-                  const editBtn=document.createElement('button'); editBtn.className='icon-small'; editBtn.textContent='✏️'; editBtn.title='Edit'; editBtn.addEventListener('click',()=>editReminder(i));
-                  const delBtn=document.createElement('button'); delBtn.className='icon-small'; delBtn.textContent='🗑️'; delBtn.title='Delete'; delBtn.addEventListener('click',()=>deleteReminder(i));
-
-                  right.appendChild(badge);
-                  right.appendChild(editBtn);
-                  right.appendChild(delBtn);
-                  li.appendChild(left); li.appendChild(right); frag.appendChild(li);
-                });
-                list.appendChild(frag);
-                renderHomeReminders(); renderHomeNotes(); renderHomeCheck();
-              }
-
-              function renderHomeReminders(){
-                const container = byId('homeRemindersContainer');
-                container.innerHTML='';
-                // Filter reminders to show only today and 1 day left
-                const filteredReminders = appData.reminders.filter(r => {
-                  const diff = daysLeft(r.endDate);
-                  return diff === 0 || diff === 1 || diff < 0;
-                    
-                });
-
-                if(filteredReminders.length === 0){
-                  const li=document.createElement('li');
-                  li.textContent='No reminders for today or tomorrow.';
-                  li.style.opacity='0.7';
-                  container.appendChild(li);
-                  return;
-                }
-
-                const frag=document.createDocumentFragment();
-                filteredReminders.forEach(r=>{
-                  const li=document.createElement('li');
-                  const diff = daysLeft(r.endDate);
-                  let badgeText='';
-                  if(diff === null){ badgeText='No date'; }
-                  else if(diff < 0){ badgeText='Expired'; }
-                  else if(diff === 0){ badgeText='Today'; }
-                  else{ badgeText=`${diff} days left`; }
-                  li.textContent = `\"${r.title}\" || ${badgeText}`;
-                  frag.appendChild(li);
-                });
-                container.appendChild(frag);
-              }
-
-              // Update renderHomeNotes function to handle table formatting
-              function renderHomeNotes(){
-                const container = byId('homeNotesContainer');
-                container.innerHTML = '';
-
-                if(appData.notes.length === 0){
-                  const li = document.createElement('li');
-                  li.textContent = 'No notes available.';
-                  li.style.opacity = '0.7';
-                  container.appendChild(li);
-                  return;
-                }
-
-                const frag = document.createDocumentFragment();
-
-                appData.notes.forEach(n => {
-                  const li = document.createElement('li');
-                  li.className = 'list-item';
-
-                  const left = document.createElement('div');
-                  left.className = 'item-left';
-
-                  // Main Text/Table Content
-                  const text = document.createElement('div');
-                  if(n.isTable && n.text) {
-                    // Show first few rows of table in home view
-                    const lines = n.text.split('\n');
-                    let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
-
-                    lines.forEach((line, index) => {
-                      if(line.includes('---')) {
-                        if(index > 0) tableHTML += '</tr>';
-                        tableHTML += '<tr>';
-                      } else if(line.includes('|')) {
-                        const cells = line.split('|').filter(cell => cell.trim() !== '');
-                        cells.forEach(cell => {
-                          const cellContent = cell.trim();
-                          if(index === 0) {
-                            tableHTML += `<th style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</th>`;
-                          } else {
-                            tableHTML += `<td style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</td>`;
-                          }
-                        });
-                      }
-                    });
-
-                    tableHTML += '</tr></table>';
-                    text.innerHTML = tableHTML;
-                  } else {
-                    text.innerHTML = `<b>${(n.text || '').substring(0, 50)}...</b><br><small style=\"opacity:0.7\">${n.createdAt || ''}</small>`;
-                  }
-                  left.appendChild(text);
-
-                  // File Thumbnail Display - EXISTING, KEPT
-                  if (n.file && n.file.type && n.file.type.includes('image')) {
-                    const thumb = document.createElement('img');
-                    thumb.src = n.file.data;
-                    thumb.style.maxWidth = '40px';
-                    thumb.style.marginLeft = '5px';
-                    thumb.style.borderRadius = '4px';
-                    thumb.style.verticalAlign = 'middle';
-                    thumb.alt = n.file.name || 'image';
-                    left.appendChild(thumb);
-                  }
-
-                  li.appendChild(left);
-                  frag.appendChild(li);
-                });
-
-                container.appendChild(frag);
-               notifsToShow.push({ title, options });
-            }
-          }
-
-          // 3. Budget (Simple reminder for budget period end date)
-          if (appData.notifBudget) {
-            appData.budget.forEach((b) => {
-              const diff = daysLeft(b.endDate);
-              if (diff === 0) {
-                const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
-                const title = `💰 Budget "${b.title}" Ends TODAY!`;
-                const options = {
-                  body: `Your budget period ends today. Daily spending limit was ₹${costPerDay}.`,
-                  icon: 'assets/icon.png',
-                  badge: 'assets/icon.png',
-                  tag: `budget-end-${b.title}`,
-                };
-                notifsToShow.push({ title, options });
-              }
-
-              // Update renderNotes function to handle table formatting
-              function renderNotes(){
-                const list = byId('noteList'); list.innerHTML='';
-                if(appData.notes.length===0){
-                  const li=document.createElement('li');
-                  li.textContent='No notes yet.'; li.style.opacity='0.7';
-                  list.appendChild(li);
-                  return;
-                }
-                const frag=document.createDocumentFragment();
-                appData.notes.forEach((note,i)=>{
-                  const li=document.createElement('li');
-                  const left=document.createElement('div'); left.className='item-left';
-
-                  const text=document.createElement('div');
-                  if(note.isTable && note.text) {
-                    // Convert table format to HTML table
-                    const lines = note.text.split('\n');
-                    let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
-
-                    lines.forEach((line, index) => {
-                      if(line.includes('---')) {
-                        // Row separator - add closing tags for previous row
-                        if(index > 0) tableHTML += '</tr>';
-                        tableHTML += '<tr>';
-                      } else if(line.includes('|')) {
-                        // Table row
-                        const cells = line.split('|').filter(cell => cell.trim() !== '');
-                        cells.forEach(cell => {
-                          const cellContent = cell.trim();
-                          if(index === 0) {
-                            tableHTML += `<th style=\"border: 1px solid #ddd; padding: 8px;\">${cellContent}</th>`;
-                          } else {
-                            tableHTML += `<td style=\"border: 1px solid #ddd; padding: 8px;\">${cellContent}</td>`;
-                          }
-                        });
-                      }
-                    });
-
-                    tableHTML += '</tr></table>';
-                    text.innerHTML = tableHTML;
-                  } else {
-                    text.innerHTML=`<b>${note.text||''}</b><br>
-                      <small style=\"opacity:0.7\">${note.createdAt||''}</small>`;
-                  }
-                  left.appendChild(text);
-
-                  // --- file rendering - EXISTING, KEPT ---
-                  if(note.file){
-                    let fileEl;
-
-                    // 📷 --- Image Support ---
-                    if(note.file.type.includes('image')){
-                      fileEl=document.createElement('img');
-                      fileEl.src=note.file.data;
-                      fileEl.style.maxWidth='200px';
-                      fileEl.style.display='block';
-                      fileEl.style.marginTop='5px';
-                    }
-                    // 🎵 --- Audio Support ---
-                    else if(note.file.type.includes('audio')){
-                      fileEl=document.createElement('audio');
-                      fileEl.controls=true;
-                      fileEl.src=note.file.data;
-                    }
-                    // 🎬 --- Video Support ---
-                    else if(note.file.type.includes('video')){
-                      fileEl=document.createElement('video');
-                      fileEl.controls=true;
-                      fileEl.width=200;
-                      fileEl.src=note.file.data;
-                    }
-                    // 📄 --- Docs (PDF/DOC) ---
-                    else {
-                      fileEl=document.createElement('a');
-                      fileEl.href=note.file.data;
-                      fileEl.download=note.file.name;
-                      fileEl.textContent='📎 '+note.file.name;
-                    }
-
-                    left.appendChild(fileEl);
-                  }
-
-                  const right = document.createElement('div');
-                  right.style.display = 'flex';
-                  right.style.alignItems = 'center';
-
-                  const editBtn = document.createElement('button');
-                  editBtn.className = 'icon-small';
-                  editBtn.textContent = '✏️';
-                  editBtn.title = 'Edit';
-                  editBtn.addEventListener('click', () => editNote(i));
-
-                  const delBtn=document.createElement('button');
-                  delBtn.className='icon-small'; delBtn.textContent='🗑️';
-                  delBtn.title='Delete';
-                  delBtn.addEventListener('click',()=>{ deleteNote(i); });
-
-                  right.appendChild(editBtn);
-                  right.appendChild(delBtn);
-                  li.appendChild(left); li.appendChild(right); frag.appendChild(li);
-                });
-                list.appendChild(frag);
-              }
-// 4. Notes (Simple reminder for note creation, not implemented a date field for notes yet)
-          if (appData.notifNotes) {
-            // Placeholder: Could add logic if notes had a 'remindDate' field.
-          }
-
-          // Show all unique notifications via Service Worker
-          for (const notif of notifsToShow) {
-            // Using showNotification via registration ensures it works in background/PWA on Android
-            registration.showNotification(notif.title, notif.options);
-          }
-        }
-              // ---------- Budget Functions ----------
-              function renderBudgets(){
-                const list = byId('budgetList'); list.innerHTML = '';
-                // Ensure appData.budget exists and is an array
-                if (!appData.budget || !Array.isArray(appData.budget)) {
-                  appData.budget = [];
-                }
-                if(appData.budget.length === 0){
-                  const li = document.createElement('li'); li.textContent='No budgets yet.'; li.style.opacity='0.7'; list.appendChild(li);
-                  renderHomeBudgets(); return;
-                }
-                const frag = document.createDocumentFragment();
-                appData.budget.forEach((b,i)=>{
-                  const li=document.createElement('li');
-                  const left=document.createElement('div'); left.className='item-left';
-
-                  // Calculate cost per day
-                  const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
-                  const days = daysBetween(b.startDate, b.endDate);
-
-                  const title=document.createElement('div');
-                  title.textContent=`Title: ${b.title}`;
-                  title.style.fontWeight='600';
-
-                  const amounts=document.createElement('div');
-                  amounts.style.fontSize='13px';
-                  amounts.style.opacity='0.85';
-                  amounts.textContent=`Total Budget: ₹${b.amount} | Remaining Days: ${days} | Cost per Day: ₹${costPerDay}`;
-
-                  left.appendChild(title); left.appendChild(amounts);
-
-                  const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
-                  const editBtn=document.createElement('button'); editBtn.className='icon-small'; editBtn.textContent='✏️'; editBtn.title='Edit'; editBtn.addEventListener('click',()=>editBudget(i));
-                  const delBtn=document.createElement('button'); delBtn.className='icon-small'; delBtn.textContent='🗑️'; delBtn.title='Delete'; delBtn.addEventListener('click',()=>deleteBudget(i));
-
-                  right.appendChild(editBtn); right.appendChild(delBtn);
-                  li.appendChild(left); li.appendChild(right); frag.appendChild(li);
-                });
-                list.appendChild(frag);
-                renderHomeBudgets();
-              }
-
-              function renderHomeBudgets(){
-                const container = byId('homeBudgetsContainer');
-                container.innerHTML='';
-                // Ensure appData.budget exists and is an array
-                if (!appData.budget || !Array.isArray(appData.budget)) {
-                  appData.budget = [];
-                }
-                if(appData.budget.length === 0){
-                  const li=document.createElement('li');
-                  li.textContent='No budgets yet.';
-                  li.style.opacity='0.7';
-                  container.appendChild(li);
-                  return;
-                }
-                const frag=document.createDocumentFragment();
-                appData.budget.forEach(b=>{
-                  // Calculate cost per day
-                  const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
-                  const days = daysBetween(b.startDate, b.endDate);
-
-                  const li=document.createElement('li');
-                  li.textContent = `\"${b.title}\" || Total: ₹${b.amount} || Remaining: ${days} days || Cost: ₹${costPerDay}/day`;
-                  frag.appendChild(li);
-                });
-                container.appendChild(frag);
-              }
-
-              function editBudget(i){
-                const b=appData.budget[i];
-                editingBudgetIndex=i;
-                byId('budgetTitle').value=b.title;
-                byId('budgetAmount').value=b.amount;
-                byId('budgetStartDate').value=b.startDate||'';
-                byId('budgetEndDate').value=b.endDate||'';
-                showForm(byId('budgetFormContainer'));
-              }
-
-              function deleteBudget(index){
-                appData.budget.splice(index, 1);
-                saveAll();
-                renderBudgets();
-                renderHomeBudgets();
-              }
-
-              function saveBudget(){
-                const title=byId('budgetTitle').value.trim();
-                const amount=byId('budgetAmount').value;
-                const start=byId('budgetStartDate').value;
-                const end=byId('budgetEndDate').value;
-                if(!title || !amount){ alert('Title and amount are required to save a budget.'); return; }
-                const budgetObj={ title, amount, startDate:start, endDate:end };
-                if(editingBudgetIndex!==null){ appData.budget[editingBudgetIndex]=budgetObj; editingBudgetIndex=null; }
-                else{ appData.budget.push(budgetObj); }
-                saveAll(); renderBudgets(); hideForm(byId('budgetFormContainer')); clearBudgetForm();
-              }
-
-              function clearBudgetForm(){
-                byId('budgetTitle').value='';
-                byId('budgetAmount').value='';
-                byId('budgetStartDate').value='';
-                byId('budgetEndDate').value='';
-              }
-
-              function editReminder(i){
-                const r=appData.reminders[i];
-                editingIndex=i;
-                byId('reminderTitle').value=r.title;
-                byId('startDate').value=r.startDate||'';
-                byId('endDate').value=r.endDate||'';
-                showForm(byId('reminderFormContainer'));
-              }
-
-              function deleteReminder(index){
-                appData.reminders.splice(index, 1);
-                saveAll();
-                renderReminders();
-                renderHomeReminders();
-              }
-
-              function saveReminder(){
-                const title=byId('reminderTitle').value.trim();
-                const start=byId('startDate').value;
-                const end=byId('endDate').value;
-                if(!title){ alert('Title is required for the reminder.'); return; }
-                const reminderObj={ title, startDate:start, endDate:end };
-                if(editingIndex!==null){ appData.reminders[editingIndex]=reminderObj; editingIndex=null; }
-                else{ appData.reminders.push(reminderObj); }
-                saveAll(); renderReminders(); hideForm(byId('reminderFormContainer')); clearReminderForm();
-              }
-
-              function clearReminderForm(){
-                byId('reminderTitle').value='';
-                byId('startDate').value='';
-                byId('endDate').value='';
-              }
-
-              function deleteNote(index){
-                appData.notes.splice(index,1);
-                saveAll();
-                renderNotes();
-                renderHomeNotes();
-              }
-
-              // Updated editNote (removed AI-related code)
-              function editNote(index){
-                const note = appData.notes[index];
-                editingNoteIndex = index;
-
-                byId('noteText').value = note.text || '';
-                byId('tableFormatCheckbox').checked = note.isTable || false;
-
-                // Show the form
-                showForm(byId('noteFormContainer'));
-
-                // Set the save button to update instead of create
-                byId('saveNoteBtn').textContent = 'Update';
-              }
-
-              // Updated saveNote (removed AI-related code)
-              function saveNote(){
-                const text = byId('noteText').value.trim();
-                const fileInput = byId('noteFile');
-                const file = fileInput.files[0];
-                const isTableFormat = byId('tableFormatCheckbox').checked;
-
-                if(!text && !file){
-                  alert('Note cannot be empty. Please add text or a file.');
-                  return;
-                }
-
-                // Format date for all notes
-                const noteDate = formatDateDMYWithTime(new Date());
-
-                let noteText = text;
-                if (isTableFormat && text) {
-                  // Add date/time to the beginning of the table
-                  noteText = `Created: ${noteDate}\n\n${text}`;
-                }
-
-                const noteObj = {
-                  text: noteText,
-                  createdAt: noteDate,
-                  file: null,
-                  isTable: isTableFormat,
-                  // Removed: aiSummary: temporaryAISummary
-                };
-
-                const finalizeSave = (noteObj) => {
-                    if(editingNoteIndex !== null){
-                        appData.notes[editingNoteIndex] = noteObj;
-                        editingNoteIndex = null;
-                    } else {
-                        appData.notes.push(noteObj);
-                    }
-                    saveAll(); renderNotes(); renderHomeNotes();
-                    hideForm(byId('noteFormContainer'));
-                    byId('noteText').value='';
-                    fileInput.value='';
-                    byId('tableFormatCheckbox').checked = false;
-                    byId('saveNoteBtn').textContent = 'Save';
-                }
-
-                if(file){
-                  const reader = new FileReader();
-                  reader.onload = function(e){
-                    noteObj.file = {
-                      name: file.name,
-                      type: file.type,
-                      data: e.target.result
-                    };
-                    finalizeSave(noteObj);
-                  };
-                  reader.onerror = function() {
-                    console.error('Error reading file. Please try again.');
-                    fileInput.value = '';
-                  };
-                  reader.readAsDataURL(file);
-                } else {
-                  finalizeSave(noteObj);
-                }
-              }
-
-              function deleteCheck(index){
-                appData.checklists.splice(index,1);
-                saveAll();
-                renderChecklists();
-                renderHomeCheck();
-              }
-
-              function editCheck(index){
-                const check = appData.checklists[index];
-                editingCheckIndex = index;
-
-                byId('checkTitle').value = check.title || '';
-                byId('checkStatus').value = check.status || 'open';
-                byId('checkItems').value = check.items ? check.items.join('\n') : '';
-
-                // Show the form
-                showForm(byId('checkFormContainer'));
-
-                // Set the save button to update instead of create
-                byId('saveCheckBtn').textContent = 'Update';
-              }
-
-              function toggleCheckStatus(index) {
-                const check = appData.checklists[index];
-                check.status = check.status === 'open' ? 'closed' : 'open';
-                saveAll();
-                renderChecklists();
-                renderHomeCheck();
-              }
-
-              function saveCheck(){
-                const title = byId('checkTitle').value.trim();
-                const status = byId('checkStatus').value;
-                const itemsText = byId('checkItems').value.trim();
-                const items = itemsText ? itemsText.split('\n').filter(item => item.trim() !== '') : [];
-
-                if(!title){
-                  alert('Title is required for the checklist.');
-                  return;
-                }
-
-                const checkObj = {
-                  title,
-                  items,
-                  status: status,
-                  createdAt: formatDateDMYWithTime(new Date()) // Use DD-MMM-YYYY with IST time format
-                };
-
-                if(editingCheckIndex !== null){
-                  appData.checklists[editingCheckIndex] = checkObj;
-                  editingCheckIndex = null;
-                } else {
-                  appData.checklists.push(checkObj);
-                }
-
-                saveAll();
-                renderChecklists();
-                renderHomeCheck();
-
-                hideForm(byId('checkFormContainer'));
-                byId('checkTitle').value = '';
-                byId('checkStatus').value = 'open';
-                byId('checkItems').value = '';
-                byId('saveCheckBtn').textContent = 'Save';
-              }
-
-
-              function renderHomeCheck(){
-                const container = byId('homeCheckContainer');
-                container.innerHTML = '';
-
-                // Ensure appData.checklists exists and is an array
-                if (!appData.checklists || !Array.isArray(appData.checklists)) {
-                  appData.checklists = [];
-                }
-
-                if(appData.checklists.length === 0){
-                  const li = document.createElement('li');
-                  li.textContent = 'No checklists yet.';
-                  li.style.opacity = '0.7';
-                  container.appendChild(li);
-                  return;
-                }
-
-                const frag = document.createDocumentFragment();
-
-                appData.checklists.forEach(check => {
-                  if(check.status === 'open') {
-                    const li = document.createElement('li');
-                    li.textContent = `\"${check.title}\" - ${check.items.length} items`;
-                    frag.appendChild(li);
-                  }
-                });
-
-                container.appendChild(frag);
-              }
-
-              function renderChecklists(){
-                const list = byId('checkList'); list.innerHTML = '';
-                // Ensure appData.checklists exists and is an array
-                if (!appData.checklists || !Array.isArray(appData.checklists)) {
-                  appData.checklists = [];
-                }
-                if(appData.checklists.length === 0){
-                  const li = document.createElement('li'); li.textContent='No checklists yet.'; li.style.opacity='0.7'; list.appendChild(li);
-                  renderHomeCheck(); return;
-                }
-                const frag = document.createDocumentFragment();
-                appData.checklists.forEach((check,i)=>{
-                  const li=document.createElement('li');
-                  const left=document.createElement('div'); left.className='item-left';
-
-                  const title=document.createElement('div');
-                  title.textContent=`${check.title}`;
-                  title.style.fontWeight='600';
-
-                  // START OF MODIFICATION: Display checklist items
-                  const itemsPreview=document.createElement('div');
-                  itemsPreview.style.fontSize='13px';
-                  itemsPreview.style.opacity='0.9';
-
-                  // Get the first 3 items or all items if less than 3
-                  const previewItems = check.items.slice(0, 3);
-                  let itemsText = previewItems.map(item => `\u2022 ${item}`).join('<br>'); // \u2022 is a bullet point
-
-                  // Add an ellipsis if there are more than 3 items
-                  if(check.items.length > 3) {
-                      itemsText += '<br>... and ' + (check.items.length - 3) + ' more items';
-                  } else if (check.items.length === 0) {
-                      itemsText = 'No items in list.';
-                  }
-
-                  itemsPreview.innerHTML = itemsText;
-                  // END OF MODIFICATION
-
-                  const statusInfo=document.createElement('div');
-                  statusInfo.style.fontSize='13px';
-                  statusInfo.style.opacity='0.85';
-                  statusInfo.textContent=`Status: ${check.status} | Total Items: ${check.items.length}`;
-
-                  const time=document.createElement('div');
-                  time.style.fontSize='12px';
-                  time.style.opacity='0.7';
-                  time.textContent=check.createdAt || '';
-
-                  left.appendChild(title);
-                  left.appendChild(itemsPreview); // Added the item preview
-                  left.appendChild(statusInfo);
-                  left.appendChild(time);
-
-                  const right = document.createElement('div');
-                  right.style.display = 'flex';
-                  right.style.alignItems = 'center';
-
-                  // Add status button
-                  const statusBtn = document.createElement('button');
-                  statusBtn.className = 'status-btn';
-                  statusBtn.textContent = check.status === 'open' ? 'Open' : 'Closed';
-                  statusBtn.title = 'Change Status';
-                  statusBtn.addEventListener('click', () => toggleCheckStatus(i));
-
-                  const editBtn = document.createElement('button');
-                  editBtn.className = 'icon-small';
-                  editBtn.textContent = '✏️';
-                  editBtn.title = 'Edit';
-                  editBtn.addEventListener('click', () => editCheck(i));
-
-                  const delBtn=document.createElement('button');
-                  delBtn.className='icon-small'; delBtn.textContent='🗑️';
-                  delBtn.title='Delete';
-                  delBtn.addEventListener('click',()=>{ deleteCheck(i); });
-
-                  right.appendChild(statusBtn);
-                  right.appendChild(editBtn);
-                  right.appendChild(delBtn);
-                  li.appendChild(left); li.appendChild(right); frag.appendChild(li);
-                });
-                list.appendChild(frag);
-                renderHomeCheck();
-              }
-
-              // ---------- Form Show/Hide ----------
-              function showForm(el){ el.classList.add('visible'); }
-              function hideForm(el){ el.classList.remove('visible'); }
-
-              // ---------- Page Navigation ----------
-              const sidebar = byId('sidebar');
-              const main = byId('main');
-              const toggleBtn = byId('toggleBtn');
-
-              function showPage(pageId){
-                document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
-                const targetPage = byId(pageId);
-                targetPage.classList.remove('hidden');
-
-                // Special handling for the notifications page
-                if (pageId === 'notifications') {
-                  renderNotificationPage();
-                }
-
-                // Auto-hide sidebar instantly when an option is chosen
-                sidebar.style.left = '-220px';
-                main.style.marginLeft = '0';
-                toggleBtn.textContent = '⮞';
-                sidebar.style.transition = 'left 0s';   // instant hide
-                main.style.transition = 'margin-left 0s'; // instant hide
-              }
-
-              // ---------- Sidebar Toggle ----------
-              toggleBtn.addEventListener('click', function() {
-                if (sidebar.style.left === '-220px' || sidebar.style.left === '') {
-                  sidebar.style.left = '0px';
-                  main.style.marginLeft = '220px';
-                  toggleBtn.textContent = '⮜';
-                } else {
-                  sidebar.style.left = '-220px';
-                  main.style.marginLeft = '0';
-                  toggleBtn.textContent = '⮞';
-                }
-              });
-
-              // ---------- Settings Panel (new) ----------
-              const settingsBtn = byId('settingsBtn');
-              const settingsPanel = byId('settingsPanel');
-              if(settingsBtn && settingsPanel){
-                settingsBtn.addEventListener('click', ()=>{
-                  const opened = settingsPanel.classList.toggle('visible');
-                  settingsBtn.setAttribute('aria-expanded', opened);
-                  settingsPanel.setAttribute('aria-hidden', !opened);
-                });
-              }
-
-              // ---------- Dark Mode ----------
-              const darkBtn=byId('darkModeBtn');
-              darkBtn.addEventListener('click',()=>{
-                document.body.classList.toggle('dark');
-                appData.darkMode=document.body.classList.contains('dark')?'1':'0';
-                saveAll();
-              });
-
-              // ---------- Profile ----------
-              const profileNameEl=byId('profileName');
-              byId('editNameBtn').addEventListener('click',()=>{
-                const n=prompt('Enter new name:',appData.profileName||'');
-                if(n){
-                  appData.profileName=n;
-                  profileNameEl.textContent=n;
-                  saveAll();
-                }
-              });
-
-              const profilePhotoInput=byId('photoUpload');
-              profilePhotoInput.addEventListener('change',(e)=>{
-                const file=e.target.files[0];
-                if(file){
-                  const reader=new FileReader();
-                  reader.onload=function(ev){
-                    appData.profilePhoto=ev.target.result;
-                    byId('profilePhoto').src=ev.target.result;
-                    saveAll();
-                  };
-                  reader.readAsDataURL(file);
-                }
-              });
-
-              // ---------- NEW: Notification Settings Logic ----------
-              // (MOVED TO TOP OF IIFE)
-
-
-              // ---------- Notifications Logic (Updated for comprehensive summary) ----------
-
-              // Helper 4: Notes (Summary of recent notes) - NEW
-              function buildNotesSummary() {
-                  let summary = [];
-                  if (appData.notes.length === 0) return "No notes added yet.";
-
-                  // Get the most recent 3 notes
-                  const recentNotes = appData.notes.slice(-3).reverse(); // Get last 3, newest first
-
-                  recentNotes.forEach(n => {
-                      let notePreview = n.text;
-                      if (n.isTable) {
-                          notePreview = "[Table Note]";
-                      } else if (notePreview && notePreview.length > 30) {
-                          notePreview = notePreview.substring(0, 30) + "...";
-                      } else if (!notePreview && n.file) {
-                          notePreview = `[File: ${n.file.name}]`;
-                      } else if (!notePreview) {
-                          notePreview = "[Empty Note]";
-                      }
-                      
-                      const datePart = n.createdAt ? n.createdAt.split(' ')[0] : '';
-                      summary.push(`- ${notePreview} (${datePart})`); // Show preview and date part
-                  });
-                  
-                  if (appData.notes.length > 3) {
-                      summary.push(`... and ${appData.notes.length - 3} older notes.`);
-                  }
-
-                  return summary.join('\n');
-              }
-
-              // Helper 1: Reminders (Today or Tomorrow)
-              function buildReminderSummary() {
-                  let summary = [];
-                  appData.reminders.forEach(r => {
-                      const diff = daysLeft(r.endDate);
-                      if (diff === 0 || diff === 1) { // Only Today or Tomorrow as per home screen
-                          summary.push(`- ${r.title} | ${diff === 0 & 1 ? 'Today' : 'Tomorrow'}`);
-                      }
-                  });
-                  return summary.length > 0 ? summary.join('\n') : "No reminders due today/tomorrow.";
-              }
-
-              // Helper 2: Checklist (Open status)
-              function buildChecklistSummary() {
-                  let summary = [];
-                  const openChecks = appData.checklists.filter(c => c.status === 'open');
-                  if (openChecks.length === 0) return "No open checklists.";
-
-                  openChecks.slice(0, 3).forEach(c => { // List top 3 open lists
-                      summary.push(`- ${c.title} (${c.items.length} items)`);
-                  });
-
-                  if (openChecks.length > 3) {
-                      summary.push(`... and ${openChecks.length - 3} more open lists.`);
-                  }
-
-                  return summary.join('\n');
-              }
-
-              // Helper 3: Budget (Overview/Cost per day)
-              function buildBudgetSummary() {
-                  let summary = [];
-                  if (appData.budget.length === 0) return "No active budgets to track.";
-
-                  appData.budget.forEach(b => {
-                      const days = daysBetween(b.startDate, b.endDate);
-                      const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
-                      // Only show if budget is active
-                      if (days > 0 && costPerDay > 0) {
-                          summary.push(`- ${b.title}: ₹${costPerDay}/day for ${days} days`);
-                      }
-                  });
-                  return summary.length > 0 ? summary.join('\n') : "No active budget overview available.";
-              }
-
-
-              // NOTIFICATION CHANGE: This function is now called on page load and on data save (in saveAll).
-              // It now sends separate notifications for each category if they have content.
-<!-- ✅ Notification Logic Section -->
-
-// === SAFE PLACEHOLDER (to avoid errors from old calls) ===
-function checkNotifications() {
-  console.log("checkNotifications() called — old logic disabled, replaced by new smart notification system.");
-  // old notification logic removed intentionally
-}
-
-
-// === ANDROID LOCAL NOTIFICATION FUNCTION ===
-function showAndroidNotification(title, body, icon = 'assets/icon.png') {
-  if (!('Notification' in window)) {
-    alert("Notifications not supported on this device.");
-    return;
-  }
-
-  if (Notification.permission === 'granted') {
-    navigator.serviceWorker.getRegistration().then(reg => {
-      if (reg) {
-        reg.showNotification(title, {
-          body: body,
-          icon: icon,
-          badge: icon,
-          requireInteraction: true, // stays until user clears
-          vibrate: [200, 100, 200],
-          tag: 'nothing-reminder',
-          actions: [
-            { action: 'open', title: 'Open App' }
-          ]
-        });
-      } else {
-        new Notification(title, { body, icon, requireInteraction: true });
       }
-    });
-  } else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then(permission => {
-      if (permission === 'granted') showAndroidNotification(title, body, icon);
-    });
-  } else {
-    alert("Notification permission denied. Please enable manually in settings.");
-  }
-}
+      // ---------- END MOVED BLOCK ----------
+
+      // ---------- Storage ----------
+
+      // Enhanced storage with quota handling
+      const STORAGE_KEY = 'smart_reminder_app_v1';
+
+      const defaultData = {
+        reminders: [],
+        notes: [],
+        profileName: '',
+        profilePhoto: '',
+        darkMode: '0',
+        budget: [],
+        checklists: [],
+        // NEW: Notification preferences
+        notifReminders: true,
+        notifNotes: true,
+        notifChecklist: true,
+        notifBudget: true,
+        // NEW: Calculation History
+        calculationHistory: []
+      };
+
+      let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+      // Merge with defaults to ensure new notif keys are present on load
+      appData = { ...defaultData, ...appData };
+      // Ensure new property is initialized if old data exists
+      if (!appData.calculationHistory) appData.calculationHistory = [];
 
 
-// === MULTI-SECTION SMART NOTIFICATION LOGIC ===
-function triggerSectionNotifications() {
-  // --- Reminders ---
-  if (appData.reminders && appData.reminders.length > 0) {
-    const dueReminders = appData.reminders.filter(r => {
-      const diff = daysLeft(r.endDate);
-      return diff <= 0; // expired or due today
-    });
-    if (dueReminders.length > 0) {
-      const first = dueReminders[0];
-      showAndroidNotification("⏰ Reminder Alert", `Reminder: "${first.title}" expired or due today.`);
-    }
-  }
+      let editingIndex = null;
+      let editingBudgetIndex = null;
+      let editingCheckIndex = null;
+      let editingNoteIndex = null;
+      let editingHistoryIndex = null; // NEW: for history editing
 
-  // --- Budgets ---
-  if (appData.budget && appData.budget.length > 0) {
-    const b = appData.budget[0];
-    const cost = calculateCostPerDay(b.amount, b.startDate, b.endDate);
-    showAndroidNotification("💰 Budget Overview", `"${b.title}" • ₹${cost}/day • Total ₹${b.amount}`);
-  }
-
-  // --- Notes ---
-  if (appData.notes && appData.notes.length > 0) {
-    const latest = appData.notes[appData.notes.length - 1];
-    const preview = (latest.text || '').substring(0, 40);
-    showAndroidNotification("📝 Notes Update", `Note: ${preview || 'Empty note added'}`);
-  }
-
-  // --- Checklist ---
-  if (appData.checklists && appData.checklists.length > 0) {
-    const openChecks = appData.checklists.filter(c => c.status === 'open' || c.status === '');
-    if (openChecks.length > 0) {
-      const ch = openChecks[0];
-      const pendingCount = ch.items ? ch.items.length : 0;
-      showAndroidNotification("✒ Checklist Update", `"${ch.title}" has ${pendingCount} items open.`);
-    }
-  }
-}
+      let currentMonth = new Date().getMonth(); // NEW: Calendar state
+      let currentYear = new Date().getFullYear(); // NEW: Calendar state
+      // ... rest of the script ...
 
 
-// === MODIFY SAVE FUNCTION TO TRIGGER NEW LOGIC ===
-async function saveAll() {
-  try {
-    const dataStr = JSON.stringify(appData);
-    localStorage.setItem(STORAGE_KEY, dataStr);
-    console.log("Data saved successfully to localStorage.");
+      // <!-- NOTIFICATION FIX 3: Modified saveAll to be async and call checkNotifications -->
+      // Modified save function to use localStorage only
+      async function saveAll() {
+        try {
+          const dataStr = JSON.stringify(appData);
+          localStorage.setItem(STORAGE_KEY, dataStr);
+          console.log("Data saved successfully to localStorage.");
+          // Re-render the notification page whenever data changes (if the page is active)
+          if (byId('notifications') && !byId('notifications').classList.contains('hidden')) {
+             renderNotificationPage();
+          }
+          // NOTIFICATION CHANGE: Trigger notification check on every data save.
+          await checkNotifications(); // Correctly awaiting the async function
+        } catch (err) {
+          console.error("Save failed:", err);
+          if (err.name === 'QuotaExceededError') {
+            console.error("Storage is full. Please delete some data to make space.");
+          }
+        }
+      }
 
-    renderNotificationPage();
+      function daysLeft(endDateStr){
+        if(!endDateStr) return null;
+        const [y,m,d] = endDateStr.split('-').map(Number);
+        const end = new Date(y,m-1,d);
+        const now = new Date();
+        const diffTime = end.setHours(0,0,0,0) - now.setHours(0,0,0,0);
+        return Math.floor(diffTime / (1000*60*60*24));
+      }
 
-    checkNotifications();          // now harmless placeholder ✅
-    triggerSectionNotifications(); // triggers smart Android notifications ✅
+      function formatDMY(dateStr){
+        if(!dateStr) return '';
+        const [y,m,d] = dateStr.split('-');
+        return `${d.toString().padStart(2,'0')}/${m.toString().padStart(2,'0')}/${y}`;
+      }
 
-  } catch (err) {
-    console.error("Save failed:", err);
-  }
-}
+      // Format date as DD-MMM-YYYY with IST time (12-hour format)
+      function formatDateDMYWithTime(date) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
 
-<!-- ✅ End Notification Logic -->
+        // Get IST time (UTC+5:30)
+        const istHours = date.getHours();
+        const istMinutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = istHours >= 12 ? 'PM' : 'AM';
+        const displayHours = istHours % 12 || 12;
 
-              
-              function checkNotifications(){
-                // 1. Check global browser permission first
-                if(!(Notification && Notification.permission === 'granted')) {
-                   console.log("Global notification permission not granted. Skipping custom checks.");
-                   return;
-                }
+        return `${day}-${month}-${year} ${displayHours}:${istMinutes} ${ampm}`;
+      }
 
-                // 1. REMINDERS Summary
-                if (appData.notifReminders) {
-                    const reminderSummary = buildReminderSummary();
-                    // Send notification only if there is something to report (not the default message)
-                    if (reminderSummary !== "No reminders due today/tomorrow.") {
-                        new Notification("Nothing Reminder - ⚠️ Reminders", {
-                            body: reminderSummary,
-                            icon: 'assets/icon.png',
-                            requireInteraction: true,
-                            tag: 'reminders' // Use a tag to replace old reminder notifications
-                        });
-                    }
-                }
+      // Calculate days between two dates
+      function daysBetween(startDateStr, endDateStr) {
+        if (!startDateStr || !endDateStr) return 0;
+        const [startY, startM, startD] = startDateStr.split('-').map(Number);
+        const [endY, endM, endD] = endDateStr.split('-').map(Number);
+        const start = new Date(startY, startM-1, startD);
+        const end = new Date(endY, endM-1, endD);
+        const diffTime = end.setHours(0,0,0,0) - start.setHours(0,0,0,0);
+        return Math.floor(diffTime / (1000*60*60*24)) + 1; // +1 to include both start and end dates
+      }
 
-                // 2. CHECKLIST Summary
-                if (appData.notifChecklist) {
-                    const checklistSummary = buildChecklistSummary();
-                    // Send notification only if there is something to report
-                    if (checklistSummary !== "No open checklists.") {
-                         new Notification("Nothing Reminder - ✒ Checklists", {
-                            body: checklistSummary,
-                            icon: 'assets/icon.png',
-                            requireInteraction: true,
-                            tag: 'checklists' // Use a tag to replace
-                        });
-                    }
-                }
+      // Calculate cost per day
+      function calculateCostPerDay(amount, startDate, endDate) {
+        const days = daysBetween(startDate, endDate);
+        if (days <= 0 || amount <= 0) return 0;
+        return (amount / days).toFixed(2);
+      }
 
-                // 3. BUDGET Summary
-                if (appData.notifBudget) {
-                    const budgetSummary = buildBudgetSummary();
-                     // Send notification only if there is something to report
-                    if (budgetSummary !== "No active budgets to track." && budgetSummary !== "No active budget overview available.") {
-                         new Notification("Nothing Reminder - 💰 Budget", {
-                            body: budgetSummary,
-                            icon: 'assets/icon.png',
-                            requireInteraction: true,
-                            tag: 'budget' // Use a tag to replace
-                        });
-                    }
-                }
+      function renderReminders(){
+        const list = byId('reminderList'); list.innerHTML = '';
+          if(appData.reminders.length === 0){
+          const li = document.createElement('li'); li.textContent='No reminders yet.'; li.style.opacity='0.7'; list.appendChild(li);
+          renderHomeReminders(); renderHomeNotes(); renderHomeCheck(); return;
+        }
+        const frag = document.createDocumentFragment();
+        appData.reminders.forEach((r,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+          const title=document.createElement('div'); title.textContent=r.title; title.style.fontWeight='600';
+          const dates=document.createElement('div'); dates.style.fontSize='13px'; dates.style.opacity='0.85'; dates.textContent=`Start: ${formatDMY(r.startDate)} | End: ${formatDMY(r.endDate)}`;
+          left.appendChild(title); left.appendChild(dates);
 
-                // 4. NOTES Summary (Using the new helper)
-                if (appData.notifNotes) {
-                    const notesSummary = buildNotesSummary();
-                     // Send notification only if there is something to report
-                    if (notesSummary !== "No notes added yet.") {
-                        new Notification("Nothing Reminder - 📝 Notes", {
-                            body: notesSummary,
-                            icon: 'assets/icon.png',
-                            requireInteraction: true,
-                            tag: 'notes' // Use a tag to replace
-                        });
-                    }
-                }
+          const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
+          const badge=document.createElement('div'); badge.className='badge';
+          const diff = daysLeft(r.endDate);
+          if(diff === null){ badge.textContent='No date'; }
+          else if(diff < 0){ badge.textContent='Expired'; }
+          else if(diff === 0){ badge.textContent='Today'; }
+          else{ badge.textContent=`${diff} days left`; }
+
+          const editBtn=document.createElement('button'); editBtn.className='icon-small'; editBtn.textContent='✏️'; editBtn.title='Edit'; editBtn.addEventListener('click',()=>editReminder(i));
+          const delBtn=document.createElement('button'); delBtn.className='icon-small'; delBtn.textContent='🗑️'; delBtn.title='Delete'; delBtn.addEventListener('click',()=>deleteReminder(i));
+
+          right.appendChild(badge);
+          right.appendChild(editBtn);
+          right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+        renderHomeReminders(); renderHomeNotes(); renderHomeCheck();
+      }
+
+      function renderHomeReminders(){
+        const container = byId('homeRemindersContainer');
+        container.innerHTML='';
+        // Filter reminders to show only today and 1 day left
+        const filteredReminders = appData.reminders.filter(r => {
+          const diff = daysLeft(r.endDate);
+          return diff === 0 || diff === 1 || diff < 0;
+
+        });
+
+        if(filteredReminders.length === 0){
+          const li=document.createElement('li');
+          li.textContent='No reminders for today or tomorrow.';
+          li.style.opacity='0.7';
+          container.appendChild(li);
+          return;
+        }
+
+        const frag=document.createDocumentFragment();
+        filteredReminders.forEach(r=>{
+          const li=document.createElement('li');
+          const diff = daysLeft(r.endDate);
+          let badgeText='';
+          if(diff === null){ badgeText='No date'; }
+          else if(diff < 0){ badgeText='Expired'; }
+          else if(diff === 0){ badgeText='Today'; }
+          else{ badgeText=`${diff} days left`; }
+          li.textContent = `\"${r.title}\" || ${badgeText}`;
+          frag.appendChild(li);
+        });
+        container.appendChild(frag);
+      }
+
+      // Update renderHomeNotes function to handle table formatting
+      function renderHomeNotes(){
+        const container = byId('homeNotesContainer');
+        container.innerHTML = '';
+
+        if(appData.notes.length === 0){
+          const li = document.createElement('li');
+          li.textContent = 'No notes available.';
+          li.style.opacity = '0.7';
+          container.appendChild(li);
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        appData.notes.forEach(n => {
+          const li = document.createElement('li');
+          li.className = 'list-item';
+
+          const left = document.createElement('div');
+          left.className = 'item-left';
+
+          // Main Text/Table Content
+          const text = document.createElement('div');
+          if(n.isTable && n.text) {
+            // Show first few rows of table in home view
+            const lines = n.text.split('\n');
+            let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
+
+            lines.forEach((line, index) => {
+              if(line.includes('---')) {
+                if(index > 0) tableHTML += '</tr>';
+                tableHTML += '<tr>';
+              } else if(line.includes('|')) {
+                const cells = line.split('|').filter(cell => cell.trim() !== '');
+                cells.forEach(cell => {
+                  const cellContent = cell.trim();
+                  if(index === 0) {
+                    tableHTML += `<th style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</th>`;
+                  } else {
+                    tableHTML += `<td style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</td>`;
+                  }
+                });
               }
+            });
+
+            tableHTML += '</tr></table>';
+            text.innerHTML = tableHTML;
+          } else {
+            text.innerHTML = `<b>${(n.text || '').substring(0, 50)}...</b><br><small style=\"opacity:0.7\">${n.createdAt || ''}</small>`;
+          }
+          left.appendChild(text);
+
+          // File Thumbnail Display - EXISTING, KEPT
+          if (n.file && n.file.type && n.file.type.includes('image')) {
+            const thumb = document.createElement('img');
+            thumb.src = n.file.data;
+            thumb.style.maxWidth = '40px';
+            thumb.style.marginLeft = '5px';
+            thumb.style.borderRadius = '4px';
+            thumb.style.verticalAlign = 'middle';
+            thumb.alt = n.file.name || 'image';
+            left.appendChild(thumb);
+          }
+
+          li.appendChild(left);
+          frag.appendChild(li);
+        });
+
+        container.appendChild(frag);
+      }
+
+      // Update renderNotes function to handle table formatting
+      function renderNotes(){
+        const list = byId('noteList'); list.innerHTML='';
+        if(appData.notes.length===0){
+          const li=document.createElement('li');
+          li.textContent='No notes yet.'; li.style.opacity='0.7';
+          list.appendChild(li);
+          return;
+        }
+        const frag=document.createDocumentFragment();
+        appData.notes.forEach((note,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+
+          const text=document.createElement('div');
+          if(note.isTable && note.text) {
+            // Convert table format to HTML table
+            const lines = note.text.split('\n');
+            let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
+
+            lines.forEach((line, index) => {
+              if(line.includes('---')) {
+                // Row separator - add closing tags for previous row
+                if(index > 0) tableHTML += '</tr>';
+                tableHTML += '<tr>';
+              } else if(line.includes('|')) {
+                // Table row
+                const cells = line.split('|').filter(cell => cell.trim() !== '');
+                cells.forEach(cell => {
+                  const cellContent = cell.trim();
+                  if(index === 0) {
+                    tableHTML += `<th style=\"border: 1px solid #ddd; padding: 8px;\">${cellContent}</th>`;
+                  } else {
+                    tableHTML += `<td style=\"border: 1px solid #ddd; padding: 8px;\">${cellContent}</td>`;
+                  }
+                });
+              }
+            });
+
+            tableHTML += '</tr></table>';
+            text.innerHTML = tableHTML;
+          } else {
+            text.innerHTML=`<b>${note.text||''}</b><br>
+              <small style=\"opacity:0.7\">${note.createdAt||''}</small>`;
+          }
+          left.appendChild(text);
+
+          // --- file rendering - EXISTING, KEPT ---
+          if(note.file){
+            let fileEl;
+
+            // 📷 --- Image Support ---
+            if(note.file.type.includes('image')){
+              fileEl=document.createElement('img');
+              fileEl.src=note.file.data;
+              fileEl.style.maxWidth='200px';
+              fileEl.style.display='block';
+              fileEl.style.marginTop='5px';
+            }
+            // 🎵 --- Audio Support ---
+            else if(note.file.type.includes('audio')){
+              fileEl=document.createElement('audio');
+              fileEl.controls=true;
+              fileEl.src=note.file.data;
+            }
+            // 🎬 --- Video Support ---
+            else if(note.file.type.includes('video')){
+              fileEl=document.createElement('video');
+              fileEl.controls=true;
+              fileEl.width=200;
+              fileEl.src=note.file.data;
+            }
+            // 📄 --- Docs (PDF/DOC) ---
+            else {
+              fileEl=document.createElement('a');
+              fileEl.href=note.file.data;
+              fileEl.download=note.file.name;
+              fileEl.textContent='📎 '+note.file.name;
+            }
+
+            left.appendChild(fileEl);
+          }
+
+          const right = document.createElement('div');
+          right.style.display = 'flex';
+          right.style.alignItems = 'center';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'icon-small';
+          editBtn.textContent = '✏️';
+          editBtn.title = 'Edit';
+          editBtn.addEventListener('click', () => editNote(i));
+
+          const delBtn=document.createElement('button');
+          delBtn.className='icon-small'; delBtn.textContent='🗑️';
+          delBtn.title='Delete';
+          delBtn.addEventListener('click',()=>{ deleteNote(i); });
+
+          right.appendChild(editBtn);
+          right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+      }
+
+      // ---------- Budget Functions ----------
+      function renderBudgets(){
+        const list = byId('budgetList'); list.innerHTML = '';
+        // Ensure appData.budget exists and is an array
+        if (!appData.budget || !Array.isArray(appData.budget)) {
+          appData.budget = [];
+        }
+        if(appData.budget.length === 0){
+          const li = document.createElement('li'); li.textContent='No budgets yet.'; li.style.opacity='0.7'; list.appendChild(li);
+          renderHomeBudgets(); return;
+        }
+        const frag = document.createDocumentFragment();
+        appData.budget.forEach((b,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+
+          // Calculate cost per day
+          const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+          const days = daysBetween(b.startDate, b.endDate);
+
+          const title=document.createElement('div');
+          title.textContent=`Title: ${b.title}`;
+          title.style.fontWeight='600';
+
+          const amounts=document.createElement('div');
+          amounts.style.fontSize='13px';
+          amounts.style.opacity='0.85';
+          amounts.textContent=`Total Budget: ₹${b.amount} | Remaining Days: ${days} | Cost per Day: ₹${costPerDay}`;
+
+          left.appendChild(title); left.appendChild(amounts);
+
+          const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
+          const editBtn=document.createElement('button'); editBtn.className='icon-small'; editBtn.textContent='✏️'; editBtn.title='Edit'; editBtn.addEventListener('click',()=>editBudget(i));
+          const delBtn=document.createElement('button'); delBtn.className='icon-small'; delBtn.textContent='🗑️'; delBtn.title='Delete'; delBtn.addEventListener('click',()=>deleteBudget(i));
+
+          right.appendChild(editBtn); right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+        renderHomeBudgets();
+      }
+
+      function renderHomeBudgets(){
+        const container = byId('homeBudgetsContainer');
+        container.innerHTML='';
+        // Ensure appData.budget exists and is an array
+        if (!appData.budget || !Array.isArray(appData.budget)) {
+          appData.budget = [];
+        }
+        if(appData.budget.length === 0){
+          const li=document.createElement('li');
+          li.textContent='No budgets yet.';
+          li.style.opacity='0.7';
+          container.appendChild(li);
+          return;
+        }
+        const frag=document.createDocumentFragment();
+        appData.budget.forEach(b=>{
+          // Calculate cost per day
+          const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+          const days = daysBetween(b.startDate, b.endDate);
+
+          const li=document.createElement('li');
+          li.textContent = `\"${b.title}\" || Total: ₹${b.amount} || Remaining: ${days} days || Cost: ₹${costPerDay}/day`;
+          frag.appendChild(li);
+        });
+        container.appendChild(frag);
+      }
+
+      function editBudget(i){
+        const b=appData.budget[i];
+        editingBudgetIndex=i;
+        byId('budgetTitle').value=b.title;
+        byId('budgetAmount').value=b.amount;
+        byId('budgetStartDate').value=b.startDate||'';
+        byId('budgetEndDate').value=b.endDate||'';
+        showForm(byId('budgetFormContainer'));
+      }
+
+      function deleteBudget(index){
+        appData.budget.splice(index, 1);
+        saveAll();
+        renderBudgets();
+        renderHomeBudgets();
+      }
+
+      function saveBudget(){
+        const title=byId('budgetTitle').value.trim();
+        const amount=byId('budgetAmount').value;
+        const start=byId('budgetStartDate').value;
+        const end=byId('budgetEndDate').value;
+        if(!title || !amount){ alert('Title and amount are required to save a budget.'); return; }
+        const budgetObj={ title, amount, startDate:start, endDate:end };
+        if(editingBudgetIndex!==null){ appData.budget[editingBudgetIndex]=budgetObj; editingBudgetIndex=null; }
+        else{ appData.budget.push(budgetObj); }
+        saveAll(); renderBudgets(); hideForm(byId('budgetFormContainer')); clearBudgetForm();
+      }
+
+      function clearBudgetForm(){
+        byId('budgetTitle').value='';
+        byId('budgetAmount').value='';
+        byId('budgetStartDate').value='';
+        byId('budgetEndDate').value='';
+      }
+
+      function editReminder(i){
+        const r=appData.reminders[i];
+        editingIndex=i;
+        byId('reminderTitle').value=r.title;
+        byId('startDate').value=r.startDate||'';
+        byId('endDate').value=r.endDate||'';
+        showForm(byId('reminderFormContainer'));
+      }
+
+      function deleteReminder(index){
+        appData.reminders.splice(index, 1);
+        saveAll();
+        renderReminders();
+        renderHomeReminders();
+      }
+
+      function saveReminder(){
+        const title=byId('reminderTitle').value.trim();
+        const start=byId('startDate').value;
+        const end=byId('endDate').value;
+        if(!title){ alert('Title is required for the reminder.'); return; }
+        const reminderObj={ title, startDate:start, endDate:end };
+        if(editingIndex!==null){ appData.reminders[editingIndex]=reminderObj; editingIndex=null; }
+        else{ appData.reminders.push(reminderObj); }
+        saveAll(); renderReminders(); hideForm(byId('reminderFormContainer')); clearReminderForm();
+      }
+
+      function clearReminderForm(){
+        byId('reminderTitle').value='';
+        byId('startDate').value='';
+        byId('endDate').value='';
+      }
+
+      function deleteNote(index){
+        appData.notes.splice(index,1);
+        saveAll();
+        renderNotes();
+        renderHomeNotes();
+      }
+
+      // Updated editNote (removed AI-related code)
+      function editNote(index){
+        const note = appData.notes[index];
+        editingNoteIndex = index;
+
+        byId('noteText').value = note.text || '';
+        byId('tableFormatCheckbox').checked = note.isTable || false;
+
+        // Show the form
+        showForm(byId('noteFormContainer'));
+
+        // Set the save button to update instead of create
+        byId('saveNoteBtn').textContent = 'Update';
+      }
+
+      // Updated saveNote (removed AI-related code)
+      function saveNote(){
+        const text = byId('noteText').value.trim();
+        const fileInput = byId('noteFile');
+        const file = fileInput.files[0];
+        const isTableFormat = byId('tableFormatCheckbox').checked;
+
+        if(!text && !file){
+          alert('Note cannot be empty. Please add text or a file.');
+          return;
+        }
+
+        // Format date for all notes
+        const noteDate = formatDateDMYWithTime(new Date());
+
+        let noteText = text;
+        if (isTableFormat && text) {
+          // Add date/time to the beginning of the table
+          noteText = `Created: ${noteDate}\n\n${text}`;
+        }
+
+        const noteObj = {
+          text: noteText,
+          createdAt: noteDate,
+          file: null,
+          isTable: isTableFormat,
+          // Removed: aiSummary: temporaryAISummary
+        };
+
+        const finalizeSave = (noteObj) => {
+            if(editingNoteIndex !== null){
+                appData.notes[editingNoteIndex] = noteObj;
+                editingNoteIndex = null;
+            } else {
+                appData.notes.push(noteObj);
+            }
+            saveAll(); renderNotes(); renderHomeNotes();
+            hideForm(byId('noteFormContainer'));
+            byId('noteText').value='';
+            fileInput.value='';
+            byId('tableFormatCheckbox').checked = false;
+            byId('saveNoteBtn').textContent = 'Save';
+        }
+
+        if(file){
+          const reader = new FileReader();
+          reader.onload = function(e){
+            noteObj.file = {
+              name: file.name,
+              type: file.type,
+              data: e.target.result
+            };
+            finalizeSave(noteObj);
+          };
+          reader.onerror = function() {
+            console.error('Error reading file. Please try again.');
+            fileInput.value = '';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          finalizeSave(noteObj);
+        }
+      }
+
+      function deleteCheck(index){
+        appData.checklists.splice(index,1);
+        saveAll();
+        renderChecklists();
+        renderHomeCheck();
+      }
+
+      function editCheck(index){
+        const check = appData.checklists[index];
+        editingCheckIndex = index;
+
+        byId('checkTitle').value = check.title || '';
+        byId('checkStatus').value = check.status || 'open';
+        byId('checkItems').value = check.items ? check.items.join('\n') : '';
+
+        // Show the form
+        showForm(byId('checkFormContainer'));
+
+        // Set the save button to update instead of create
+        byId('saveCheckBtn').textContent = 'Update';
+      }
+
+      function toggleCheckStatus(index) {
+        const check = appData.checklists[index];
+        check.status = check.status === 'open' ? 'closed' : 'open';
+        saveAll();
+        renderChecklists();
+        renderHomeCheck();
+      }
+
+      function saveCheck(){
+        const title = byId('checkTitle').value.trim();
+        const status = byId('checkStatus').value;
+        const itemsText = byId('checkItems').value.trim();
+        const items = itemsText ? itemsText.split('\n').filter(item => item.trim() !== '') : [];
+
+        if(!title){
+          alert('Title is required for the checklist.');
+          return;
+        }
+
+        const checkObj = {
+          title,
+          items,
+          status: status,
+          createdAt: formatDateDMYWithTime(new Date()) // Use DD-MMM-YYYY with IST time format
+        };
+
+        if(editingCheckIndex !== null){
+          appData.checklists[editingCheckIndex] = checkObj;
+          editingCheckIndex = null;
+        } else {
+          appData.checklists.push(checkObj);
+        }
+
+        saveAll();
+        renderChecklists();
+        renderHomeCheck();
+
+        hideForm(byId('checkFormContainer'));
+        byId('checkTitle').value = '';
+        byId('checkStatus').value = 'open';
+        byId('checkItems').value = '';
+        byId('saveCheckBtn').textContent = 'Save';
+      }
+
+
+      function renderHomeCheck(){
+        const container = byId('homeCheckContainer');
+        container.innerHTML = '';
+
+        // Ensure appData.checklists exists and is an array
+        if (!appData.checklists || !Array.isArray(appData.checklists)) {
+          appData.checklists = [];
+        }
+
+        if(appData.checklists.length === 0){
+          const li = document.createElement('li');
+          li.textContent = 'No checklists yet.';
+          li.style.opacity = '0.7';
+          container.appendChild(li);
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        appData.checklists.forEach(check => {
+          if(check.status === 'open') {
+            const li = document.createElement('li');
+            li.textContent = `\"${check.title}\" - ${check.items.length} items`; // Use items.length
+            frag.appendChild(li);
+          }
+        });
+
+        if (frag.children.length === 0) { // Check if any open checklists were found
+            const li = document.createElement('li');
+            li.textContent = 'No open checklists.';
+            li.style.opacity = '0.7';
+            container.appendChild(li);
+        } else {
+            container.appendChild(frag);
+        }
+      }
+
+      function renderChecklists(){
+        const list = byId('checkList'); list.innerHTML = '';
+        // Ensure appData.checklists exists and is an array
+        if (!appData.checklists || !Array.isArray(appData.checklists)) {
+          appData.checklists = [];
+        }
+        if(appData.checklists.length === 0){
+          const li = document.createElement('li'); li.textContent='No checklists yet.'; li.style.opacity='0.7'; list.appendChild(li);
+          renderHomeCheck(); return;
+        }
+        const frag = document.createDocumentFragment();
+        appData.checklists.forEach((check,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+
+          const title=document.createElement('div');
+          title.textContent=`${check.title}`;
+          title.style.fontWeight='600';
+
+          // START OF MODIFICATION: Display checklist items
+          const itemsPreview=document.createElement('div');
+          itemsPreview.style.fontSize='13px';
+          itemsPreview.style.opacity='0.9';
+
+          // Get the first 3 items or all items if less than 3
+          const previewItems = check.items.slice(0, 3);
+          let itemsText = previewItems.map(item => `\u2022 ${item}`).join('<br>'); // \u2022 is a bullet point
+
+          // Add an ellipsis if there are more than 3 items
+          if(check.items.length > 3) {
+              itemsText += '<br>... and ' + (check.items.length - 3) + ' more items';
+          } else if (check.items.length === 0) {
+              itemsText = 'No items in list.';
+          }
+
+          itemsPreview.innerHTML = itemsText;
+          // END OF MODIFICATION
+
+          const statusInfo=document.createElement('div');
+          statusInfo.style.fontSize='13px';
+          statusInfo.style.opacity='0.85';
+          statusInfo.textContent=`Status: ${check.status} | Total Items: ${check.items.length}`;
+
+          const time=document.createElement('div');
+          time.style.fontSize='12px';
+          time.style.opacity='0.7';
+          time.textContent=check.createdAt || '';
+
+          left.appendChild(title);
+          left.appendChild(itemsPreview); // Added the item preview
+          left.appendChild(statusInfo);
+          left.appendChild(time);
+
+          const right = document.createElement('div');
+          right.style.display = 'flex';
+          right.style.alignItems = 'center';
+
+          // Add status button
+          const statusBtn = document.createElement('button');
+          statusBtn.className = 'status-btn';
+          statusBtn.textContent = check.status === 'open' ? 'Open' : 'Closed';
+          statusBtn.title = 'Change Status';
+          statusBtn.addEventListener('click', () => toggleCheckStatus(i));
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'icon-small';
+          editBtn.textContent = '✏️';
+          editBtn.title = 'Edit';
+          editBtn.addEventListener('click', () => editCheck(i));
+
+          const delBtn=document.createElement('button');
+          delBtn.className='icon-small'; delBtn.textContent='🗑️';
+          delBtn.title='Delete';
+          delBtn.addEventListener('click',()=>{ deleteCheck(i); });
+
+          right.appendChild(statusBtn);
+          right.appendChild(editBtn);
+          right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+        renderHomeCheck();
+      }
+
+      // ---------- Form Show/Hide ----------
+      function showForm(el){ el.classList.add('visible'); }
+      function hideForm(el){ el.classList.remove('visible'); }
+
+      // ---------- Page Navigation ----------
+      const sidebar = byId('sidebar');
+      const main = byId('main');
+      const toggleBtn = byId('toggleBtn');
+
+      function showPage(pageId){
+        document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+        const targetPage = byId(pageId);
+        targetPage.classList.remove('hidden');
+
+        // Special handling for the notifications page
+        if (pageId === 'notifications') {
+          renderNotificationPage();
+        }
+
+        // Auto-hide sidebar instantly when an option is chosen
+        sidebar.style.left = '-220px';
+        main.style.marginLeft = '0';
+        toggleBtn.textContent = '⮞';
+        sidebar.style.transition = 'left 0s';   // instant hide
+        main.style.transition = 'margin-left 0s'; // instant hide
+      }
+
+      // ---------- Sidebar Toggle ----------
+      toggleBtn.addEventListener('click', function() {
+        if (sidebar.style.left === '-220px' || sidebar.style.left === '') {
+          sidebar.style.left = '0px';
+          main.style.marginLeft = '220px';
+          toggleBtn.textContent = '⮜';
+        } else {
+          sidebar.style.left = '-220px';
+          main.style.marginLeft = '0';
+          toggleBtn.textContent = '⮞';
+        }
+      });
+
+      // ---------- Settings Panel (new) ----------
+      const settingsBtn = byId('settingsBtn');
+      const settingsPanel = byId('settingsPanel');
+      if(settingsBtn && settingsPanel){
+        settingsBtn.addEventListener('click', ()=>{
+          const opened = settingsPanel.classList.toggle('visible');
+          settingsBtn.setAttribute('aria-expanded', opened);
+          settingsPanel.setAttribute('aria-hidden', !opened);
+        });
+      }
+
+      // ---------- Dark Mode ----------
+      const darkBtn=byId('darkModeBtn');
+      darkBtn.addEventListener('click',()=>{
+        document.body.classList.toggle('dark');
+        appData.darkMode=document.body.classList.contains('dark')?'1':'0';
+        saveAll();
+      });
+
+      // ---------- Profile ----------
+      const profileNameEl=byId('profileName');
+      byId('editNameBtn').addEventListener('click',()=>{
+        const n=prompt('Enter new name:',appData.profileName||'');
+        if(n){
+          appData.profileName=n;
+          profileNameEl.textContent=n;
+          saveAll();
+        }
+      });
+
+      const profilePhotoInput=byId('photoUpload');
+      profilePhotoInput.addEventListener('change',(e)=>{
+        const file=e.target.files[0];
+        if(file){
+          const reader=new FileReader();
+          reader.onload=function(ev){
+            appData.profilePhoto=ev.target.result;
+            byId('profilePhoto').src=ev.target.result;
+            saveAll();
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // <!-- NOTIFICATION FIX 2: Defining the correct async checkNotifications function -->
+      // Helper 4: Notes (Summary of recent notes)
+      function buildNotesSummary() {
+          let summary = [];
+          if (appData.notes.length === 0) return "No notes added yet.";
+          const recentNotes = appData.notes.slice(-3).reverse();
+          recentNotes.forEach(n => {
+              let notePreview = n.text;
+              if (n.isTable) notePreview = "[Table Note]";
+              else if (notePreview && notePreview.length > 30) notePreview = notePreview.substring(0, 30) + "...";
+              else if (!notePreview && n.file) notePreview = `[File: ${n.file.name}]`;
+              else if (!notePreview) notePreview = "[Empty Note]";
+              const datePart = n.createdAt ? n.createdAt.split(' ')[0] : '';
+              summary.push(`- ${notePreview} (${datePart})`);
+          });
+          if (appData.notes.length > 3) summary.push(`... and ${appData.notes.length - 3} older notes.`);
+          return summary.join('\n');
+      }
+
+      // Helper 1: Reminders (Today or Tomorrow)
+      function buildReminderSummary() {
+          let summary = [];
+          appData.reminders.forEach(r => {
+              const diff = daysLeft(r.endDate);
+              if (diff === 0 || diff === 1) {
+                  summary.push(`- ${r.title} | ${diff === 0 ? 'Today' : 'Tomorrow'}`);
+              }
+          });
+          return summary.length > 0 ? summary.join('\n') : "No reminders due today/tomorrow.";
+      }
+
+      // Helper 2: Checklist (Open status)
+      function buildChecklistSummary() {
+          let summary = [];
+          const openChecks = appData.checklists.filter(c => c.status === 'open');
+          if (openChecks.length === 0) return "No open checklists.";
+          openChecks.slice(0, 3).forEach(c => {
+              summary.push(`- ${c.title} (${c.items.length} items)`); // Use items.length
+          });
+          if (openChecks.length > 3) summary.push(`... and ${openChecks.length - 3} more open lists.`);
+          return summary.join('\n');
+      }
+
+      // Helper 3: Budget (Overview/Cost per day)
+      function buildBudgetSummary() {
+          let summary = [];
+          if (appData.budget.length === 0) return "No active budgets to track.";
+          appData.budget.forEach(b => {
+              const days = daysBetween(b.startDate, b.endDate);
+              const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+              if (days > 0 && costPerDay > 0) {
+                  summary.push(`- ${b.title}: ₹${costPerDay}/day for ${days} days`);
+              }
+          });
+          return summary.length > 0 ? summary.join('\n') : "No active budget overview available.";
+      }
+
+      // The single, correct checkNotifications function using registration.showNotification()
+      async function checkNotifications(){
+        if(!(Notification && Notification.permission === 'granted')) {
+           console.log("Global notification permission not granted. Skipping custom checks.");
+           return;
+        }
+
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) {
+           console.warn("Service Worker not registered. Cannot show persistent notifications via SW.");
+           // Fallback to non-persistent notification if SW isn't ready (less reliable on Android)
+           // If permission granted, show a basic one
+           if (Notification.permission === 'granted') {
+              new Notification("Nothing Reminder", { body: "Checking reminders..." });
+           }
+           return;
+        }
+
+        // REMINDERS Summary
+        if (appData.notifReminders) {
+            const reminderSummary = buildReminderSummary();
+            if (reminderSummary !== "No reminders due today/tomorrow.") {
+                registration.showNotification("Nothing Reminder - ⚠️ Reminders", {
+                    body: reminderSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'reminders'
+                });
+            }
+        }
+
+        // CHECKLIST Summary
+        if (appData.notifChecklist) {
+            const checklistSummary = buildChecklistSummary();
+            if (checklistSummary !== "No open checklists.") {
+                 registration.showNotification("Nothing Reminder - ✒ Checklists", {
+                    body: checklistSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'checklists'
+                });
+            }
+        }
+
+        // BUDGET Summary
+        if (appData.notifBudget) {
+            const budgetSummary = buildBudgetSummary();
+            if (budgetSummary !== "No active budgets to track." && budgetSummary !== "No active budget overview available.") {
+                 registration.showNotification("Nothing Reminder - 💰 Budget", {
+                    body: budgetSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'budget'
+                });
+            }
+        }
+
+        // NOTES Summary
+        if (appData.notifNotes) {
+            const notesSummary = buildNotesSummary();
+            if (notesSummary !== "No notes added yet.") {
+                registration.showNotification("Nothing Reminder - 📝 Notes", {
+                    body: notesSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'notes'
+                });
+            }
+        }
+      } // <<<--- This was the missing brace causing the SyntaxError
 
       // ---------- Calculation History Functions ----------
               function renderHistory() {
@@ -2650,12 +2464,11 @@ function calculateDateDifference() {
                   updateBrowserPermissionUI();
                   checkNotifications(); // Check once on page load
               }
-              if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.register('service-worker.js');
-              }
               // ---------- End Initial Render Code ----------
 
             })();
     </script>
+
+
   </body>
 </html>
