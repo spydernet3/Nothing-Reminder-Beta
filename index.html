@@ -6,12 +6,6 @@
     <title>Nothing Reminder</title>
     <link rel="icon" type="image/png" href="assets/icon.png" />
     <link rel="icon" type="image/png" href="assets/icon.png" />
-    <meta property="og:image" content="https://spydernet3.github.io/test/static/assets/images/meta-icon.png">
-    <meta property="og:image:width" content="600">
-    <meta property="og:image:height" content="315">
-    <meta name="x-client-data" content="">
-    <link href="/static/assets/favicon.ico" rel="icon" type="image/x-icon">
-    <link href="/static/assets/favicon.svg" rel="icon" type="image/svg+xml">
     <link rel="manifest" href="manifest.json">
     <style>
             :root {
@@ -539,40 +533,61 @@
       </div>
 
       <div id="budget" class="page hidden">
-        <h2>💰 Budget Tracker</h2>
-        <div class="add-area">
-          <button id="showAddBudgetBtn" class="add-btn" aria-expanded="false">
-            ＋ CREATE NEW BUDGET <span class="arrow">▼</span>
-          </button>
-          <div id="budgetFormContainer" class="form" aria-hidden="true">
+    <h2>💰 Budget Tracker</h2>
+
+    <div class="add-area">
+        <button id="showAddBudgetBtn" class="add-btn" aria-expanded="false">
+            ▶ ADD NEW BUDGET
+        </button>
+        <div id="budgetFormContainer" class="form" aria-hidden="true">
             <label
-              >Title<input
-                id="budgetTitle"
-                type="text"
-                placeholder="Budget title"
+                >Title<input
+                    id="budgetTitle"
+                    type="text"
+                    placeholder="Budget title"
             /></label>
             <label
-              >Total Amount (₹)<input
-                id="budgetAmount"
-                type="number"
-                placeholder="Total Amount"
+                >Total Amount (₹)<input
+                    id="budgetAmount"
+                    type="number"
+                    placeholder="Total Amount"
             /></label>
             <label>Start Date<input id="budgetStartDate" type="date" /></label>
             <label>End Date<input id="budgetEndDate" type="date" /></label>
             <div class="form-actions">
-              <button id="saveBudgetBtn" class="primary">Save</button>
-              <button id="cancelBudgetBtn" class="secondary">Cancel</button>
+                <button id="saveBudgetBtn" class="primary">Save</button>
+                <button id="cancelBudgetBtn" class="secondary">Cancel</button>
             </div>
-          </div>
         </div>
-        <div class="add-area">
-          <button id="viewbudgetToggle" class="add-btn" aria-expanded="false">
-            👀 VIEW BUDGET OVERVIEW <span class="arrow">▼</span>
-          </button>
-          <ul id="budgetList" class="list scrollable-list form"></ul>
-        </div>
-      </div>
+    </div>
 
+    <div id="budgetExpenseFormContainer" class="form hidden" aria-hidden="true">
+        <h4 id="expenseBudgetTitle">Adding expense...</h4> 
+        <label
+            >Amount (₹)<input
+                id="expenseAmount"
+                type="number"
+                placeholder="Expense Amount"
+        /></label>
+        <label
+            >Description<input
+                id="expenseDescription"
+                type="text"
+                placeholder="What was this expense for?"
+        /></label>
+        <div class="form-actions">
+            <button id="saveExpenseBtn" class="primary">Record Expense</button>
+            <button id="cancelExpenseBtn" class="secondary">Cancel</button>
+        </div>
+    </div>
+
+    <div class="add-area">
+        <button id="viewbudgetToggle" class="add-btn" aria-expanded="false">
+            ▶ VIEW BUDGETS
+        </button>
+        <ul id="budgetList" class="list scrollable-list form visible" aria-hidden="false"></ul>
+    </div>
+</div>
       <div id="Check" class="page hidden">
         <h2>✒ Check List</h2>
         <div class="add-area">
@@ -698,8 +713,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.4.6</p>
-          <p>Last Updated: 24-Sep-2025</p>
+          <p>Version 13.4.7</p>
+          <p>Last Updated: 27-Sep-2025</p>
           <p>Project Type: Open source</p>
         </ul>
       </div>
@@ -709,6 +724,7 @@
         <hr />
         <ul>
           <li>By Pressing Add to Home Screen Button There You can see Install App to install page as PWA</li>
+          <li>In App Notification logic working here</li>
         </ul>
         <h3>Reminder!</h3>
         <hr />
@@ -775,6 +791,7 @@
         <ul>
           <li>Notification will showed once page is active</li>
           <li>You will Turn Notification On/Off</li>
+          <li> When app is active then only Notification showed,Background push Notification's are restricted</li>
           <li>You can customize notification as per your requirements</li>
         </ul>
         <h3>Offline Mode</h3>
@@ -782,8 +799,9 @@
         <ul>
           <li>
             Step: Download Source Code Zip File in your Device and Extract foder
-            then Open index.html without internet in any broweser Note: notifications are not supposed to allowed
+            then Open index.html without internet in any broweser.
           </li>
+          <li>Note: notifications are not supposed to working</li>
         </ul>
       </div>
 
@@ -1022,7 +1040,8 @@
       </div>
     </div>
 <script>
-    // // Uses the standard registration method, pointing to 'service-worker.js' in the root.
+    // <!-- NOTIFICATION FIX 1: Cleaned up Service Worker Registration -->
+    // Uses the standard registration method, pointing to 'service-worker.js' in the root.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
@@ -1038,25 +1057,6 @@
     (function () {
       // ---------- Helpers ----------
       function byId(id){ return document.getElementById(id); }
-      
-      // Function to show/hide collapsible forms/sections
-      function toggleCollapse(el, btn){
-          el.classList.toggle('visible');
-          btn.classList.toggle('open');
-          
-          // START ARROW UI FIX: Toggle arrow icon
-          if (btn.textContent.includes('▶')) {
-              btn.textContent = btn.textContent.replace('▶', '▼');
-          } else if (btn.textContent.includes('▼')) {
-              btn.textContent = btn.textContent.replace('▼', '▶');
-          }
-          // END ARROW UI FIX
-      }
-      
-      // Generic form functions
-      function showForm(el) { el.classList.add('visible'); }
-      function hideForm(el) { el.classList.remove('visible'); }
-
 
       // ---------- NEW: Notification Settings Logic ----------
       function updateBrowserPermissionUI() {
@@ -1065,7 +1065,7 @@
           const boxEl = byId('globalNotifStatus');
           const btnEl = byId('requestPermissionBtn');
 
-          if (!textEl || !boxEl || !btnEl) return; 
+          if (!textEl || !boxEl || !btnEl) return; // Add guards for elements
 
           boxEl.classList.remove('denied');
 
@@ -1078,7 +1078,7 @@
               btnEl.textContent = 'Permission Denied';
               btnEl.disabled = true;
               boxEl.classList.add('denied');
-          } else { 
+          } else { // 'default' or not supported
               textEl.innerHTML = 'Status: <b style="color: #ff9800;">Not Requested (OFF)</b>';
               btnEl.textContent = 'Request Permission';
               btnEl.disabled = false;
@@ -1123,12 +1123,10 @@
           // Re-check notifications immediately if a new category is toggled on
           if (event.target.checked) checkNotifications();
       }
-      // Placeholder for checkNotifications (assuming it exists elsewhere in the script context)
-      async function checkNotifications() { /* Logic for notification checks */ } 
-      // ---------- END Notification Logic ----------
 
       // ---------- Storage ----------
 
+      // Enhanced storage with quota handling
       const STORAGE_KEY = 'smart_reminder_app_v1';
 
       const defaultData = {
@@ -1139,59 +1137,43 @@
         darkMode: '0',
         budget: [],
         checklists: [],
+        // NEW: Notification preferences
         notifReminders: true,
         notifNotes: true,
         notifChecklist: true,
         notifBudget: true,
+        // NEW: Calculation History
         calculationHistory: []
       };
 
       let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
-      // Merge with defaults to ensure new keys are present on load
+      // Merge with defaults to ensure new notif keys are present on load
       appData = { ...defaultData, ...appData };
       // Ensure new property is initialized if old data exists
       if (!appData.calculationHistory) appData.calculationHistory = [];
-
-      // NEW: Budget Data Migration/Initialization
-      appData.budget.forEach(b => {
-          // 1. Add unique ID if missing
-          if (!b.id) b.id = Date.now().toString() + Math.random().toFixed(4).replace('0.', '');
-          
-          // 2. Initialize new fields if missing (for existing saved data)
-          // originalAmount holds the constant budget
-          if (!b.originalAmount) b.originalAmount = parseFloat(b.amount || 0); 
-          if (!b.expenses) b.expenses = [];
-          
-          // 3. Recalculate balance based on expenses
-          const totalSpent = b.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-          b.currentBalance = b.originalAmount - totalSpent;
-
-          // Maintain 'amount' property for old compatibility, but it's now redundant
-          b.amount = b.originalAmount; 
-      });
-
-
+      
       let editingIndex = null;
       let editingBudgetIndex = null;
       let editingCheckIndex = null;
       let editingNoteIndex = null;
-      let editingHistoryIndex = null; 
-      let currentExpenseBudgetId = null; // NEW: Tracks which budget is being modified for expense input
+      let editingHistoryIndex = null; // NEW: for history editing
 
-      let currentMonth = new Date().getMonth(); 
-      let currentYear = new Date().getFullYear(); 
+      let currentMonth = new Date().getMonth(); // NEW: Calendar state
+      let currentYear = new Date().getFullYear(); // NEW: Calendar state
 
-
-      // Modified save function
+      // <!-- NOTIFICATION FIX 3: Modified saveAll to be async and call checkNotifications -->
+      // Modified save function to use localStorage only
       async function saveAll() {
         try {
           const dataStr = JSON.stringify(appData);
           localStorage.setItem(STORAGE_KEY, dataStr);
           console.log("Data saved successfully to localStorage.");
+          // Re-render the notification page whenever data changes (if the page is active)
           if (byId('notifications') && !byId('notifications').classList.contains('hidden')) {
-              renderNotificationPage();
+             renderNotificationPage();
           }
-          await checkNotifications(); 
+          // NOTIFICATION CHANGE: Trigger notification check on every data save.
+          await checkNotifications(); // Correctly awaiting the async function
         } catch (err) {
           console.error("Save failed:", err);
           if (err.name === 'QuotaExceededError') {
@@ -1199,8 +1181,6 @@
           }
         }
       }
-
-      // --- Utility Functions ---
 
       function daysLeft(endDateStr){
         if(!endDateStr) return null;
@@ -1225,6 +1205,7 @@
         const month = months[date.getMonth()];
         const year = date.getFullYear();
 
+        // Get IST time (UTC+5:30)
         const istHours = date.getHours();
         const istMinutes = date.getMinutes().toString().padStart(2, '0');
         const ampm = istHours >= 12 ? 'PM' : 'AM';
@@ -1241,7 +1222,7 @@
         const start = new Date(startY, startM-1, startD);
         const end = new Date(endY, endM-1, endD);
         const diffTime = end.setHours(0,0,0,0) - start.setHours(0,0,0,0);
-        return Math.floor(diffTime / (1000*60*60*24)) + 1; 
+        return Math.floor(diffTime / (1000*60*60*24)) + 1; // +1 to include both start and end dates
       }
 
       // Calculate cost per day
@@ -1250,11 +1231,7 @@
         if (days <= 0 || amount <= 0) return 0;
         return (amount / days).toFixed(2);
       }
-      
-      // --- End Utility Functions ---
 
-
-      // --- REMINDER FUNCTIONS --- 
       function renderReminders(){
         const list = byId('reminderList'); list.innerHTML = '';
           if(appData.reminders.length === 0){
@@ -1288,10 +1265,11 @@
         list.appendChild(frag);
         renderHomeReminders(); renderHomeNotes(); renderHomeCheck();
       }
-      
+
       function renderHomeReminders(){
         const container = byId('homeRemindersContainer');
         container.innerHTML='';
+        // Filter reminders to show only today and 1 day left
         const filteredReminders = appData.reminders.filter(r => {
           const diff = daysLeft(r.endDate);
           return diff === 0 || diff === 1 || diff < 0;
@@ -1319,6 +1297,288 @@
           frag.appendChild(li);
         });
         container.appendChild(frag);
+      }
+
+      // Update renderHomeNotes function to handle table formatting
+      function renderHomeNotes(){
+        const container = byId('homeNotesContainer');
+        container.innerHTML = '';
+
+        if(appData.notes.length === 0){
+          const li = document.createElement('li');
+          li.textContent = 'No notes available.';
+          li.style.opacity = '0.7';
+          container.appendChild(li);
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        appData.notes.forEach(n => {
+          const li = document.createElement('li');
+          li.className = 'list-item';
+
+          const left = document.createElement('div');
+          left.className = 'item-left';
+
+          // Main Text/Table Content
+          const text = document.createElement('div');
+          if(n.isTable && n.text) {
+            // Show first few rows of table in home view
+            const lines = n.text.split('\n');
+            let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
+
+            lines.forEach((line, index) => {
+              if(line.includes('---')) {
+                if(index > 0) tableHTML += '</tr>';
+                tableHTML += '<tr>';
+              } else if(line.includes('|')) {
+                const cells = line.split('|').filter(cell => cell.trim() !== '');
+                cells.forEach(cell => {
+                  const cellContent = cell.trim();
+                  if(index === 0) {
+                    tableHTML += `<th style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</th>`;
+                  } else {
+                    tableHTML += `<td style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</td>`;
+                  }
+                });
+              }
+            });
+
+            tableHTML += '</tr></table>';
+            text.innerHTML = tableHTML;
+          } else {
+            text.innerHTML = `<b>${(n.text || '').substring(0, 50)}...</b><br><small style=\"opacity:0.7\">${n.createdAt || ''}</small>`;
+          }
+          left.appendChild(text);
+
+          // File Thumbnail Display - EXISTING, KEPT
+          if (n.file && n.file.type && n.file.type.includes('image')) {
+            const thumb = document.createElement('img');
+            thumb.src = n.file.data;
+            thumb.style.maxWidth = '40px';
+            thumb.style.marginLeft = '5px';
+            thumb.style.borderRadius = '4px';
+            thumb.style.verticalAlign = 'middle';
+            thumb.alt = n.file.name || 'image';
+            left.appendChild(thumb);
+          }
+
+          li.appendChild(left);
+          frag.appendChild(li);
+        });
+
+        container.appendChild(frag);
+      }
+
+      // Update renderNotes function to handle table formatting
+      function renderNotes(){
+        const list = byId('noteList'); list.innerHTML='';
+        if(appData.notes.length===0){
+          const li=document.createElement('li');
+          li.textContent='No notes yet.'; li.style.opacity='0.7';
+          list.appendChild(li);
+          return;
+        }
+        const frag=document.createDocumentFragment();
+        appData.notes.forEach((note,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+
+          const text=document.createElement('div');
+          if(note.isTable && note.text) {
+            // Convert table format to HTML table
+            const lines = note.text.split('\n');
+            let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
+
+            lines.forEach((line, index) => {
+              if(line.includes('---')) {
+                // Row separator - add closing tags for previous row
+                if(index > 0) tableHTML += '</tr>';
+                tableHTML += '<tr>';
+              } else if(line.includes('|')) {
+                // Table row
+                const cells = line.split('|').filter(cell => cell.trim() !== '');
+                cells.forEach(cell => {
+                  const cellContent = cell.trim();
+                  if(index === 0) {
+                    tableHTML += `<th style=\"border: 1px solid #ddd; padding: 8px;\">${cellContent}</th>`;
+                  } else {
+                    tableHTML += `<td style=\"border: 1px solid #ddd; padding: 8px;\">${cellContent}</td>`;
+                  }
+                });
+              }
+            });
+
+            tableHTML += '</tr></table>';
+            text.innerHTML = tableHTML;
+          } else {
+            text.innerHTML=`<b>${note.text||''}</b><br>
+              <small style=\"opacity:0.7\">${note.createdAt||''}</small>`;
+          }
+          left.appendChild(text);
+
+          // --- file rendering - EXISTING, KEPT ---
+          if(note.file){
+            let fileEl;
+
+            // 📷 --- Image Support ---
+            if(note.file.type.includes('image')){
+              fileEl=document.createElement('img');
+              fileEl.src=note.file.data;
+              fileEl.style.maxWidth='200px';
+              fileEl.style.display='block';
+              fileEl.style.marginTop='5px';
+            }
+            // 🎵 --- Audio Support ---
+            else if(note.file.type.includes('audio')){
+              fileEl=document.createElement('audio');
+              fileEl.controls=true;
+              fileEl.src=note.file.data;
+            }
+            // 🎬 --- Video Support ---
+            else if(note.file.type.includes('video')){
+              fileEl=document.createElement('video');
+              fileEl.controls=true;
+              fileEl.width=200;
+              fileEl.src=note.file.data;
+            }
+            // 📄 --- Docs (PDF/DOC) ---
+            else {
+              fileEl=document.createElement('a');
+              fileEl.href=note.file.data;
+              fileEl.download=note.file.name;
+              fileEl.textContent='📎 '+note.file.name;
+            }
+
+            left.appendChild(fileEl);
+          }
+
+          const right = document.createElement('div');
+          right.style.display = 'flex';
+          right.style.alignItems = 'center';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'icon-small';
+          editBtn.textContent = '✏️';
+          editBtn.title = 'Edit';
+          editBtn.addEventListener('click', () => editNote(i));
+
+          const delBtn=document.createElement('button');
+          delBtn.className='icon-small'; delBtn.textContent='🗑️';
+          delBtn.title='Delete';
+          delBtn.addEventListener('click',()=>{ deleteNote(i); });
+
+          right.appendChild(editBtn);
+          right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+      }
+
+      // ---------- Budget Functions ----------
+      function renderBudgets(){
+        const list = byId('budgetList'); list.innerHTML = '';
+        // Ensure appData.budget exists and is an array
+        if (!appData.budget || !Array.isArray(appData.budget)) {
+          appData.budget = [];
+        }
+        if(appData.budget.length === 0){
+          const li = document.createElement('li'); li.textContent='No budgets yet.'; li.style.opacity='0.7'; list.appendChild(li);
+          renderHomeBudgets(); return;
+        }
+        const frag = document.createDocumentFragment();
+        appData.budget.forEach((b,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+
+          // Calculate cost per day
+          const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+          const days = daysBetween(b.startDate, b.endDate);
+
+          const title=document.createElement('div');
+          title.textContent=`Title: ${b.title}`;
+          title.style.fontWeight='600';
+
+          const amounts=document.createElement('div');
+          amounts.style.fontSize='13px';
+          amounts.style.opacity='0.85';
+          amounts.textContent=`Total Budget: ₹${b.amount} | Remaining Days: ${days} | Cost per Day: ₹${costPerDay}`;
+
+          left.appendChild(title); left.appendChild(amounts);
+
+          const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
+          const editBtn=document.createElement('button'); editBtn.className='icon-small'; editBtn.textContent='✏️'; editBtn.title='Edit'; editBtn.addEventListener('click',()=>editBudget(i));
+          const delBtn=document.createElement('button'); delBtn.className='icon-small'; delBtn.textContent='🗑️'; delBtn.title='Delete'; delBtn.addEventListener('click',()=>deleteBudget(i));
+
+          right.appendChild(editBtn); right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+        renderHomeBudgets();
+      }
+
+      function renderHomeBudgets(){
+        const container = byId('homeBudgetsContainer');
+        container.innerHTML='';
+        // Ensure appData.budget exists and is an array
+        if (!appData.budget || !Array.isArray(appData.budget)) {
+          appData.budget = [];
+        }
+        if(appData.budget.length === 0){
+          const li=document.createElement('li');
+          li.textContent='No budgets yet.';
+          li.style.opacity='0.7';
+          container.appendChild(li);
+          return;
+        }
+        const frag=document.createDocumentFragment();
+        appData.budget.forEach(b=>{
+          // Calculate cost per day
+          const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+          const days = daysBetween(b.startDate, b.endDate);
+
+          const li=document.createElement('li');
+          li.textContent = `\"${b.title}\" || Total: ₹${b.amount} || Remaining: ${days} days || Cost: ₹${costPerDay}/day`;
+          frag.appendChild(li);
+        });
+        container.appendChild(frag);
+      }
+
+      function editBudget(i){
+        const b=appData.budget[i];
+        editingBudgetIndex=i;
+        byId('budgetTitle').value=b.title;
+        byId('budgetAmount').value=b.amount;
+        byId('budgetStartDate').value=b.startDate||'';
+        byId('budgetEndDate').value=b.endDate||'';
+        showForm(byId('budgetFormContainer'));
+      }
+
+      function deleteBudget(index){
+        appData.budget.splice(index, 1);
+        saveAll();
+        renderBudgets();
+        renderHomeBudgets();
+      }
+
+      function saveBudget(){
+        const title=byId('budgetTitle').value.trim();
+        const amount=byId('budgetAmount').value;
+        const start=byId('budgetStartDate').value;
+        const end=byId('budgetEndDate').value;
+        if(!title || !amount){ alert('Title and amount are required to save a budget.'); return; }
+        const budgetObj={ title, amount, startDate:start, endDate:end };
+        if(editingBudgetIndex!==null){ appData.budget[editingBudgetIndex]=budgetObj; editingBudgetIndex=null; }
+        else{ appData.budget.push(budgetObj); }
+        saveAll(); renderBudgets(); hideForm(byId('budgetFormContainer')); clearBudgetForm();
+      }
+
+      function clearBudgetForm(){
+        byId('budgetTitle').value='';
+        byId('budgetAmount').value='';
+        byId('budgetStartDate').value='';
+        byId('budgetEndDate').value='';
       }
 
       function editReminder(i){
@@ -1353,391 +1613,870 @@
         byId('startDate').value='';
         byId('endDate').value='';
       }
-      // --- END REMINDER FUNCTIONS --- 
 
-
-      // --- NOTE FUNCTIONS (Simplified for brevity) ---
-      function renderHomeNotes(){
-        // ... (existing logic for rendering notes on home) ...
-        const container = byId('homeNotesContainer');
-        container.innerHTML = '<li>Notes rendering logic omitted for brevity.</li>';
+      function deleteNote(index){
+        appData.notes.splice(index,1);
+        saveAll();
+        renderNotes();
+        renderHomeNotes();
       }
 
-      function renderNotes(){
-        // ... (existing logic for rendering all notes) ...
-        const list = byId('noteList'); list.innerHTML='<li>Notes rendering logic omitted for brevity.</li>';
-      }
-      
-      function editNote(index){ /* ... */ }
-      function deleteNote(index){ /* ... */ }
-      function saveNote(){ /* ... */ }
-      // --- END NOTE FUNCTIONS ---
+      // Updated editNote
+      function editNote(index){
+        const note = appData.notes[index];
+        editingNoteIndex = index;
 
+        byId('noteText').value = note.text || '';
+        byId('tableFormatCheckbox').checked = note.isTable || false;
 
-      // --- CHECKLIST FUNCTIONS (Simplified for brevity) ---
-      function renderHomeCheck(){
-        // ... (existing logic for rendering checklists on home) ...
-        const container = byId('homeCheckContainer');
-        container.innerHTML = '<li>Checklist rendering logic omitted for brevity.</li>';
+        // Show the form
+        showForm(byId('noteFormContainer'));
+
+        // Set the save button to update instead of create
+        byId('saveNoteBtn').textContent = 'Update';
       }
 
-      function renderChecklists(){
-        // ... (existing logic for rendering all checklists) ...
-        const list = byId('checkList'); list.innerHTML = '<li>Checklist rendering logic omitted for brevity.</li>';
-      }
-      
-      function editCheck(index){ /* ... */ }
-      function deleteCheck(index){ /* ... */ }
-      function toggleCheckStatus(index) { /* ... */ }
-      function saveCheck(){ /* ... */ }
-      // --- END CHECKLIST FUNCTIONS ---
+      // Updated saveNote (removed AI-related code)
+      function saveNote(){
+        const text = byId('noteText').value.trim();
+        const fileInput = byId('noteFile');
+        const file = fileInput.files[0];
+        const isTableFormat = byId('tableFormatCheckbox').checked;
 
-
-      // ---------- Budget Functions (NEW LOGIC) ----------
-
-      // Function to render the list of budgets in the Budgets tab
-      function renderBudgets(){
-        const list = byId('budgetList'); list.innerHTML = '';
-        if (!appData.budget || !Array.isArray(appData.budget) || appData.budget.length === 0) {
-          const li = document.createElement('li'); 
-          li.textContent='No budgets yet. Use "▶ Add New Budget" to start.'; 
-          li.style.opacity='0.7'; 
-          list.appendChild(li);
-          renderHomeBudgets(); 
+        if(!text && !file){
+          alert('Note cannot be empty. Please add text or a file.');
           return;
         }
-        
-        const frag = document.createDocumentFragment();
-        appData.budget.forEach((b,i)=>{
-          const li=document.createElement('li');
-          li.style.flexDirection = 'column';
 
-          const headerDiv = document.createElement('div');
-          headerDiv.style.display = 'flex';
-          headerDiv.style.justifyContent = 'space-between';
-          headerDiv.style.width = '100%';
+        // Format date for all notes
+        const noteDate = formatDateDMYWithTime(new Date());
 
-          const left=document.createElement('div'); left.className='item-left';
+        let noteText = text;
+        if (isTableFormat && text) {
+          // Add date/time to the beginning of the table
+          noteText = `Created: ${noteDate}\n\n${text}`;
+        }
 
-          const costPerDay = calculateCostPerDay(b.originalAmount, b.startDate, b.endDate);
-          const days = daysBetween(b.startDate, b.endDate);
+        const noteObj = {
+          text: noteText,
+          createdAt: noteDate,
+          file: null,
+          isTable: isTableFormat,
+        };
 
-          // 1. Budget Title
-          const title=document.createElement('div');
-          title.textContent=`Budget: ${b.title}`;
-          title.style.fontWeight='700';
-          title.style.marginBottom = '5px';
-          
-          // 2. Budget Status Div (Highlighted Primary)
-          const budgetStatusDiv = document.createElement('div');
-          budgetStatusDiv.style.padding = '8px';
-          budgetStatusDiv.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // Light green/accent highlight
-          budgetStatusDiv.style.borderRadius = '4px';
+        const finalizeSave = (noteObj) => {
+            if(editingNoteIndex !== null){
+                appData.notes[editingNoteIndex] = noteObj;
+                editingNoteIndex = null;
+            } else {
+                appData.notes.push(noteObj);
+            }
+            saveAll(); renderNotes(); renderHomeNotes();
+            hideForm(byId('noteFormContainer'));
+            byId('noteText').value='';
+            fileInput.value='';
+            byId('tableFormatCheckbox').checked = false;
+            byId('saveNoteBtn').textContent = 'Save';
+        }
 
-          budgetStatusDiv.innerHTML = `
-              <div><b>Original Budget:</b> ₹${b.originalAmount.toFixed(2)}</div>
-              <div><b>Remaining Balance:</b> <span style="color: ${b.currentBalance < 0 ? '#f44336' : 'var(--accent)'}; font-weight: bold;">₹${b.currentBalance.toFixed(2)}</span></div>
-              <div style="font-size: 13px; opacity: 0.85; margin-top: 5px;">
-                  Period: ${formatDMY(b.startDate)} to ${formatDMY(b.endDate)} | Days: ${days} | Cost per Day: ₹${costPerDay}
-              </div>
-          `;
-          
-          left.appendChild(title);
-          left.appendChild(budgetStatusDiv);
-
-          // 3. Expense History Div (Highlighted Secondary)
-          const historyDiv = document.createElement('div');
-          historyDiv.style.marginTop = '10px';
-          historyDiv.style.padding = '8px';
-          historyDiv.style.backgroundColor = 'rgba(244, 67, 54, 0.05)'; // Light red/muted highlight
-          historyDiv.style.borderRadius = '4px';
-          historyDiv.style.width = '100%';
-
-          let historyHtml = '<b>Expense History:</b> (' + b.expenses.length + ' records)';
-
-          if (b.expenses.length > 0) {
-              const recentExpenses = b.expenses.slice(-3).reverse(); // Last 3 expenses
-              
-              historyHtml += '<ul style="list-style-type: none; padding-left: 0; margin: 5px 0 0;">';
-              recentExpenses.forEach(exp => {
-                  historyHtml += `<li style="font-size: 13px; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 2px 0;">
-                      <span style="font-weight: 600; color: #f44336;">- ₹${parseFloat(exp.amount).toFixed(2)}</span> - ${exp.description} 
-                      <small style="opacity: 0.7; float: right;">${exp.timestamp.split(' ')[0]}</small>
-                  </li>`;
-              });
-              historyHtml += '</ul>';
-
-              if (b.expenses.length > 3) {
-                   historyHtml += `<div style="font-size: 13px; opacity: 0.7; text-align: center; margin-top: 5px;">...Showing 3 of ${b.expenses.length} records...</div>`;
-              }
-          } else {
-              historyHtml += '<div style="font-size: 13px; opacity: 0.7; margin-top: 5px;">No expenses recorded yet.</div>';
-          }
-
-          historyDiv.innerHTML = historyHtml;
-
-
-          // 4. Action Buttons (Add Expense, Edit, Delete)
-          const right=document.createElement('div');
-          right.style.display='flex'; right.style.alignItems='flex-start';
-
-          const expenseBtn = document.createElement('button');
-          expenseBtn.className = 'icon-small';
-          expenseBtn.textContent = '➕';
-          expenseBtn.title = 'Add Expense';
-          expenseBtn.addEventListener('click', () => showExpenseForm(b.id));
-
-          const editBtn=document.createElement('button'); editBtn.className='icon-small'; editBtn.textContent='✏️'; editBtn.title='Edit Budget'; editBtn.addEventListener('click',()=>editBudget(i));
-          const delBtn=document.createElement('button'); delBtn.className='icon-small'; delBtn.textContent='🗑️'; delBtn.title='Delete Budget'; delBtn.addEventListener('click',()=>deleteBudget(i));
-
-          right.appendChild(expenseBtn);
-          right.appendChild(editBtn); 
-          right.appendChild(delBtn);
-
-          headerDiv.appendChild(left);
-          headerDiv.appendChild(right);
-
-          li.appendChild(headerDiv);
-          li.appendChild(historyDiv);
-
-          frag.appendChild(li);
-        });
-        list.appendChild(frag);
-        renderHomeBudgets();
+        if(file){
+          const reader = new FileReader();
+          reader.onload = function(e){
+            noteObj.file = {
+              name: file.name,
+              type: file.type,
+              data: e.target.result
+            };
+            finalizeSave(noteObj);
+          };
+          reader.onerror = function() {
+            console.error('Error reading file. Please try again.');
+            fileInput.value = '';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          finalizeSave(noteObj);
+        }
       }
 
-      function renderHomeBudgets(){
-        const container = byId('homeBudgetsContainer');
-        container.innerHTML='';
-        if (!appData.budget || !Array.isArray(appData.budget) || appData.budget.length === 0) {
-          const li=document.createElement('li');
-          li.textContent='No budgets yet.';
-          li.style.opacity='0.7';
+      function deleteCheck(index){
+        appData.checklists.splice(index,1);
+        saveAll();
+        renderChecklists();
+        renderHomeCheck();
+      }
+
+      function editCheck(index){
+        const check = appData.checklists[index];
+        editingCheckIndex = index;
+
+        byId('checkTitle').value = check.title || '';
+        byId('checkStatus').value = check.status || 'open';
+        byId('checkItems').value = check.items ? check.items.join('\n') : '';
+
+        // Show the form
+        showForm(byId('checkFormContainer'));
+
+        // Set the save button to update instead of create
+        byId('saveCheckBtn').textContent = 'Update';
+      }
+
+      function toggleCheckStatus(index) {
+        const check = appData.checklists[index];
+        check.status = check.status === 'open' ? 'closed' : 'open';
+        saveAll();
+        renderChecklists();
+        renderHomeCheck();
+      }
+
+      function saveCheck(){
+        const title = byId('checkTitle').value.trim();
+        const status = byId('checkStatus').value;
+        const itemsText = byId('checkItems').value.trim();
+        const items = itemsText ? itemsText.split('\n').filter(item => item.trim() !== '') : [];
+
+        if(!title){
+          alert('Title is required for the checklist.');
+          return;
+        }
+
+        const checkObj = {
+          title,
+          items,
+          status: status,
+          createdAt: formatDateDMYWithTime(new Date()) // Use DD-MMM-YYYY with IST time format
+        };
+
+        if(editingCheckIndex !== null){
+          appData.checklists[editingCheckIndex] = checkObj;
+          editingCheckIndex = null;
+        } else {
+          appData.checklists.push(checkObj);
+        }
+
+        saveAll();
+        renderChecklists();
+        renderHomeCheck();
+
+        hideForm(byId('checkFormContainer'));
+        byId('checkTitle').value = '';
+        byId('checkStatus').value = 'open';
+        byId('checkItems').value = '';
+        byId('saveCheckBtn').textContent = 'Save';
+      }
+
+
+      function renderHomeCheck(){
+        const container = byId('homeCheckContainer');
+        container.innerHTML = '';
+
+        // Ensure appData.checklists exists and is an array
+        if (!appData.checklists || !Array.isArray(appData.checklists)) {
+          appData.checklists = [];
+        }
+
+        if(appData.checklists.length === 0){
+          const li = document.createElement('li');
+          li.textContent = 'No checklists yet.';
+          li.style.opacity = '0.7';
           container.appendChild(li);
           return;
         }
-        const frag=document.createDocumentFragment();
-        appData.budget.forEach(b=>{
-          const days = daysBetween(b.startDate, b.endDate);
-          const statusColor = b.currentBalance < 0 ? '#f44336' : 'var(--accent)';
 
-          const li=document.createElement('li');
-          li.innerHTML = `\"${b.title}\" || Total: ₹${b.originalAmount.toFixed(2)} || <b style="color: ${statusColor};">Remaining: ₹${b.currentBalance.toFixed(2)}</b>`;
-          frag.appendChild(li);
+        const frag = document.createDocumentFragment();
+
+        appData.checklists.forEach(check => {
+          if(check.status === 'open') {
+            const li = document.createElement('li');
+            li.textContent = `\"${check.title}\" - ${check.items.length} items`; // Use items.length
+            frag.appendChild(li);
+          }
         });
-        container.appendChild(frag);
+
+        if (frag.children.length === 0) { // Check if any open checklists were found
+            const li = document.createElement('li');
+            li.textContent = 'No open checklists.';
+            li.style.opacity = '0.7';
+            container.appendChild(li);
+        } else {
+            container.appendChild(frag);
+        }
       }
 
-      function editBudget(i){
-        const b=appData.budget[i];
-        editingBudgetIndex=i;
-        byId('budgetTitle').value=b.title;
-        // Use originalAmount when editing the total budget
-        byId('budgetAmount').value=b.originalAmount; 
-        byId('budgetStartDate').value=b.startDate||'';
-        byId('budgetEndDate').value=b.endDate||'';
-        showForm(byId('budgetFormContainer'));
+      function renderChecklists(){
+        const list = byId('checkList'); list.innerHTML = '';
+        // Ensure appData.checklists exists and is an array
+        if (!appData.checklists || !Array.isArray(appData.checklists)) {
+          appData.checklists = [];
+        }
+        if(appData.checklists.length === 0){
+          const li = document.createElement('li'); li.textContent='No checklists yet.'; li.style.opacity='0.7'; list.appendChild(li);
+          renderHomeCheck(); return;
+        }
+        const frag = document.createDocumentFragment();
+        appData.checklists.forEach((check,i)=>{
+          const li=document.createElement('li');
+          const left=document.createElement('div'); left.className='item-left';
+
+          const title=document.createElement('div');
+          title.textContent=`${check.title}`;
+          title.style.fontWeight='600';
+
+          // START OF MODIFICATION: Display checklist items
+          const itemsPreview=document.createElement('div');
+          itemsPreview.style.fontSize='13px';
+          itemsPreview.style.opacity='0.9';
+
+          // Get the first 3 items or all items if less than 3
+          const previewItems = check.items.slice(0, 3);
+          let itemsText = previewItems.map(item => `\u2022 ${item}`).join('<br>'); // \u2022 is a bullet point
+
+          // Add an ellipsis if there are more than 3 items
+          if(check.items.length > 3) {
+              itemsText += '<br>... and ' + (check.items.length - 3) + ' more items';
+          } else if (check.items.length === 0) {
+              itemsText = 'No items in list.';
+          }
+
+          itemsPreview.innerHTML = itemsText;
+          // END OF MODIFICATION
+
+          const statusInfo=document.createElement('div');
+          statusInfo.style.fontSize='13px';
+          statusInfo.style.opacity='0.85';
+          statusInfo.textContent=`Status: ${check.status} | Total Items: ${check.items.length}`;
+
+          const time=document.createElement('div');
+          time.style.fontSize='12px';
+          time.style.opacity='0.7';
+          time.textContent=check.createdAt || '';
+
+          left.appendChild(title);
+          left.appendChild(itemsPreview); // Added the item preview
+          left.appendChild(statusInfo);
+          left.appendChild(time);
+
+          const right = document.createElement('div');
+          right.style.display = 'flex';
+          right.style.alignItems = 'center';
+
+          // Add status button
+          const statusBtn = document.createElement('button');
+          statusBtn.className = 'status-btn';
+          statusBtn.textContent = check.status === 'open' ? 'Open' : 'Closed';
+          statusBtn.title = 'Change Status';
+          statusBtn.addEventListener('click', () => toggleCheckStatus(i));
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'icon-small';
+          editBtn.textContent = '✏️';
+          editBtn.title = 'Edit';
+          editBtn.addEventListener('click', () => editCheck(i));
+
+          const delBtn=document.createElement('button');
+          delBtn.className='icon-small'; delBtn.textContent='🗑️';
+          delBtn.title='Delete';
+          delBtn.addEventListener('click',()=>{ deleteCheck(i); });
+
+          right.appendChild(statusBtn);
+          right.appendChild(editBtn);
+          right.appendChild(delBtn);
+          li.appendChild(left); li.appendChild(right); frag.appendChild(li);
+        });
+        list.appendChild(frag);
+        renderHomeCheck();
       }
 
-      function deleteBudget(index){
-        appData.budget.splice(index, 1);
+      // ---------- Form Show/Hide ----------
+      function showForm(el){ el.classList.add('visible'); }
+      function hideForm(el){ el.classList.remove('visible'); }
+
+      // ---------- Page Navigation ----------
+      const sidebar = byId('sidebar');
+      const main = byId('main');
+      const toggleBtn = byId('toggleBtn');
+
+      function showPage(pageId){
+        document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+        const targetPage = byId(pageId);
+        targetPage.classList.remove('hidden');
+
+        // Special handling for the notifications page
+        if (pageId === 'notifications') {
+          renderNotificationPage();
+        }
+
+        // Auto-hide sidebar instantly when an option is chosen
+        sidebar.style.left = '-220px';
+        main.style.marginLeft = '0';
+        toggleBtn.textContent = '⮞';
+        sidebar.style.transition = 'left 0s';   // instant hide
+        main.style.transition = 'margin-left 0s'; // instant hide
+      }
+
+      // ---------- Sidebar Toggle ----------
+      toggleBtn.addEventListener('click', function() {
+        if (sidebar.style.left === '-220px' || sidebar.style.left === '') {
+          sidebar.style.left = '0px';
+          main.style.marginLeft = '220px';
+          toggleBtn.textContent = '⮜';
+        } else {
+          sidebar.style.left = '-220px';
+          main.style.marginLeft = '0';
+          toggleBtn.textContent = '⮞';
+        }
+      });
+
+      // ---------- Settings Panel (new) ----------
+      const settingsBtn = byId('settingsBtn');
+      const settingsPanel = byId('settingsPanel');
+      if(settingsBtn && settingsPanel){
+        settingsBtn.addEventListener('click', ()=>{
+          const opened = settingsPanel.classList.toggle('visible');
+          settingsBtn.setAttribute('aria-expanded', opened);
+          settingsPanel.setAttribute('aria-hidden', !opened);
+        });
+      }
+
+      // ---------- Dark Mode ----------
+      const darkBtn=byId('darkModeBtn');
+      darkBtn.addEventListener('click',()=>{
+        document.body.classList.toggle('dark');
+        appData.darkMode=document.body.classList.contains('dark')?'1':'0';
         saveAll();
-        renderBudgets();
-        renderHomeBudgets();
-      }
+      });
 
-      function saveBudget(){
-        const title=byId('budgetTitle').value.trim();
-        const amount=parseFloat(byId('budgetAmount').value); // The TOTAL amount
-        const start=byId('budgetStartDate').value;
-        const end=byId('budgetEndDate').value;
-
-        if(!title || isNaN(amount) || amount <= 0){ alert('Title and a valid amount are required to save a budget.'); return; }
-
-        let budgetObj;
-        if(editingBudgetIndex!==null){
-            // Editing existing budget
-            budgetObj = appData.budget[editingBudgetIndex];
-
-            // If the user changes the original budget amount, recalculate the balance
-            if (budgetObj.originalAmount !== amount) {
-                budgetObj.originalAmount = amount;
-                const totalSpent = budgetObj.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-                budgetObj.currentBalance = amount - totalSpent;
-            }
-
-            budgetObj.title = title;
-            budgetObj.startDate = start;
-            budgetObj.endDate = end;
-            budgetObj.amount = amount; // For compatibility
-
-            editingBudgetIndex=null;
-        }
-        else{
-            // New budget creation (initial save)
-            budgetObj={
-                id: Date.now().toString(), 
-                title: title,
-                amount: amount, 
-                originalAmount: amount, // The constant budget
-                currentBalance: amount, // Initial balance
-                startDate: start,
-                endDate: end,
-                expenses: [] // Initialize expenses history
-            };
-            appData.budget.push(budgetObj);
-        }
-
-        saveAll(); 
-        renderBudgets(); 
-        hideForm(byId('budgetFormContainer')); 
-        clearBudgetForm();
-      }
-
-      function clearBudgetForm(){
-        byId('budgetTitle').value='';
-        byId('budgetAmount').value='';
-        byId('budgetStartDate').value='';
-        byId('budgetEndDate').value='';
-      }
-
-      // NEW: Function to prepare and show the expense form
-      function showExpenseForm(budgetId) {
-          currentExpenseBudgetId = budgetId;
-          const budget = appData.budget.find(b => b.id === budgetId);
-          if (!budget) return;
-
-          // Assumes an element with id 'expenseBudgetTitle' exists in your HTML form
-          const expenseTitleEl = byId('expenseBudgetTitle'); 
-          if(expenseTitleEl) expenseTitleEl.textContent = `Adding expense to: ${budget.title}`;
-          
-          const expenseForm = byId('budgetExpenseFormContainer');
-          if (expenseForm) {
-              // Clear previous inputs
-              if(byId('expenseAmount')) byId('expenseAmount').value = '';
-              if(byId('expenseDescription')) byId('expenseDescription').value = '';
-              showForm(expenseForm);
-          } else {
-              // FALLBACK: If form element is missing, use prompts (not recommended for production)
-              const amount = prompt(`Enter expense amount for ${budget.title}:`);
-              if (amount === null || isNaN(parseFloat(amount))) return;
-              const description = prompt("Enter expense description:");
-              if (description === null || description.trim() === '') return;
-              saveExpense(budgetId, amount, description);
-          }
-      }
-
-      // NEW: Function to record and save an expense
-      function saveExpense(budgetId, expenseAmount, expenseDescription) {
-          const amount = parseFloat(expenseAmount);
-          const description = expenseDescription.trim();
-
-          if (isNaN(amount) || amount <= 0 || !description) {
-              alert('Please enter a valid amount and description for the expense.');
-              return;
-          }
-
-          const budget = appData.budget.find(b => b.id === budgetId);
-          if (!budget) {
-              console.error('Budget not found for ID:', budgetId);
-              return;
-          }
-
-          // 1. Reduce current balance
-          budget.currentBalance -= amount;
-
-          // 2. Create and save expense object
-          const expenseObj = {
-              amount: amount,
-              description: description,
-              timestamp: formatDateDMYWithTime(new Date())
-          };
-          budget.expenses.push(expenseObj);
-
+      // ---------- Profile ----------
+      const profileNameEl=byId('profileName');
+      byId('editNameBtn').addEventListener('click',()=>{
+        const n=prompt('Enter new name:',appData.profileName||'');
+        if(n){
+          appData.profileName=n;
+          profileNameEl.textContent=n;
           saveAll();
-          renderBudgets();
-          // Hide the expense form (assuming it's id is 'budgetExpenseFormContainer')
-          hideForm(byId('budgetExpenseFormContainer'));
+        }
+      });
+
+      const profilePhotoInput=byId('photoUpload');
+      profilePhotoInput.addEventListener('change',(e)=>{
+        const file=e.target.files[0];
+        if(file){
+          const reader=new FileReader();
+          reader.onload=function(ev){
+            appData.profilePhoto=ev.target.result;
+            byId('profilePhoto').src=ev.target.result;
+            saveAll();
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Helper 4: Notes (Summary of recent notes)
+      function buildNotesSummary() {
+          let summary = [];
+          if (appData.notes.length === 0) return "No notes added yet.";
+          const recentNotes = appData.notes.slice(-3).reverse();
+          recentNotes.forEach(n => {
+              let notePreview = n.text;
+              if (n.isTable) notePreview = "[Table Note]";
+              else if (notePreview && notePreview.length > 30) notePreview = notePreview.substring(0, 30) + "...";
+              else if (!notePreview && n.file) notePreview = `[File: ${n.file.name}]`;
+              else if (!notePreview) notePreview = "[Empty Note]";
+              const datePart = n.createdAt ? n.createdAt.split(' ')[0] : '';
+              summary.push(`- ${notePreview} (${datePart})`);
+          });
+          if (appData.notes.length > 3) summary.push(`... and ${appData.notes.length - 3} older notes.`);
+          return summary.join('\n');
       }
-      
-      // Function to be called by the Expense Form Submit button (Example linkage)
-      function doSaveExpenseFromForm() {
-          const amount = byId('expenseAmount').value;
-          const description = byId('expenseDescription').value;
-          if (currentExpenseBudgetId) {
-              saveExpense(currentExpenseBudgetId, amount, description);
-          }
+
+      // Helper 1: Reminders (Today or Tomorrow)
+      function buildReminderSummary() {
+          let summary = [];
+          appData.reminders.forEach(r => {
+              const diff = daysLeft(r.endDate);
+              if (diff === 0 || diff === 1) {
+                  summary.push(`- ${r.title} | ${diff === 0 ? 'Today' : 'Tomorrow'}`);
+              }
+          });
+          return summary.length > 0 ? summary.join('\n') : "No reminders due today/tomorrow.";
       }
-      // ---------- End Budget Functions ----------
 
+      // Helper 2: Checklist (Open status)
+      function buildChecklistSummary() {
+          let summary = [];
+          const openChecks = appData.checklists.filter(c => c.status === 'open');
+          if (openChecks.length === 0) return "No open checklists.";
+          openChecks.slice(0, 3).forEach(c => {
+              summary.push(`- ${c.title} (${c.items.length} items)`); // Use items.length
+          });
+          if (openChecks.length > 3) summary.push(`... and ${openChecks.length - 3} more open lists.`);
+          return summary.join('\n');
+      }
 
-      // --- Initialisation and Event Listeners ---
-      
-      // Placeholder for other initial render functions
-      function renderHistory() { /* ... */ }
-      function switchCalculatorMode() { /* ... */ }
-      
-      window.onload = function() {
-        const toggleBtn = byId('sidebarToggle');
-        const sidebar = byId('sidebar');
-        const main = byId('main');
+      // Helper 3: Budget (Overview/Cost per day)
+      function buildBudgetSummary() {
+          let summary = [];
+          if (appData.budget.length === 0) return "No active budgets to track.";
+          appData.budget.forEach(b => {
+              const days = daysBetween(b.startDate, b.endDate);
+              const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+              if (days > 0 && costPerDay > 0) {
+                  summary.push(`- ${b.title}: ₹${costPerDay}/day for ${days} days`);
+              }
+          });
+          return summary.length > 0 ? summary.join('\n') : "No active budget overview available.";
+      }
 
-        // FIX: Sidebar Toggle Logic
-        if (toggleBtn && sidebar && main) {
-            toggleBtn.addEventListener('click', function() {
-                // Re-enable smooth transition before toggling
-                sidebar.style.transition = 'left 0.3s ease';
-                main.style.transition = 'margin-left 0.3s ease';
+      // The single, correct checkNotifications function using registration.showNotification()
+      async function checkNotifications(){
+        if(!(Notification && Notification.permission === 'granted')) {
+           console.log("Global notification permission not granted. Skipping custom checks.");
+           return;
+        }
 
-                if (sidebar.style.left === '-220px' || sidebar.style.left === '') {
-                  sidebar.style.left = '0px';
-                  main.style.marginLeft = '220px';
-                  toggleBtn.textContent = '⮜';
-                } else {
-                  sidebar.style.left = '-220px';
-                  main.style.marginLeft = '0';
-                  toggleBtn.textContent = '⮞';
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) {
+           console.warn("Service Worker not registered. Cannot show persistent notifications via SW.");
+           // Fallback to non-persistent notification if SW isn't ready (less reliable on Android)
+           // If permission granted, show a basic one
+           if (Notification.permission === 'granted') {
+              new Notification("Nothing Reminder", { body: "Checking reminders..." });
+           }
+           return;
+        }
+
+        // REMINDERS Summary
+        if (appData.notifReminders) {
+            const reminderSummary = buildReminderSummary();
+            if (reminderSummary !== "No reminders due today/tomorrow.") {
+                registration.showNotification("Nothing Reminder - ⚠️ Reminders", {
+                    body: reminderSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'reminders'
+                });
+            }
+        }
+
+        // CHECKLIST Summary
+        if (appData.notifChecklist) {
+            const checklistSummary = buildChecklistSummary();
+            if (checklistSummary !== "No open checklists.") {
+                 registration.showNotification("Nothing Reminder - ✒ Checklists", {
+                    body: checklistSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'checklists'
+                });
+            }
+        }
+
+        // BUDGET Summary
+        if (appData.notifBudget) {
+            const budgetSummary = buildBudgetSummary();
+            if (budgetSummary !== "No active budgets to track." && budgetSummary !== "No active budget overview available.") {
+                 registration.showNotification("Nothing Reminder - 💰 Budget", {
+                    body: budgetSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'budget'
+                });
+            }
+        }
+
+        // NOTES Summary
+        if (appData.notifNotes) {
+            const notesSummary = buildNotesSummary();
+            if (notesSummary !== "No notes added yet.") {
+                registration.showNotification("Nothing Reminder - 📝 Notes", {
+                    body: notesSummary, icon: 'assets/icon.png', requireInteraction: true, tag: 'notes'
+                });
+            }
+        }
+      } 
+
+      // ---------- Calculation History Functions ----------
+              function renderHistory() {
+                const list = byId('calculationHistoryList');
+                list.innerHTML = '';
+                if (appData.calculationHistory.length === 0) {
+                  const li = document.createElement('li');
+                  li.textContent = 'No calculation history yet.';
+                  li.style.opacity = '0.7';
+                  list.appendChild(li);
+                  return;
                 }
-            });
-        }
-        
-        // Form Toggle Bindings (use the fixed toggleCollapse function)
-        // You need to bind the toggleCollapse function to your HTML buttons
-        // Example: byId('toggleBudgetBtn').addEventListener('click', () => toggleCollapse(byId('budgetFormContainer'), byId('toggleBudgetBtn')));
+
+                const frag = document.createDocumentFragment();
+                appData.calculationHistory.forEach((item, i) => {
+                  const li = document.createElement('li');
+                  const left = document.createElement('div');
+                  left.className = 'item-left';
+
+                  const title = document.createElement('div');
+                  title.innerHTML = `<b>${item.title}</b>`;
+                  title.style.fontWeight = '600';
+
+                  const details = document.createElement('div');
+                  details.style.fontSize = '13px';
+                  details.style.opacity = '0.85';
+                  details.textContent = `${item.result} | ${item.createdAt}`;
+
+                  left.appendChild(title);
+                  left.appendChild(details);
+
+                  const right = document.createElement('div');
+                  right.style.display = 'flex';
+                  right.style.alignItems = 'center';
+
+                  const editBtn = document.createElement('button');
+                  editBtn.className = 'icon-small';
+                  editBtn.textContent = '✏️';
+                  editBtn.title = 'Edit Title';
+                  editBtn.addEventListener('click', () => editHistory(i));
+
+                  const delBtn = document.createElement('button');
+                  delBtn.className = 'icon-small';
+                  delBtn.textContent = '🗑️';
+                  delBtn.title = 'Delete';
+                  delBtn.addEventListener('click', () => deleteHistory(i));
+
+                  right.appendChild(editBtn);
+                  right.appendChild(delBtn);
+                  li.appendChild(left);
+                  li.appendChild(right);
+                  frag.appendChild(li);
+                });
+                list.appendChild(frag);
+              }
+
+              function saveHistory(result) {
+                const title = 'New Calculation';
+                if (title) {
+                  const historyObj = {
+                    title: title,
+                    result: result,
+                    createdAt: formatDateDMYWithTime(new Date())
+                  };
+                  appData.calculationHistory.push(historyObj);
+                  saveAll();
+                  renderHistory();
+                }
+              }
+
+              function editHistory(index) {
+                const item = appData.calculationHistory[index];
+                const newTitle = prompt('Edit title:', item.title);
+                if (newTitle) {
+                  item.title = newTitle;
+                  saveAll();
+                  renderHistory();
+                }
+              }
+
+              function deleteHistory(index) {
+                // No confirmation, as requested
+                appData.calculationHistory.splice(index, 1);
+                saveAll();
+                renderHistory();
+              }
+
+              // ---------- Normal Calculator Logic ----------
+              let currentExpression = '0';
+              const normalDisplay = byId('normalDisplay');
+
+              function updateNormalDisplay(value) {
+                if (value === 'clear') {
+                  currentExpression = '0';
+                } else if (value === 'backspace') {
+                  currentExpression = currentExpression.length > 1 ? currentExpression.slice(0, -1) : '0';
+                } else if (value === 'equals') {
+                  try {
+                    // Safely evaluate the expression
+                    // eslint-disable-next-line no-eval
+                    const result = eval(currentExpression);
+                    saveHistory(`${currentExpression} = ${result}`);
+                    currentExpression = String(result);
+                  } catch (e) {
+                    currentExpression = 'Error';
+                  }
+                } else {
+                  if (currentExpression === '0' && value !== '.') {
+                    currentExpression = value;
+                  } else {
+                    currentExpression += value;
+                  }
+                }
+                normalDisplay.value = currentExpression;
+              }
+
+              document.querySelectorAll('.normal-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  updateNormalDisplay(btn.dataset.value);
+                });
+              });
+
+              // ---------- Age Calculator Logic ----------
+              function calculateAge() {
+                const dobStr = byId('dobInput').value;
+                const asOfStr = byId('asOfDateInput').value || new Date().toISOString().split('T')[0]; // Default to today
+                const resultEl = byId('ageResult');
+
+                if (!dobStr) {
+                  resultEl.textContent = 'Please enter a date of birth.';
+                  return;
+                }
+
+                const dob = new Date(dobStr);
+                const asOf = new Date(asOfStr);
+
+                let age_years = asOf.getFullYear() - dob.getFullYear();
+                let age_months = asOf.getMonth() - dob.getMonth();
+                let age_days = asOf.getDate() - dob.getDate();
+
+                if (age_days < 0) {
+                  age_months--;
+                  age_days += new Date(asOf.getFullYear(), asOf.getMonth(), 0).getDate(); // Days in the previous month
+                }
+                if (age_months < 0) {
+                  age_years--;
+                  age_months += 12;
+                }
+
+                const result = `Age as of ${formatDMY(asOfStr)}: ${age_years} years, ${age_months} months, and ${age_days} days.`;
+                resultEl.textContent = result;
+
+                saveHistory(`Age as of: ${age_years} years & ${age_months} months, & ${age_days} days.`, result);
+              }
+
+              // ---------- Date Difference Calculator Logic ----------
+              function calculateDateDifference() {
+                const startStr = byId('dateDiffStart').value;
+                const endStr = byId('dateDiffEnd').value;
+                const resultEl = byId('dateDiffResult');
+              
+                if (!startStr || !endStr) {
+                  resultEl.textContent = 'Please enter both start and end dates.';
+                  return;
+                }
+              
+                const startDate = new Date(startStr);
+                const endDate = new Date(endStr);
+              
+                // Calculate the difference in time
+                const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+              
+                // Convert to days and add 1 to include both start and end dates
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+              
+                const result = `Difference: ${diffDays} day(s).`;
+                resultEl.textContent = result;
+              
+                saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${diffDays} day(s)`, result);
+              }
+
+              // ---------- Calculator Mode Switcher ----------
+              function switchCalculatorMode() {
+                const mode = byId('calculatorMode').value;
+                document.querySelectorAll('.calculator-mode').forEach(el => el.classList.add('hidden'));
+
+                if (mode === 'normal') {
+                  byId('normalCalculator').classList.remove('hidden');
+                } else if (mode === 'age') {
+                  byId('ageCalculator').classList.remove('hidden');
+                } else if (mode === 'date') {
+                  byId('dateCalculator').classList.remove('hidden');
+                }
+                // Reset history index when mode changes
+                editingHistoryIndex = null;
+              }
+
+              // ---------- Monthly Calendar Logic ----------
+              function renderCalendar(month, year) {
+                const today = new Date();
+                const grid = byId('calendarGrid');
+                const monthYearHeader = byId('currentMonthYear');
+                grid.innerHTML = '<div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>'; // Weekday headers
+
+                const date = new Date(year, month);
+                monthYearHeader.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+                const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 for Sunday, 1 for Monday, etc.
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                // Add spacer days for the start of the month
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                  const spacer = document.createElement('div');
+                  spacer.className = 'calendar-day spacer';
+                  grid.appendChild(spacer);
+                }
+
+                // Add days of the month
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const dayEl = document.createElement('div');
+                  dayEl.className = 'calendar-day';
+                  dayEl.textContent = day;
+
+                  // Highlight today
+                  if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayEl.classList.add('today');
+                  }
+
+                  grid.appendChild(dayEl);
+                }
+              }
+
+              function changeMonth(delta) {
+                  currentMonth += delta;
+                  if (currentMonth > 11) {
+                      currentMonth = 0;
+                      currentYear++;
+                  } else if (currentMonth < 0) {
+                      currentMonth = 11;
+                      currentYear--;
+                  }
+                  renderCalendar(currentMonth, currentYear);
+              }
+
+              // ---------- Event Listeners ----------
+
+              // Utilities Listeners
+              byId('monthlyCalendarToggle').addEventListener('click', function() {
+                toggleCollapse(byId('monthlyCalendarContainer'), byId('monthlyCalendarToggle'));
+                renderCalendar(currentMonth, currentYear); // Render on opening
+              });
+              byId('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+              byId('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+
+              byId('calculatorToggle').addEventListener('click', function() {
+                toggleCollapse(byId('calculatorContainer'), byId('calculatorToggle'));
+              });
+              byId('calculatorMode').addEventListener('change', switchCalculatorMode);
+
+              byId('calculateAgeBtn').addEventListener('click', calculateAge);
+              byId('calculateDateDiffBtn').addEventListener('click', calculateDateDifference);
+
+              byId('viewHistoryToggle').addEventListener('click', function() {
+                toggleCollapse(byId('calculationHistoryList'), byId('viewHistoryToggle'));
+              });
+              // ... all other listeners ...
+
+              // Notification Page Listener
+              byId('requestPermissionBtn').addEventListener('click', requestNotificationPermission);
+              byId('toggleReminders').addEventListener('change', (e) => handleCustomNotifToggle('notifReminders', e));
+              byId('toggleNotes').addEventListener('change', (e) => handleCustomNotifToggle('notifNotes', e));
+              byId('toggleChecklist').addEventListener('change', (e) => handleCustomNotifToggle('notifChecklist', e));
+              byId('toggleBudget').addEventListener('change', (e) => handleCustomNotifToggle('notifBudget', e));
 
 
-        // 1. Initial synchronous render of all data
-        if (appData.darkMode === '1') document.body.classList.add('dark');
-        // Profile/etc. loading omitted for brevity
-        renderReminders();
-        renderNotes();
-        renderBudgets();
-        renderChecklists();
-        renderHistory(); 
-        switchCalculatorMode();
+              byId('showAddFormBtn').addEventListener('click', function() {
+                toggleCollapse(byId('reminderFormContainer'), byId('showAddFormBtn'));
+              });
 
-        // 2. Setup notifications
-        if ("Notification" in window) {
-            updateBrowserPermissionUI();
-            checkNotifications(); 
-        }
-        
-        // 3. Bind the Expense Save function (Important)
-        const expenseSaveBtn = byId('saveExpenseBtn');
-        if(expenseSaveBtn) expenseSaveBtn.addEventListener('click', doSaveExpenseFromForm);
+              byId('cancelReminderBtn').addEventListener('click', function() {
+                hideForm(byId('reminderFormContainer'));
+                editingIndex=null;
+                clearReminderForm();
+              });
 
-        const budgetSaveBtn = byId('saveBudgetBtn');
-        if(budgetSaveBtn) budgetSaveBtn.addEventListener('click', saveBudget);
-        
-        // Add listeners for custom notification toggles
-        if(byId('toggleReminders')) byId('toggleReminders').addEventListener('change', (e) => handleCustomNotifToggle('notifReminders', e));
-        if(byId('toggleNotes')) byId('toggleNotes').addEventListener('change', (e) => handleCustomNotifToggle('notifNotes', e));
-        if(byId('toggleChecklist')) byId('toggleChecklist').addEventListener('change', (e) => handleCustomNotifToggle('notifChecklist', e));
-        if(byId('toggleBudget')) byId('toggleBudget').addEventListener('change', (e) => handleCustomNotifToggle('notifBudget', e));
-      };
+              byId('saveReminderBtn').addEventListener('click', saveReminder);
+              byId('viewRemindersToggle').addEventListener('click', function() {
+                toggleCollapse(byId('reminderList'), byId('viewRemindersToggle'));
+              });
 
+              // Notes Listeners
+              byId('showAddNoteBtn').addEventListener('click', function() {
+                byId('saveNoteBtn').textContent = 'Save'; // Ensure it says Save
+                toggleCollapse(byId('noteFormContainer'), byId('showAddNoteBtn'));
+              });
 
-    })();
-</script>
+              byId('cancelNoteBtn').addEventListener('click', function() {
+                hideForm(byId('noteFormContainer'));
+                editingNoteIndex = null;
+                byId('saveNoteBtn').textContent = 'Save';
+              });
+
+              byId('saveNoteBtn').addEventListener('click', saveNote);
+
+              byId('viewNotesToggle').addEventListener('click', function() {
+                toggleCollapse(byId('noteList'), byId('viewNotesToggle'));
+              });
+
+              byId('homeRemindersToggle').addEventListener('click', function() {
+                toggleCollapse(byId('homeRemindersContainer'), byId('homeRemindersToggle'));
+              });
+
+              byId('homeNotesToggle').addEventListener('click', function() {
+                toggleCollapse(byId('homeNotesContainer'), byId('homeNotesToggle'));
+              });
+
+              byId('homeCheckToggle').addEventListener('click', function() {
+                toggleCollapse(byId('homeCheckContainer'), byId('homeCheckToggle'));
+              });
+
+              byId('showAddBudgetBtn').addEventListener('click', function() {
+                toggleCollapse(byId('budgetFormContainer'), byId('showAddBudgetBtn'));
+              });
+
+              byId('cancelBudgetBtn').addEventListener('click', function() {
+                hideForm(byId('budgetFormContainer'));
+                editingBudgetIndex=null;
+                clearBudgetForm();
+              });
+
+              byId('saveBudgetBtn').addEventListener('click', saveBudget);
+              byId('viewbudgetToggle').addEventListener('click', function() {
+                toggleCollapse(byId('budgetList'), byId('viewbudgetToggle'));
+              });
+              byId('homeBudgetsToggle').addEventListener('click', function() {
+                toggleCollapse(byId('homeBudgetsContainer'), byId('homeBudgetsToggle'));
+              });
+
+              // Check List Event Listeners
+              byId('showAddCheckBtn').addEventListener('click', function() {
+                toggleCollapse(byId('checkFormContainer'), byId('showAddCheckBtn'));
+              });
+
+              byId('cancelCheckBtn').addEventListener('click', function() {
+                hideForm(byId('checkFormContainer'));
+                editingCheckIndex = null;
+                byId('saveCheckBtn').textContent = 'Save';
+              });
+
+              byId('saveCheckBtn').addEventListener('click', saveCheck);
+
+              byId('viewCheckToggle').addEventListener('click', function() {
+                toggleCollapse(byId('checkList'), byId('viewCheckToggle'));
+              });
+
+              document.querySelectorAll('.menu-btn[data-page]').forEach(btn=>{
+                btn.addEventListener('click',function() {
+                  showPage(this.dataset.page);
+                });
+              });
+
+              function toggleCollapse(el, btn){
+                el.classList.toggle('visible');
+                btn.classList.toggle('open');
+              }
+
+              // ---------- Initial Render Code ----------
+
+              // 1. Set initial UI states from loaded data
+              if (appData.darkMode === '1') document.body.classList.add('dark');
+              if (appData.profileName) profileNameEl.textContent = appData.profileName;
+              if (appData.profilePhoto) byId('profilePhoto').src = appData.profilePhoto;
+
+              // 2. Initial synchronous render of all data
+              renderReminders();
+              renderNotes();
+              renderBudgets();
+              renderChecklists();
+              renderHistory(); // NEW: Initial render for history
+
+              // NEW: Initialize calculator mode
+              switchCalculatorMode();
+
+              // 3. Setup notifications
+              // Notifications are now checked on page load (below) and on every data save (in saveAll).
+              if ("Notification" in window) {
+                  updateBrowserPermissionUI();
+                  checkNotifications(); // Check once on page load
+              }
+              // ---------- End Initial Render Code ----------
+
+            })();
+    </script>
   </body>
 </html>
