@@ -2571,6 +2571,12 @@ function deleteCheck(i){ moveToTrash('checklists', appData.checklists[i], i); re
                     updateBrowserPermissionUI();
                     checkNotifications(); // Check once on page load
                 }
+        // ✅ Fix: render Trash only after all scripts + storage loaded
+              window.addEventListener('load', () => {
+                if (!appData.trash) appData.trash = [];
+                renderTrash();
+              });
+
                 // ---------- End Initial Render Code ----------
 
               })();
