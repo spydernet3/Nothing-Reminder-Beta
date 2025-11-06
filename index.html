@@ -383,6 +383,26 @@
       button, input, select, textarea {
       font-size: 16px !important;
       }
+      /* Prevent auto zoom and focus scaling when pressing buttons */
+button, .menu-btn, .icon-btn {
+  font-size: 16px !important;  /* required threshold */
+  touch-action: manipulation;  /* disables double-tap zoom */
+  -webkit-tap-highlight-color: transparent; /* removes flash zoom */
+}
+
+/* Disable outline & zoom focus */
+button:focus, .menu-btn:focus, .icon-btn:focus {
+  outline: none;
+  -webkit-focus-ring-color: transparent;
+  transform: scale(1); /* override Safari zoom */
+}
+
+/* Make the entire app ignore focus zoom on all inputs */
+input, textarea, select {
+  font-size: 16px !important;
+  -webkit-user-select: none;
+}
+
     </style>
   </head>
   <body>
