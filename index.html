@@ -361,20 +361,6 @@
       input:checked + .slider:before {
         transform: translateX(26px);
       }
-      .sidebar {
-        width: 220px;
-        background: #666;
-        color: #fff;
-        position: fixed;
-        height: 100%;
-        left: 0;
-        display: flex;
-        flex-direction: column;
-        padding: 12px;
-        gap: 8px;
-        transition: left 0s;
-        overflow-y: auto; /* ADD THIS LINE */
-      }
     </style>
   </head>
   <body>
@@ -2576,6 +2562,30 @@ function deleteCheck(i){ moveToTrash('checklists', appData.checklists[i], i); re
                 if (!appData.trash) appData.trash = [];
                 renderTrash();
               });
+// >>> Insert this block just before the final "})();" in your script <<<
+// Ensure only Home is visible and sidebar is hidden on initial page load
+window.addEventListener('load', () => {
+  const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main');
+  const toggleBtn = document.getElementById('toggleBtn');
+
+  // Hide sidebar off-screen (same positions your toggle uses)
+  if (sidebar) sidebar.style.left = '-220px';
+
+  // Make main area full width (no left margin)
+  if (main) main.style.marginLeft = '0';
+
+  // Make toggle button show "closed" state
+  if (toggleBtn) toggleBtn.textContent = '⮞';
+
+  // Hide all pages and then show only Home
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  const home = document.getElementById('home');
+  if (home) home.classList.remove('hidden');
+
+  // Ensure Trash (and other widgets) render after load too
+  if (typeof renderTrash === 'function') renderTrash();
+});
 
                 // ---------- End Initial Render Code ----------
 
