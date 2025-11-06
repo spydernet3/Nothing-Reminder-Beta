@@ -1986,10 +1986,13 @@ function deleteForever(i){
         const main = byId('main');
         const toggleBtn = byId('toggleBtn');
 
-        function showPage(pageId){
-          document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
-          const targetPage = byId(pageId);
-          targetPage.classList.remove('hidden');
+        function showPage(pageId) {
+  // Blur any active element to prevent mobile focus zoom
+  if (document.activeElement) document.activeElement.blur();
+
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  const target = document.getElementById(pageId);
+  if (target) target.classList.remove('hidden');
 
           // Special handling for the notifications page
           if (pageId === 'notifications') {
