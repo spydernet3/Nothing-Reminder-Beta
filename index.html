@@ -181,26 +181,32 @@
       .settings-panel.visible { display: flex; }
 
       /* Consistent button styling for all sections */
-      #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
-      #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
-      #viewCheckToggle, #viewRemindersToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
-        position: relative;
-        user-select: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 600;
-        font-size: 15px;
-        cursor: pointer;
-        transition: left 0s;
-        padding: 10px;
-        border: none;
-        background: #888;
-        color: #fff;
-        border-radius: 6px;
-        text-align: left;
-      }
+      /* Consistent button styling for all sections (Mobile-Safe) */
+#showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
+#homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn, #viewbudgetToggle, #showAddCheckBtn,
+#viewCheckToggle, #viewRemindersToggle, #monthlyCalendarToggle, #calculatorToggle, #viewHistoryToggle {
+  position: relative;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px !important;   /* ✅ Prevents mobile zoom */
+  cursor: pointer;
+  padding: 10px;
+  border: none;
+  background: #888;
+  color: #fff;
+  border-radius: 6px;
+  text-align: left;
 
+  /* ✅ Mobile safe additions */
+  -webkit-tap-highlight-color: transparent;  /* removes gray flash/zoom */
+  touch-action: manipulation;                /* disables double-tap zoom */
+  -webkit-user-select: none;                 /* no text highlight */
+  -webkit-touch-callout: none;               /* disable long-press popup */
+  outline: none;                             /* prevent focus zoom border */
+}
       #showAddFormBtn:hover, #homeRemindersToggle:hover, #showAddNoteBtn:hover, #viewNotesToggle:hover,
       #homeNotesToggle:hover, #homeBudgetsToggle:hover, #homeCheckToggle:hover, #showAddBudgetBtn:hover,
       #viewbudgetToggle:hover, #showAddCheckBtn:hover,#viewCheckToggle:hover, #viewRemindersToggle:hover {
