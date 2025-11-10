@@ -1225,16 +1225,7 @@
             // NOTIFICATION CHANGE: Trigger notification check on every data save.
             await checkNotifications(); // Correctly awaiting the async function
           // Replace line 433-436 with:
-} catch (err) {
-  console.error("Save failed:", err);
-  if (err.name === 'QuotaExceededError') {
-    alert('❌ Storage full! Please delete some items (notes with files, large budgets) from Trash Bin or main pages.');
-    // Optionally: Show storage usage
-    if (typeof updateStorageUsage === 'function') updateStorageUsage();
-  }
-  throw err; // Re-throw to prevent data loss assumptions
-}
-          }
+
         
 
         // Replace lines 552-557 with:
