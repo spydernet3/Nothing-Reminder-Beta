@@ -1196,6 +1196,7 @@
 
         let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
         // Merge with defaults to ensure new notif keys are present on load
+        appData = { ...defaultData, ...appData };
         /// Replace line 413 with:
 const validKeys = Object.keys(defaultData);
 appData = { ...defaultData, ...Object.fromEntries(
