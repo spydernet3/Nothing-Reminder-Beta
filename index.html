@@ -1211,8 +1211,7 @@
         let currentYear = new Date().getFullYear(); // NEW: Calendar state
 
         // <!-- NOTIFICATION FIX 3: Modified saveAll to be async and call checkNotifications -->
-        // Modified save function to use localStorage only
-        async function saveAll() {
+      async function saveAll() {
           try {
             const dataStr = JSON.stringify(appData);
             localStorage.setItem(STORAGE_KEY, dataStr);
@@ -1224,9 +1223,13 @@
             }
             // NOTIFICATION CHANGE: Trigger notification check on every data save.
             await checkNotifications(); // Correctly awaiting the async function
-          // Replace line 433-436 with:
-
-        
+          } catch (err) {
+            console.error("Save failed:", err);
+            if (err.name === 'QuotaExceededError') {
+              console.error("Storage is full. Please delete some data to make space.");
+            }
+          }
+        }
 
         // Replace lines 552-557 with:
 function daysLeft(endDateStr){
