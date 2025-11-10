@@ -1198,10 +1198,6 @@
         // Merge with defaults to ensure new notif keys are present on load
         appData = { ...defaultData, ...appData };
         /// Replace line 413 with:
-const validKeys = Object.keys(defaultData);
-appData = { ...defaultData, ...Object.fromEntries(
-  Object.entries(appData).filter(([key]) => validKeys.includes(key))
-)};
         // Ensure new property is initialized if old data exists
         if (!appData.calculationHistory) appData.calculationHistory = [];
 
