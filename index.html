@@ -969,7 +969,6 @@
                 style="margin-top: 10px; font-weight: 600;"
               ></p>
             </div>
-          
             <!-- ---------- BMI Calculator ---------- -->
 <div class="calculator-mode hidden" id="bmiCalculator">
   <h3>🧮 BMI Calculator</h3>
@@ -978,6 +977,8 @@
   <label>Weight (kg): <input type="number" id="bmiWeight" min="1" placeholder="Enter weight in kg" /></label><br><br>
   <button id="calcBMIButton">Calculate BMI</button>
   <p id="bmiResult" style="margin-top: 10px; font-weight: 600;"></p>
+</div>
+
           </div>
         </div>
         <div class="add-area">
@@ -2446,25 +2447,6 @@
 
             saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${result}`, result);
                 }
-                // ---------- Calculator Mode Switcher ----------
-                function switchCalculatorMode() {
-                  const mode = byId('calculatorMode').value;
-                  document.querySelectorAll('.calculator-mode').forEach(el => el.classList.add('hidden'));
-
-                  if (mode === 'normal') {
-                    byId('normalCalculator').classList.remove('hidden');
-                  } else if (mode === 'age') {
-                    byId('ageCalculator').classList.remove('hidden');
-                  } else if (mode === 'date') {
-                    byId('dateCalculator').classList.remove('hidden');
-                  }
-                    else if (mode === 'bmi') {
-                    byId('bmiCalculator').classList.remove('hidden');
-                  }
-
-                  // Reset history index when mode changes
-                  editingHistoryIndex = null;
-                }
                 // ---------- BMI Calculator Logic ----------
 function calculateBMI() {
   const age = parseInt(byId('bmiAge').value);
@@ -2507,6 +2489,26 @@ function calculateBMI() {
 }
 
 byId('calcBMIButton').addEventListener('click', calculateBMI);
+
+                // ---------- Calculator Mode Switcher ----------
+                function switchCalculatorMode() {
+                  const mode = byId('calculatorMode').value;
+                  document.querySelectorAll('.calculator-mode').forEach(el => el.classList.add('hidden'));
+
+                  if (mode === 'normal') {
+                    byId('normalCalculator').classList.remove('hidden');
+                  } else if (mode === 'age') {
+                    byId('ageCalculator').classList.remove('hidden');
+                  } else if (mode === 'date') {
+                    byId('dateCalculator').classList.remove('hidden');
+                  }
+                  else if (mode === 'bmi') {
+  byId('bmiCalculator').classList.remove('hidden');
+}
+
+                  // Reset history index when mode changes
+                  editingHistoryIndex = null;
+                }
 
                 // ---------- Monthly Calendar Logic ----------
                 function renderCalendar(month, year) {
