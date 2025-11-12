@@ -737,8 +737,9 @@
         <h3>Version Info!</h3>
         <ul>
           <p>Version 13.5.4</p>
-          <p>Last Updated: 09-Nov-2025</p>
-          <p>Project Type: Open source</p>
+          <p>Last Updated: 11-Nov-2025</p>
+          <p>Project Mode: Open source</p>
+          <p>App Size    : 7.0KB </p>
         </ul>
       </div>
 
@@ -750,7 +751,7 @@
             By Pressing Add to Home Screen Button There You can see Install App
             to install page as PWA
           </li>
-          <li>In App Notification logic working here</li>
+          <li>In App Notification logic used </li>
         </ul>
         <h3>Reminder!</h3>
         <hr />
@@ -884,6 +885,7 @@
                 <option value="normal">Normal Calculator</option>
                 <option value="age">Age Calculator</option>
                 <option value="date">Date Difference Calculator</option>
+                <option value="bmi">BMI Calculator</option>
                 <option value="scientific" disabled>
                   Scientific Calculator (WIP)
                 </option>
@@ -967,6 +969,15 @@
                 style="margin-top: 10px; font-weight: 600;"
               ></p>
             </div>
+          
+            <!-- ---------- BMI Calculator ---------- -->
+<div class="calculator-mode hidden" id="bmiCalculator">
+  <h3>🧮 BMI Calculator</h3>
+  <label>Age: <input type="number" id="bmiAge" min="1" placeholder="Enter age" /></label><br><br>
+  <label>Height (cm): <input type="number" id="bmiHeight" min="50" placeholder="Enter height in cm" /></label><br><br>
+  <label>Weight (kg): <input type="number" id="bmiWeight" min="1" placeholder="Enter weight in kg" /></label><br><br>
+  <button id="calcBMIButton">Calculate BMI</button>
+  <p id="bmiResult" style="margin-top: 10px; font-weight: 600;"></p>
           </div>
         </div>
         <div class="add-area">
@@ -1197,7 +1208,6 @@
         let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
         // Merge with defaults to ensure new notif keys are present on load
         appData = { ...defaultData, ...appData };
-        /// Replace line 413 with:
         // Ensure new property is initialized if old data exists
         if (!appData.calculationHistory) appData.calculationHistory = [];
 
@@ -1211,7 +1221,8 @@
         let currentYear = new Date().getFullYear(); // NEW: Calendar state
 
         // <!-- NOTIFICATION FIX 3: Modified saveAll to be async and call checkNotifications -->
-      async function saveAll() {
+        // Modified save function to use localStorage only
+        async function saveAll() {
           try {
             const dataStr = JSON.stringify(appData);
             localStorage.setItem(STORAGE_KEY, dataStr);
@@ -1231,14 +1242,11 @@
           }
         }
 
-        // Replace lines 552-557 with:
-function daysLeft(endDateStr){
-  if(!endDateStr || typeof endDateStr !== 'string') return null;
-  const parts = endDateStr.split('-');
-  if (parts.length !== 3) return null;
-  const [y,m,d] = parts.map(Number);
-  if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
-  // ... rest of function
+        function daysLeft(endDateStr){
+          if(!endDateStr) return null;
+          const [y,m,d] = endDateStr.split('-').map(Number);
+          const end = new Date(y,m-1,d);
+          const now = new Date();
           const diffTime = end.setHours(0,0,0,0) - now.setHours(0,0,0,0);
           return Math.floor(diffTime / (1000*60*60*24));
         }
@@ -1398,22 +1406,7 @@ function daysLeft(endDateStr){
               });
 
               tableHTML += '</tr></table>';
-             // Add this helper function after line 393:
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Then in table rendering, change:
-tableHTML += `<th style="...">${cellContent}</th>`;
-// To:
-tableHTML += `<th style="...">${escapeHtml(cellContent)}</th>`;
-
-// And:
-tableHTML += `<td style="...">${cellContent}</td>`;
-// To:
-tableHTML += `<td style="...">${escapeHtml(cellContent)}</td>`;
+              text.innerHTML = tableHTML;
             } else {
               text.innerHTML = `<b>${(n.text || '').substring(0, 50)}...</b><br><small style=\"opacity:0.7\">${n.createdAt || ''}</small>`;
             }
@@ -1564,8 +1557,8 @@ tableHTML += `<td style="...">${escapeHtml(cellContent)}</td>`;
         const li = document.createElement('li');
         const left = document.createElement('div');
          left.className = 'item-left';
-// Replace line 834 with:
-const used = b.expenses ? b.expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0) : 0;
+
+          const used = b.expenses ? b.expenses.reduce((sum, e) => sum + e.amount, 0) : 0;
           const remaining = b.amount - used;
           const start = b.startDate ? new Date(b.startDate) : null;
           const end = b.endDate ? new Date(b.endDate) : null;
@@ -1585,30 +1578,18 @@ const used = b.expenses ? b.expenses.reduce((sum, e) => sum + (Number(e.amount) 
           expList.style.marginTop = '6px';
           expList.style.fontSize = '13px';
           
-          expList.innerHTML = ''; // Clear first
-if (b.expenses && b.expenses.length) {
-  b.expenses.forEach(e => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #333;padding:3px 0;';
-    
-    const dateSpan = document.createElement('span');
-    dateSpan.textContent = '📅 ' + e.date;
-    
-    const titleSpan = document.createElement('span');
-    titleSpan.textContent = '💸 ' + e.title;
-    
-    const amountSpan = document.createElement('span');
-    amountSpan.textContent = '₹' + e.amount;
-    
-    div.append(dateSpan, titleSpan, amountSpan);
-    expList.appendChild(div);
-  });
-} else {
-  const p = document.createElement('p');
-  p.style.opacity = '0.6';
-  p.textContent = 'No expenses yet';
-  expList.appendChild(p);
-}
+          expList.innerHTML = (b.expenses && b.expenses.length)
+        ? b.expenses
+            .map(
+              e =>
+                `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #333;padding:3px 0;">
+                  <span>📅 ${e.date}</span>
+                  <span>💸 ${e.title}</span>
+                  <span>₹${e.amount}</span>
+                </div>`
+            )
+            .join('')
+        : `<p style="opacity:0.6;">No expenses yet</p>`;
 
             // --- EXPANDABLE FORM for adding expenses ---
             const expForm = document.createElement('div');
@@ -1977,17 +1958,16 @@ if (b.expenses && b.expenses.length) {
 
             // Get the first 3 items or all items if less than 3
             const previewItems = check.items.slice(0, 3);
-            itemsPreview.innerHTML = ''; // Clear first
-previewItems.forEach(item => {
-  const span = document.createElement('span');
-  span.textContent = '• ' + item;
-  itemsPreview.appendChild(span);
-  itemsPreview.appendChild(document.createElement('br'));
-});
-if(check.items.length > 3) {
-  const moreText = document.createTextNode('... and ' + (check.items.length - 3) + ' more items');
-  itemsPreview.appendChild(moreText);
-}
+            let itemsText = previewItems.map(item => `\u2022 ${item}`).join('<br>'); // \u2022 is a bullet point
+
+            // Add an ellipsis if there are more than 3 items
+            if(check.items.length > 3) {
+                itemsText += '<br>... and ' + (check.items.length - 3) + ' more items';
+            } else if (check.items.length === 0) {
+                itemsText = 'No items in list.';
+            }
+
+            itemsPreview.innerHTML = itemsText;
             // END OF MODIFICATION
 
             const statusInfo=document.createElement('div');
@@ -2052,14 +2032,7 @@ if(check.items.length > 3) {
               const li = document.createElement('li');
               const left = document.createElement('div');
               left.className = 'item-left';
-              const textSpan = document.createElement('b');
-textSpan.textContent = (n.text || '').substring(0, 50) + '...';
-const timeSmall = document.createElement('small');
-timeSmall.style.opacity = '0.7';
-timeSmall.textContent = n.createdAt || '';
-left.appendChild(textSpan);
-left.appendChild(document.createElement('br'));
-left.appendChild(timeSmall);
+              left.innerHTML = `<b>${t.type.toUpperCase()}</b><br>${(t.item.title||t.item.text||'Untitled')}<br><small>Deleted: ${new Date(t.deletedAt).toLocaleString()}</small>`;
               const right = document.createElement('div');
               right.style.display = 'flex';
               const restoreBtn = document.createElement('button');
@@ -2177,13 +2150,6 @@ left.appendChild(timeSmall);
               appData.profilePhoto=ev.target.result;
               byId('profilePhoto').src=ev.target.result;
               saveAll();
-              // After line 1145, add:
-reader.onerror = function() {
-  console.error('Failed to read profile photo');
-  profilePhotoInput.value = '';
-};
-reader.readAsDataURL(file);
-profilePhotoInput.value = ''; // Clear input
             };
             reader.readAsDataURL(file);
           }
@@ -2394,27 +2360,15 @@ profilePhotoInput.value = ''; // Clear input
                   } else if (value === 'backspace') {
                     currentExpression = currentExpression.length > 1 ? currentExpression.slice(0, -1) : '0';
                   } else if (value === 'equals') {
-                    // Replace lines 1261-1270 with:
-  try {
-    // Sanitize: only allow numbers and basic operators
-    const sanitized = currentExpression.replace(/[^0-9+\-*/.() ]/g, '');
-    if (sanitized !== currentExpression) {
-      currentExpression = 'Invalid';
-      normalDisplay.value = currentExpression;
-      return;
-    }
-    // Use Function constructor (safer than eval)
-    const result = new Function('return ' + sanitized)();
-    if (!isFinite(result)) {
-      currentExpression = 'Error';
-    } else {
-      saveHistory(`${currentExpression} = ${result}`);
-      currentExpression = String(result);
-    }
-  } catch (e) {
-    currentExpression = 'Error';
-  }
-
+                    try {
+                      // Safely evaluate the expression
+                      // eslint-disable-next-line no-eval
+                      const result = eval(currentExpression);
+                      saveHistory(`${currentExpression} = ${result}`);
+                      currentExpression = String(result);
+                    } catch (e) {
+                      currentExpression = 'Error';
+                    }
                   } else {
                     if (currentExpression === '0' && value !== '.') {
                       currentExpression = value;
@@ -2449,20 +2403,9 @@ profilePhotoInput.value = ''; // Clear input
                   let age_months = asOf.getMonth() - dob.getMonth();
                   let age_days = asOf.getDate() - dob.getDate();
 
-                  // Replace lines 1292-1302 with:
-let years = asOf.getFullYear() - dob.getFullYear();
-let months = asOf.getMonth() - dob.getMonth();
-let days = asOf.getDate() - dob.getDate();
-
-if (days < 0) {
-  months--;
-  const prevMonth = new Date(asOf.getFullYear(), asOf.getMonth(), 0);
-  days += prevMonth.getDate();
-}
-if (months < 0) {
-  years--;
-  months += 12;
-
+                  if (age_days < 0) {
+                    age_months--;
+                    age_days += new Date(asOf.getFullYear(), asOf.getMonth(), 0).getDate(); // Days in the previous month
                   }
                   if (age_months < 0) {
                     age_years--;
@@ -2488,7 +2431,7 @@ if (months < 0) {
                    const start = new Date(startStr);
                const end = new Date(endStr);
               const diffTime = Math.abs(end - start);
-               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)+1);
 
             // Calculate months and remaining days
             const totalMonths = Math.floor(diffDays / 30); // Approximate month as 30 days
@@ -2515,6 +2458,10 @@ if (months < 0) {
                   } else if (mode === 'date') {
                     byId('dateCalculator').classList.remove('hidden');
                   }
+                    else if (mode === 'bmi') {
+                    byId('bmiCalculator').classList.remove('hidden');
+                  }
+
                   // Reset history index when mode changes
                   editingHistoryIndex = null;
                 }
@@ -2565,6 +2512,49 @@ if (months < 0) {
                     }
                     renderCalendar(currentMonth, currentYear);
                 }
+                // ---------- BMI Calculator Logic ----------
+function calculateBMI() {
+  const age = parseInt(byId('bmiAge').value);
+  const height = parseFloat(byId('bmiHeight').value);
+  const weight = parseFloat(byId('bmiWeight').value);
+  const resultEl = byId('bmiResult');
+
+  if (!age || !height || !weight) {
+    resultEl.textContent = '⚠️ Please fill all fields.';
+    return;
+  }
+
+  // Calculate BMI
+  const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+
+  // Determine category
+  let category = '';
+  if (bmi < 18.5) category = 'Underweight';
+  else if (bmi < 25) category = 'Normal';
+  else if (bmi < 30) category = 'Overweight';
+  else category = 'Obese';
+
+  // Include age relevance
+  let ageNote = '';
+  if (age < 18 && bmi > 24) ageNote = '⚠️ For children/teens, consult pediatric BMI charts.';
+  else if (age >= 18 && bmi > 24.9) ageNote = '⚠️ High for adult. Consider healthy diet/exercise.';
+
+  resultEl.textContent = `BMI: ${bmi} (${category}) ${ageNote}`;
+
+  // Save BMI history to appData
+  const historyObj = {
+    title: `BMI Result`,
+    result: `Age: ${age} | Height: ${height}cm | Weight: ${weight}kg | BMI: ${bmi} (${category})`,
+    createdAt: formatDateDMYWithTime(new Date())
+  };
+  if (!appData.calculationHistory) appData.calculationHistory = [];
+  appData.calculationHistory.push(historyObj);
+  saveAll();
+  renderHistory();
+}
+
+byId('calcBMIButton').addEventListener('click', calculateBMI);
+
                 function moveToTrash(type, item, index) {
                   appData.trash.push({ type, item, deletedAt: new Date().toISOString() });
                   appData[type].splice(index, 1);
@@ -2800,17 +2790,7 @@ if (months < 0) {
                 const usedBytes = getLocalStorageSize();
                 const maxBytes = 500 * 1024 * 1024; // 500 MB quota
                 const percent = Math.min((usedBytes / maxBytes) * 100, 100);
-            // Add BEFORE line 1016:
-
-  // ADD THIS CHECK:
-  if (file.size > MAX_FILE_SIZE) {
-    alert('❌ File too large! Maximum size is 5M00B. Please choose a smaller file.');
-    fileInput.value = '';
-    return;
-  }
-  
-  const reader = new FileReader();
-  // ... rest of code
+            
                 // fill bar & color
                 storageBar.style.width = percent.toFixed(1) + '%';
                 if (percent < 80) storageBar.style.background = 'linear-gradient(90deg,#4caf50,#8bc34a)';
