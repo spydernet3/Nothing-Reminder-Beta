@@ -459,6 +459,75 @@
 
 .moon-day:last-child { border: none; }
 
+#panchangamToggle {
+  background:#888;
+  color:#fff;
+  font-weight:600;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:8px;
+}
+
+#panchangamContainer {
+  background:#222;
+  color:#fff;
+  border-radius:8px;
+  padding:12px;
+  margin-top:5px;
+  display:none;
+}
+
+#panchangamContainer.visible { display:block; }
+
+.panch-item {
+  padding:6px 0;
+  font-size:15px;
+}
+#sunToggle {
+  background:#888;
+  color:#fff;
+  font-weight:600;
+  padding:10px;
+  border-radius:6px;
+  width:100%;
+  margin-top:8px;
+}
+
+#sunContainer {
+  background:#222;
+  color:#fff;
+  border-radius:8px;
+  padding:12px;
+  margin-top:5px;
+  display:none;
+}
+
+#sunContainer.visible { display:block; }
+#compassToggle {
+  background:#888;
+  color:#fff;
+  font-weight:600;
+  padding:10px;
+  border-radius:6px;
+  width:100%;
+  margin-top:8px;
+}
+
+#compassContainer {
+  background:#222;
+  color:#fff;
+  padding:12px;
+  border-radius:8px;
+  margin-top:5px;
+  display:none;
+}
+
+#compassContainer.visible { display:block; }
 
     </style>
   </head>
@@ -771,15 +840,11 @@
         </div>
       </div>
 
-      <!-- Fix improper list nesting in Terms section -->
-<div id="terms" class="page hidden">
-  <h2>Privacy Policy!</h2>
-  <div class="section">
-    <h3>📂 Data We Collected</h3>
-    <!-- Content here -->
-  </div>
-<ul>
-
+      <div id="terms" class="page hidden">
+        <h2>Privacy Policy!</h2>
+        <ul>
+          <h2>📂 Data We Colleted</h2>
+          <ul>
           <p>
             App data are stored using local storage. Avoid data losses before
             formatting the device.
@@ -1072,6 +1137,17 @@
         </div>
         <button id="moonPhaseToggle">🌙 MOON PHASE <span class="arrow">▼</span></button>
 <div id="moonPhaseContainer" class="hidden"></div>
+<!-- TAMIL PANCHANGAM -->
+<button id="panchangamToggle">📅 Tamil Panchangam</button>
+<div id="panchangamContainer" class="hidden"></div>
+<button id="sunToggle">🌞 Sunrise / Sunset</button>
+<div id="sunContainer" class="hidden"></div>
+<button id="compassToggle">🧭 Compass</button>
+<div id="compassContainer" class="hidden">
+  <div id="compassDegree" style="text-align:center; font-size:20px; margin-bottom:10px;"></div>
+  <img src="compass.png" id="compassImg" style="width:240px; display:block; margin:auto;">
+</div>
+
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -2655,6 +2731,111 @@ function moonEmoji(eng) {
     "Waning Crescent": "🌘"
   };
   return icons[eng] || "🌙";
+}
+// --------- PANCHANGAM ---------
+const pBtn = document.getElementById('panchangamToggle');
+const pDiv = document.getElementById('panchangamContainer');
+
+pBtn.addEventListener('click', () => {
+  pDiv.classList.toggle('visible');
+  if (pDiv.classList.contains('visible')) renderPanchangam();
+});
+
+function renderPanchangam() {
+  const now = new Date();
+  const dateStr = now.toDateString();
+
+  const tamilMonths = [
+    "சித்திரை","வைகாசி","ஆனி","ஆடி","ஆவணி","புரட்டாசி",
+    "ஐப்பசி","கார்த்திகை","மார்கழி","தை","மாசி","பங்குனி"
+  ];
+
+  // Basic Tamil month estimation (offline simple model)
+  const startTamilMonth = new Date(now.getFullYear(), 3, 14); // Apr 14
+  const diff = now - startTamilMonth;
+  const tamilMonthIndex = Math.floor(diff / (30 * 24 * 60 * 60 * 1000)) % 12;
+
+  const nakshatra = ["அசுவினி","பரணி","கார்த்திகை","ரோகிணி","மிருகசீரிஷம்",
+  "திருவாதிரை","புனர்பூசம்","பூசம்","ஆயில்யம்","மகம்","பூரம்","உத்திரம்",
+  "ஹஸ்தம்","சித்திரை","சுவாதி"," விசாகம்","அனுஷம்","கேட்டை","மூலம்","பூராடம்",
+  "உத்திராடம்","திருவோணம்","அவிட்டம்","சதயம்","பூரட்டாதி","உத்திரட்டாதி","ரேவதி"];
+
+  // simple offline sequence
+  const nakIndex = (now.getDate() + now.getMonth() * 3) % nakshatra.length;
+
+  const tithiList = [
+    "பிரதமை","துவிதியை","த்ருதியை","சதுர்த்தி","பஞ்சமி","ஷஷ்டி","சப்தமி",
+    "அஷ்டமி","நவமி","தசமி","ஏகாதசி","துவாதசி",
+    "த்ரயோதசி","சதுர்தசி","பௌர்ணமி / அமாவாசை"
+  ];
+
+  const tithiIndex = (now.getDate() % 15);
+
+  const raahuKalam = [
+    "07:30–09:00","15:00–16:30","12:00–13:30","13:30–15:00",
+    "10:30–12:00","09:00–10:30","16:30–18:00"
+  ];
+  const weekday = now.getDay();
+
+  pDiv.innerHTML = `
+    <h3>📅 Tamil Panchangam</h3>
+    <div class="panch-item">📆 Today: ${dateStr}</div>
+    <div class="panch-item">🌙 Tithi: ${tithiList[tithiIndex]}</div>
+    <div class="panch-item">✨ Nakshatra: ${nakshatra[nakIndex]}</div>
+    <div class="panch-item">📜 Tamil Month: ${tamilMonths[tamilMonthIndex]}</div>
+    <div class="panch-item">⚠️ Raahu Kalam: ${raahuKalam[weekday]}</div>
+  `;
+}
+// ---------- SUNRISE / SUNSET (offline) ----------
+const sBtn = document.getElementById('sunToggle');
+const sDiv = document.getElementById('sunContainer');
+
+sBtn.addEventListener('click', () => {
+  sDiv.classList.toggle('visible');
+  if (sDiv.classList.contains('visible')) renderSunTimes();
+});
+
+// Basic offline formula (approx)
+function calcSunrise(lat, lng, dayOfYear) {
+  return 6 + (Math.sin(dayOfYear / 58) * 0.6); // 5.4 to 6.6 AM approx
+}
+function calcSunset(lat, lng, dayOfYear) {
+  return 18 + (Math.sin(dayOfYear / 58) * 0.6); // 17.4 to 18.6 PM approx
+}
+
+function renderSunTimes() {
+  const now = new Date();
+  const day = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / 86400000);
+
+  const sunrise = calcSunrise(13.0827, 80.2707, day);
+  const sunset = calcSunset(13.0827, 80.2707, day);
+
+  sDiv.innerHTML = `
+    <h3>🌞 Sunrise / Sunset</h3>
+    <div>🌅 Sunrise (உதயம்): ${sunrise.toFixed(2)} AM</div>
+    <div>🌇 Sunset (அஸ்தமனம்): ${sunset.toFixed(2)} PM</div>
+  `;
+}
+// --------- COMPASS ----------
+const cBtn = document.getElementById('compassToggle');
+const cDiv = document.getElementById('compassContainer');
+const cImg = document.getElementById('compassImg');
+const cDeg = document.getElementById('compassDegree');
+
+cBtn.addEventListener('click', () => {
+  cDiv.classList.toggle('visible');
+});
+
+if (window.DeviceOrientationEvent) {
+  window.addEventListener('deviceorientation', (e) => {
+    let degree = e.alpha; 
+    if (degree != null) {
+      cImg.style.transform = `rotate(${degree * -1}deg)`;
+      cDeg.textContent = `Direction: ${Math.round(degree)}°`;
+    }
+  });
+} else {
+  cDeg.textContent = "Compass not supported on this device.";
 }
 
 
