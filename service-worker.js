@@ -1,5 +1,5 @@
 // -------- Service Worker for Full Offline Support --------
-const CACHE_NAME = "spydernet-app-v13.5.5";
+const CACHE_NAME = "smart_reminder_app_v1";
 const FILES_TO_CACHE = [
   "/", 
   "/index.html",
