@@ -184,7 +184,7 @@
       /* Consistent button styling for all sections */
       #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
       #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
-      #viewCheckToggle, #viewRemindersToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
+      #viewCheckToggle, #viewRemindersToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle , #moonPhaseToggle {
         position: relative;
         user-select: none;
         display: flex;
@@ -423,6 +423,43 @@
 #calcBMIButton:hover {
   background: #43a047;
 }
+#moonPhaseToggle {
+  background: #888;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 8px;
+}
+
+#moonPhaseContainer {
+  background: #ffffff;
+  color: black;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 5px;
+  display: none;
+}
+
+#moonPhaseContainer.visible { display: block; }
+
+.moon-day {
+  display: flex;
+  justify-content: space-between;
+  margin: 3px 0;
+  padding: 5px 6px;
+  border-bottom: 1px solid #444;
+}
+
+.moon-day:last-child { border: none; }
+
+
     </style>
   </head>
   <body>
@@ -734,11 +771,15 @@
         </div>
       </div>
 
-      <div id="terms" class="page hidden">
-        <h2>Privacy Policy!</h2>
-        <ul>
-          <h2>📂 Data We Colleted</h2>
-          <ul>
+      <!-- Fix improper list nesting in Terms section -->
+<div id="terms" class="page hidden">
+  <h2>Privacy Policy!</h2>
+  <div class="section">
+    <h3>📂 Data We Collected</h3>
+    <!-- Content here -->
+  </div>
+<ul>
+
           <p>
             App data are stored using local storage. Avoid data losses before
             formatting the device.
@@ -768,13 +809,13 @@
             <a href="https://github.com/spydernet3" target="_blank"
               >Spydernet Github ↠</a>
           </p>
-          <p> mersalmgblog@gmail.com</p>
+          <p> Developer : mersalmgblog@gmail.com</p>
         </ul>
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.5.4</p>
-          <p>Last Updated: 11-Nov-2025</p>
+          <p>Version 13.5.5</p>
+          <p>Last Updated: 12-Nov-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -1028,9 +1069,9 @@
   <button id="calcBMIButton">Calculate BMI</button>
   <p id="bmiResult" style="margin-top: 8px; font-weight: 600;"></p>
 </div>
-
-          </div>
         </div>
+        <button id="moonPhaseToggle">🌙 MOON PHASE <span class="arrow">▼</span></button>
+<div id="moonPhaseContainer" class="hidden"></div>
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -2539,6 +2580,83 @@ function calculateBMI() {
 }
 
 byId('calcBMIButton').addEventListener('click', calculateBMI);
+// ---------- MOON PHASE FEATURE ----------
+const moonToggle = document.getElementById('moonPhaseToggle');
+const moonContainer = document.getElementById('moonPhaseContainer');
+
+moonToggle.addEventListener('click', () => {
+  moonContainer.classList.toggle('visible');
+  if (moonContainer.classList.contains('visible')) {
+    renderMoonPhases();
+  }
+});
+
+function renderMoonPhases() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  moonContainer.innerHTML = `<h3>🌙 ${now.toLocaleString('default', { month: 'long' })} ${year} – Moon Phases</h3>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const phaseName = getMoonPhase(year, month, d);
+    const tamilName = tamilPhase(phaseName);
+    const emoji = moonEmoji(phaseName);
+    const div = document.createElement('div');
+    div.className = 'moon-day';
+    div.innerHTML = `<span>${d}/${month + 1}/${year}</span><span>${phaseName} (${tamilName}) ${emoji}</span>`;
+    moonContainer.appendChild(div);
+  }
+}
+
+// Simple moon-phase algorithm
+function getMoonPhase(y, m, d) {
+  const lp = 2551443;
+  const new_moon = new Date(1970, 0, 7, 20, 35, 0);
+  const phase = ((new Date(y, m, d).getTime() - new_moon.getTime()) / 1000) % lp;
+  const index = Math.floor((phase / lp) * 8 + 0.5) % 8;
+  const names = [
+    "New Moon",
+    "Waxing Crescent",
+    "First Quarter",
+    "Waxing Gibbous",
+    "Full Moon",
+    "Waning Gibbous",
+    "Last Quarter",
+    "Waning Crescent"
+  ];
+  return names[index];
+}
+
+function tamilPhase(eng) {
+  switch (eng) {
+    case "New Moon": return "அமாவாசை (Amavasai)";
+    case "Waxing Crescent": return "பிறை (Pirai)";
+    case "First Quarter": return "அரைக்கதிர் (Araikathir)";
+    case "Waxing Gibbous": return "பௌர்ணமி நெருங்கல் (Pournami Nerungal)";
+    case "Full Moon": return "பௌர்ணமி (Pournami)";
+    case "Waning Gibbous": return "மறைவிறை (Maraivirai)";
+    case "Last Quarter": return "அரை அமைதி (Arai Amaithi)";
+    case "Waning Crescent": return "தேய்பிறை (Theipirai)";
+    default: return "";
+  }
+}
+
+function moonEmoji(eng) {
+  const icons = {
+    "New Moon": "🌑",
+    "Waxing Crescent": "🌒",
+    "First Quarter": "🌓",
+    "Waxing Gibbous": "🌔",
+    "Full Moon": "🌕",
+    "Waning Gibbous": "🌖",
+    "Last Quarter": "🌗",
+    "Waning Crescent": "🌘"
+  };
+  return icons[eng] || "🌙";
+}
+
 
                 // ---------- Calculator Mode Switcher ----------
                 function switchCalculatorMode() {
