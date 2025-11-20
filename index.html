@@ -798,6 +798,14 @@
             <span class="slider"></span>
           </label>
         </div>
+        <div class="notif-setting-item">
+  <span>🌙 Moon Phase Alerts</span>
+  <label class="toggle-switch">
+    <input type="checkbox" id="toggleMoonPhase">
+    <span class="slider"></span>
+  </label>
+</div>
+
       </div>
 
       <div id="terms" class="page hidden">
@@ -839,8 +847,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.5.6</p>
-          <p>Last Updated: 16-Nov-2025</p>
+          <p>Version 13.5.7</p>
+          <p>Last Updated: 17-Nov-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -1311,6 +1319,9 @@
             if(byId('toggleNotes')) byId('toggleNotes').checked = appData.notifNotes;
             if(byId('toggleChecklist')) byId('toggleChecklist').checked = appData.notifChecklist;
             if(byId('toggleBudget')) byId('toggleBudget').checked = appData.notifBudget;
+        if(byId('toggleMoonPhase')) 
+    byId('toggleMoonPhase').checked = appData.notifMoonPhase;
+
         }
 
         // Function to handle custom toggle changes
@@ -1342,6 +1353,7 @@
           // NEW: Calculation History
           calculationHistory: [],
           trash: [],
+          notifMoonPhase: true,
         };
 
         let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
@@ -2318,18 +2330,18 @@
             appData.reminders.forEach(r => {
                 const diff = daysLeft(r.endDate);
                 if (diff < 0) {
-    summary.push(`${r.title} — ❗Expired (${formatDMY(r.endDate)})`);
-}
-else if (diff === 0) {
-    summary.push(`${r.title} — Today`);
-}
-else if (diff === 1) {
-    summary.push(`${r.title} — Tomorrow`);
-}
-
-            });
-            return summary.length > 0 ? summary.join('\n') : "No reminders due today/tomorrow.";
-        }
+              summary.push(`${r.title} — ❗Expired (${formatDMY(r.endDate)})`);
+              }
+              else if (diff === 0) {
+                  summary.push(`${r.title} — Today`);
+              }
+              else if (diff === 1) {
+                  summary.push(`${r.title} — Tomorrow`);
+              }
+      
+                  });
+                  return summary.length > 0 ? summary.join('\n') : "No reminders due today/tomorrow.";
+              }
 
         // Helper 2: Checklist (Open status)
         function buildChecklistSummary() {
@@ -2374,6 +2386,75 @@ else if (diff === 1) {
              }
              return;
           }
+          // ---- Moon Phase Notification ----
+self.addEventListener("message", event => {
+    if (event.data?.type === "MOONPHASE_SETTING") {
+
+        if (event.data.enabled !== true) return;
+
+        const moon = getMoonPhaseSW();
+
+        if (moon === "amavasai") {
+            self.registration.showNotification("🌑 Amavasai Today", {
+                body: "A powerful spiritual new moon day.",
+                icon: "assets/icon.png",
+                tag: "moon-amavasai",
+                requireInteraction: true
+            });
+        }
+
+        if (moon === "pournami") {
+            self.registration.showNotification("🌕 Pournami Today", {
+                body: "A bright and auspicious full moon day.",
+                icon: "assets/icon.png",
+                tag: "moon-pournami",
+                requireInteraction: true
+            });
+        }
+    }
+});
+navigator.serviceWorker.addEventListener("message", event => {
+    if (event.data?.type === "REQUEST_MOONPHASE_SETTING") {
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: "MOONPHASE_SETTING",
+                enabled: appData.notifMoonPhase === true
+            });
+        }
+    }
+});
+
+// Background Moon Phase Notification
+async function checkMoonPhaseInSW() {
+
+    // Load notification permission from the page (saved in IndexedDB by browser)
+    const permission = await self.registration.permissions?.query?.({ name: "notifications" });
+
+    // Safety check
+    if (!permission || permission.state !== "granted") return;
+
+    // Read appData from clients (fallback)
+    const allClients = await clients.matchAll({ includeUncontrolled: true });
+    if (!allClients.length) return;
+
+    // Ask page for settings
+    allClients[0].postMessage({ type: "REQUEST_MOONPHASE_SETTING" });
+}
+
+// ---- Moon Phase Calculator ----
+function getMoonPhaseName() {
+    const now = new Date();
+    const synodicMonth = 29.53058867;
+    const knownNewMoon = new Date("2000-01-06T18:14:00Z").getTime();
+
+    const daysSince = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
+    const phase = daysSince % synodicMonth;
+
+    if (phase < 1.5) return "amavasai";        // 🌑 New Moon
+    if (phase > 13.5 && phase < 16.0) return "pournami"; // 🌕 Full Moon
+
+    return "normal";
+}
 
           // REMINDERS Summary
           if (appData.notifReminders) {
@@ -2973,6 +3054,10 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                 byId('toggleNotes').addEventListener('change', (e) => handleCustomNotifToggle('notifNotes', e));
                 byId('toggleChecklist').addEventListener('change', (e) => handleCustomNotifToggle('notifChecklist', e));
                 byId('toggleBudget').addEventListener('change', (e) => handleCustomNotifToggle('notifBudget', e));
+byId("toggleMoonPhase").addEventListener("change", (e) => {
+    appData.notifMoonPhase = e.target.checked;
+    saveAll();
+});
 
 
                 byId('showAddFormBtn').addEventListener('click', function() {
