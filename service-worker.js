@@ -1,59 +1,36 @@
-// -------- Service Worker for Full Offline Support --------
-const CACHE_NAME = "smart_reminder_app_v1";
-const FILES_TO_CACHE = [
-  "/", 
-  "/index.html",
-  "/manifest.json",
-  "/assets/icon.png",
-  // Add all your feature JS/CSS/HTML paths here:
-];
-
-// INSTALL EVENT – cache files during first load
-self.addEventListener("install", event => {
-  console.log("[ServiceWorker] Install");
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log("[ServiceWorker] Pre-caching files");
-        return cache.addAll(FILES_TO_CACHE);
-      })
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install', event => {
+  console.log('[SW] Installed');
+  self.skipWaiting();
 });
 
-// ACTIVATE EVENT – clear old caches
-self.addEventListener("activate", event => {
-  console.log("[ServiceWorker] Activate");
-  event.waitUntil(
-    caches.keys().then(keyList => {
-      return Promise.all(
-        keyList.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log("[ServiceWorker] Removing old cache", key);
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+self.addEventListener('activate', event => {
+  console.log('[SW] Activated');
+  return self.clients.claim();
 });
 
-// FETCH EVENT – serve files offline
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) {
-        // File found in cache – serve it offline
-        return response;
+// Notification Click Handling
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      if (clientList.length > 0) {
+        clientList[0].focus();
+      } else {
+        clients.openWindow('./index.html');
       }
-      // Otherwise, try fetching from network
-      return fetch(event.request).catch(() => {
-        // If network fails, show fallback page if available
-        if (event.request.mode === "navigate") {
-          return caches.match("/index.html");
-        }
-      });
     })
   );
 });
+function getMoonPhaseSW() {
+    const now = new Date();
+    const synodicMonth = 29.53058867;
+    const knownNewMoon = new Date("2000-01-06T18:14:00Z").getTime();
+
+    const daysSince = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
+    const phase = daysSince % synodicMonth;
+
+    if (phase < 1.5) return "amavasai";         // 🌑
+    if (phase > 13.5 && phase < 16.0) return "pournami"; // 🌕
+
+    return "normal";
+}
