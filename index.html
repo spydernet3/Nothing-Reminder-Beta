@@ -3194,30 +3194,30 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
 
     return phases[phaseIndex];
 }
-// --- MOON PHASE NOTIFICATION ---
-if (appData.notifMoonPhase) {
+// --- MOON PHASE NOTIFICATION (Same concept as reminders) ---
+if (appData.notifMoonPhase && Notification.permission === "granted") {
+
     const today = new Date();
     const phase = getMoonPhaseName(today);
 
-    const todayKey = today.toISOString().split("T")[0];
-    if (!appData.lastMoonNotif) appData.lastMoonNotif = "";
+    // Allow one notification per app-open cycle
+    if (!window.moonNotifShown) {
 
-    if (phase === "NEW" && appData.lastMoonNotif !== todayKey) {
-        new Notification("🌑 Amavasai Today", {
-            body: "Today is Amavasai (New Moon).",
-            icon: "assets/icon.png"
-        });
-        appData.lastMoonNotif = todayKey;
-        saveAll();
-    }
+        if (phase === "NEW") {
+            new Notification("🌑 Amavasai Today", {
+                body: "Today is Amavasai (New Moon).",
+                icon: "assets/icon.png"
+            });
+            window.moonNotifShown = true;  // same concept as reminders
+        }
 
-    if (phase === "FULL" && appData.lastMoonNotif !== todayKey) {
-        new Notification("🌕 Pournami Today", {
-            body: "Today is Pournami (Full Moon).",
-            icon: "assets/icon.png"
-        });
-        appData.lastMoonNotif = todayKey;
-        saveAll();
+        else if (phase === "FULL") {
+            new Notification("🌕 Pournami Today", {
+                body: "Today is Pournami (Full Moon).",
+                icon: "assets/icon.png"
+            });
+            window.moonNotifShown = true;
+        }
     }
 }
 
