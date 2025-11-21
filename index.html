@@ -520,7 +520,7 @@
       <button class="menu-btn" data-page="utilities">🛠️ Utilities</button>
       <button class="menu-btn" data-page="trash">🗑️ Trash Bin</button>
       <button class="menu-btn" data-page="other">🎲 Other Apps</button>
-<button class="menu-btn" data-page="blog">📰 Blog</button>
+
       <div id="settingsContainer" style="margin-top:auto;">
         <button id="settingsBtn" class="icon-btn" aria-expanded="false">
           ⚙️ Settings ▼
@@ -799,13 +799,12 @@
           </label>
         </div>
         <div class="notif-setting-item">
-  <span>🌙 Moon Phase Alerts</span>
-  <label class="toggle-switch">
-    <input type="checkbox" id="toggleMoonPhase">
-    <span class="slider"></span>
-  </label>
-</div>
-
+      <span>🌙 Moon Phase Alerts</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleMoonPhase" />
+        <span class="slider"></span>
+      </label>
+    </div>
       </div>
 
       <div id="terms" class="page hidden">
@@ -1229,25 +1228,6 @@
             <button class="menu-btn" style="width: 180px;">Meta Card</button>
           </a>
         </div>
-
-<div id="blog" class="page hidden">
-  <h2>📰 Blog</h2>
-  <div style="
-      width: 100%; 
-      height: calc(100vh - 100px); 
-      background: #fff; 
-      border-radius: 8px; 
-      border: 1px solid #ccc; 
-      overflow: hidden;">
-      
-    <iframe
-      src="https://te.legra.ph/NothingReminder-11-20"
-      style="width: 100%; height: 100%; border: none;"
-      title="Nothing Reminder Blog"
-    ></iframe>
-
-
-</div>
       </div>
     </div>
     <script>
@@ -1338,8 +1318,12 @@
             if(byId('toggleNotes')) byId('toggleNotes').checked = appData.notifNotes;
             if(byId('toggleChecklist')) byId('toggleChecklist').checked = appData.notifChecklist;
             if(byId('toggleBudget')) byId('toggleBudget').checked = appData.notifBudget;
-        if(byId('toggleMoonPhase')) 
-    byId('toggleMoonPhase').checked = appData.notifMoonPhase;
+        byId("toggleMoonPhase").addEventListener("change", e => {
+    appData.notifMoonPhase = e.target.checked;
+    saveAll();
+});
+if (byId("toggleMoonPhase"))
+    byId("toggleMoonPhase").checked = appData.notifMoonPhase;
 
         }
 
@@ -2405,75 +2389,6 @@
              }
              return;
           }
-          // ---- Moon Phase Notification ----
-self.addEventListener("message", event => {
-    if (event.data?.type === "MOONPHASE_SETTING") {
-
-        if (event.data.enabled !== true) return;
-
-        const moon = getMoonPhaseSW();
-
-        if (moon === "amavasai") {
-            self.registration.showNotification("🌑 Amavasai Today", {
-                body: "A powerful spiritual new moon day.",
-                icon: "assets/icon.png",
-                tag: "moon-amavasai",
-                requireInteraction: true
-            });
-        }
-
-        if (moon === "pournami") {
-            self.registration.showNotification("🌕 Pournami Today", {
-                body: "A bright and auspicious full moon day.",
-                icon: "assets/icon.png",
-                tag: "moon-pournami",
-                requireInteraction: true
-            });
-        }
-    }
-});
-navigator.serviceWorker.addEventListener("message", event => {
-    if (event.data?.type === "REQUEST_MOONPHASE_SETTING") {
-        if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: "MOONPHASE_SETTING",
-                enabled: appData.notifMoonPhase === true
-            });
-        }
-    }
-});
-
-// Background Moon Phase Notification
-async function checkMoonPhaseInSW() {
-
-    // Load notification permission from the page (saved in IndexedDB by browser)
-    const permission = await self.registration.permissions?.query?.({ name: "notifications" });
-
-    // Safety check
-    if (!permission || permission.state !== "granted") return;
-
-    // Read appData from clients (fallback)
-    const allClients = await clients.matchAll({ includeUncontrolled: true });
-    if (!allClients.length) return;
-
-    // Ask page for settings
-    allClients[0].postMessage({ type: "REQUEST_MOONPHASE_SETTING" });
-}
-
-// ---- Moon Phase Calculator ----
-function getMoonPhaseName() {
-    const now = new Date();
-    const synodicMonth = 29.53058867;
-    const knownNewMoon = new Date("2000-01-06T18:14:00Z").getTime();
-
-    const daysSince = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
-    const phase = daysSince % synodicMonth;
-
-    if (phase < 1.5) return "amavasai";        // 🌑 New Moon
-    if (phase > 13.5 && phase < 16.0) return "pournami"; // 🌕 Full Moon
-
-    return "normal";
-}
 
           // REMINDERS Summary
           if (appData.notifReminders) {
@@ -3073,10 +2988,6 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                 byId('toggleNotes').addEventListener('change', (e) => handleCustomNotifToggle('notifNotes', e));
                 byId('toggleChecklist').addEventListener('change', (e) => handleCustomNotifToggle('notifChecklist', e));
                 byId('toggleBudget').addEventListener('change', (e) => handleCustomNotifToggle('notifBudget', e));
-byId("toggleMoonPhase").addEventListener("change", (e) => {
-    appData.notifMoonPhase = e.target.checked;
-    saveAll();
-});
 
 
                 byId('showAddFormBtn').addEventListener('click', function() {
@@ -3262,6 +3173,54 @@ byId("toggleMoonPhase").addEventListener("change", (e) => {
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
+              function getMoonPhaseName(date = new Date()) {
+    const lp = 2551443; // lunar cycle in seconds
+    const new_moon_1970 = Date.UTC(1970, 0, 7, 20, 35, 0); 
+    const phaseSec = (date.getTime() - new_moon_1970) / 1000;
+    const phase = phaseSec % lp;
+
+    const phaseIndex = Math.floor((phase / lp) * 8);
+
+    const phases = [
+        "NEW",          // Amavasai
+        "WAXING_CRESCENT",
+        "FIRST_QUARTER",
+        "WAXING_GIBBOUS",
+        "FULL",         // Pournami
+        "WANING_GIBBOUS",
+        "LAST_QUARTER",
+        "WANING_CRESCENT"
+    ];
+
+    return phases[phaseIndex];
+}
+// --- MOON PHASE NOTIFICATION ---
+if (appData.notifMoonPhase) {
+    const today = new Date();
+    const phase = getMoonPhaseName(today);
+
+    const todayKey = today.toISOString().split("T")[0];
+    if (!appData.lastMoonNotif) appData.lastMoonNotif = "";
+
+    if (phase === "NEW" && appData.lastMoonNotif !== todayKey) {
+        new Notification("🌑 Amavasai Today", {
+            body: "Today is Amavasai (New Moon).",
+            icon: "assets/icon.png"
+        });
+        appData.lastMoonNotif = todayKey;
+        saveAll();
+    }
+
+    if (phase === "FULL" && appData.lastMoonNotif !== todayKey) {
+        new Notification("🌕 Pournami Today", {
+            body: "Today is Pournami (Full Moon).",
+            icon: "assets/icon.png"
+        });
+        appData.lastMoonNotif = todayKey;
+        saveAll();
+    }
+}
+
               // ---------- End Initial Render Code ----------
               })();
     </script>
