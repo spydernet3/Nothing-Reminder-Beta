@@ -3173,38 +3173,38 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
- // --- MOON PHASE NOTIFICATION (PERSISTENT, SAME BEHAVIOR) ---
-if (appData.notifMoonPhase && Notification.permission === "granted") {
+ // MOON PHASE Notification (same concept as others, no summary)
+if (appData.notifMoonPhase) {
 
     const today = new Date();
-    const phase = getMoonPhaseName(today);
+    const phaseName = getMoonPhase(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
 
-    navigator.serviceWorker.getRegistration().then(registration => {
-        if (!registration) return;
+    // Only trigger on New Moon or Full Moon
+    if (phaseName === "New Moon" || phaseName === "Full Moon") {
 
-        // Amavasai
-        if (phase === "NEW") {
-            registration.showNotification("🌑 Amavasai Today", {
-                body: "Today is Amavasai (New Moon).",
-                icon: "assets/icon.png",
-                tag: "moon-phase",   // allows constant replacement like your other notifications
-                renotify: true,      // shows again after cleared
-                requireInteraction: true   // CONSTANT (no timeout)
-            });
-        }
+        const title =
+            phaseName === "New Moon"
+                ? "🌑 Amavasai Today"
+                : "🌕 Pournami Today";
 
-        // Pournami
-        if (phase === "FULL") {
-            registration.showNotification("🌕 Pournami Today", {
-                body: "Today is Pournami (Full Moon).",
-                icon: "assets/icon.png",
-                tag: "moon-phase",
-                renotify: true,
-                requireInteraction: true
-            });
-        }
-    });
+        const body =
+            phaseName === "New Moon"
+                ? "Today is Amavasai (New Moon)."
+                : "Today is Pournami (Full Moon).";
+
+        registration.showNotification(title, {
+            body: body,
+            icon: "assets/icon.png",
+            requireInteraction: true,
+            tag: "moonPhase",            // same concept as other features (unique tag)
+        });
+    }
 }
+
               // ---------- End Initial Render Code ----------
               })();
     </script>
