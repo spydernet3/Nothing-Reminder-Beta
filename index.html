@@ -3173,53 +3173,35 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
-              function getMoonPhaseName(date = new Date()) {
-    const lp = 2551443; // lunar cycle in seconds
-    const new_moon_1970 = Date.UTC(1970, 0, 7, 20, 35, 0); 
-    const phaseSec = (date.getTime() - new_moon_1970) / 1000;
-    const phase = phaseSec % lp;
-
-    const phaseIndex = Math.floor((phase / lp) * 8);
-
-    const phases = [
-        "NEW",          // Amavasai
-        "WAXING_CRESCENT",
-        "FIRST_QUARTER",
-        "WAXING_GIBBOUS",
-        "FULL",         // Pournami
-        "WANING_GIBBOUS",
-        "LAST_QUARTER",
-        "WANING_CRESCENT"
-    ];
-
-    return phases[phaseIndex];
-}
-// --- MOON PHASE NOTIFICATION (Same concept as reminders) ---
+ // --- MOON PHASE NOTIFICATION (persistent, no summary) ---
 if (appData.notifMoonPhase && Notification.permission === "granted") {
 
     const today = new Date();
     const phase = getMoonPhaseName(today);
 
-    // Allow one notification per app-open cycle
-    if (!window.moonNotifShown) {
+    navigator.serviceWorker.getRegistration().then(registration => {
+        if (!registration) return;
 
         if (phase === "NEW") {
-            new Notification("🌑 Amavasai Today", {
+            registration.showNotification("🌑 Amavasai Today", {
                 body: "Today is Amavasai (New Moon).",
-                icon: "assets/icon.png"
+                icon: "assets/icon.png",
+                tag: "moon-phase",     // persistent refresh tag
+                renotify: true
             });
-            window.moonNotifShown = true;  // same concept as reminders
         }
 
-        else if (phase === "FULL") {
-            new Notification("🌕 Pournami Today", {
+        if (phase === "FULL") {
+            registration.showNotification("🌕 Pournami Today", {
                 body: "Today is Pournami (Full Moon).",
-                icon: "assets/icon.png"
+                icon: "assets/icon.png",
+                tag: "moon-phase",
+                renotify: true
             });
-            window.moonNotifShown = true;
         }
-    }
+    });
 }
+
 
               // ---------- End Initial Render Code ----------
               })();
