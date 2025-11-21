@@ -3173,7 +3173,7 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
- // --- MOON PHASE NOTIFICATION (persistent, no summary) ---
+ // --- MOON PHASE NOTIFICATION (PERSISTENT, SAME BEHAVIOR) ---
 if (appData.notifMoonPhase && Notification.permission === "granted") {
 
     const today = new Date();
@@ -3182,27 +3182,29 @@ if (appData.notifMoonPhase && Notification.permission === "granted") {
     navigator.serviceWorker.getRegistration().then(registration => {
         if (!registration) return;
 
+        // Amavasai
         if (phase === "NEW") {
             registration.showNotification("🌑 Amavasai Today", {
                 body: "Today is Amavasai (New Moon).",
                 icon: "assets/icon.png",
-                tag: "moon-phase",     // persistent refresh tag
-                renotify: true
+                tag: "moon-phase",   // allows constant replacement like your other notifications
+                renotify: true,      // shows again after cleared
+                requireInteraction: true   // CONSTANT (no timeout)
             });
         }
 
+        // Pournami
         if (phase === "FULL") {
             registration.showNotification("🌕 Pournami Today", {
                 body: "Today is Pournami (Full Moon).",
                 icon: "assets/icon.png",
                 tag: "moon-phase",
-                renotify: true
+                renotify: true,
+                requireInteraction: true
             });
         }
     });
 }
-
-
               // ---------- End Initial Render Code ----------
               })();
     </script>
