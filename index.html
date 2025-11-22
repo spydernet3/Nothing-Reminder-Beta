@@ -1348,10 +1348,10 @@
           notifNotes: true,
           notifChecklist: true,
           notifBudget: true,
+          notifMoonPhase: true,
           // NEW: Calculation History
           calculationHistory: [],
           trash: [],
-          notifMoonPhase: true,
         };
 
         let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
@@ -2424,34 +2424,25 @@
                   });
               }
           }
-        }
-          // MOON PHASE Notification
-          if (appData.notifMoonPhase) {
-              const today = new Date();
-              const phase = getMoonPhase(
-                  today.getFullYear(),
-                  today.getMonth(),
-                  today.getDate()
-              );
+        
+    if (phase === "New Moon") {
+        registration.showNotification("🌑 Amavasai Today", {
+            body: "Today is Amavasai (New Moon).",
+            icon: "assets/icon.png",
+            requireInteraction: true,
+            tag: "moonPhase"
+        });
+    }
 
-              if (phase === "New Moon") {
-                  registration.showNotification("🌑 Amavasai Today", {
-                      body: "Today is Amavasai (New Moon).",
-                      icon: "assets/icon.png",
-                      requireInteraction: true,
-                      tag: "moonPhase"
-                  });
-              }
-
-              if (phase === "Full Moon") {
-                  registration.showNotification("🌕 Pournami Today", {
-                      body: "Today is Pournami (Full Moon).",
-                      icon: "assets/icon.png",
-                      requireInteraction: true,
-                      tag: "moonPhase"
-                  });
-              }
-          }
+    if (phase === "Full Moon") {
+        registration.showNotification("🌕 Pournami Today", {
+            body: "Today is Pournami (Full Moon).",
+            icon: "assets/icon.png",
+            requireInteraction: true,
+            tag: "moonPhase"
+        });
+    }
+}
         // ---------- Calculation History Functions ----------
                 function renderHistory() {
                   const list = byId('calculationHistoryList');
