@@ -2425,24 +2425,29 @@
               }
           }
         
+    // MOON PHASE Notification (same concept as other sections, no summary needed)
+
+
+    // Only show notification if it's New Moon or Full Moon
     if (phase === "New Moon") {
         registration.showNotification("🌑 Amavasai Today", {
             body: "Today is Amavasai (New Moon).",
-            icon: "assets/icon.png",
+            icon: 'assets/icon.png',
             requireInteraction: true,
-            tag: "moonPhase"
+            tag: 'moonPhase'
         });
     }
 
     if (phase === "Full Moon") {
         registration.showNotification("🌕 Pournami Today", {
             body: "Today is Pournami (Full Moon).",
-            icon: "assets/icon.png",
+            icon: 'assets/icon.png',
             requireInteraction: true,
-            tag: "moonPhase"
+            tag: 'moonPhase'
         });
     }
 }
+
         // ---------- Calculation History Functions ----------
                 function renderHistory() {
                   const list = byId('calculationHistoryList');
