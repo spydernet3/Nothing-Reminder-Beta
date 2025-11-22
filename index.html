@@ -799,12 +799,12 @@
           </label>
         </div>
         <div class="notif-setting-item">
-      <span>🌙 Moon Phase Alerts</span>
+      <span>🌙 Moon Phase</span>
       <label class="toggle-switch">
         <input type="checkbox" id="toggleMoonPhase" />
         <span class="slider"></span>
       </label>
-    </div>
+      </div>
       </div>
 
       <div id="terms" class="page hidden">
@@ -1318,15 +1318,10 @@
             if(byId('toggleNotes')) byId('toggleNotes').checked = appData.notifNotes;
             if(byId('toggleChecklist')) byId('toggleChecklist').checked = appData.notifChecklist;
             if(byId('toggleBudget')) byId('toggleBudget').checked = appData.notifBudget;
-        byId("toggleMoonPhase").addEventListener("change", e => {
-    appData.notifMoonPhase = e.target.checked;
-    saveAll();
-});
-if (byId("toggleMoonPhase"))
-    byId("toggleMoonPhase").checked = appData.notifMoonPhase;
-
+            if (byId('toggleMoonPhase')) byId('toggleMoonPhase').checked = appData.notifMoonPhase; byId('toggleMoonPhase')?.addEventListener("change", (e) => {appData.notifMoonPhase = e.target.checked;
+            saveAll();
+        });
         }
-
         // Function to handle custom toggle changes
         function handleCustomNotifToggle(category, event) {
             appData[category] = event.target.checked;
@@ -2430,7 +2425,33 @@ if (byId("toggleMoonPhase"))
               }
           }
         }
+          // MOON PHASE Notification
+          if (appData.notifMoonPhase) {
+              const today = new Date();
+              const phase = getMoonPhase(
+                  today.getFullYear(),
+                  today.getMonth(),
+                  today.getDate()
+              );
 
+              if (phase === "New Moon") {
+                  registration.showNotification("🌑 Amavasai Today", {
+                      body: "Today is Amavasai (New Moon).",
+                      icon: "assets/icon.png",
+                      requireInteraction: true,
+                      tag: "moonPhase"
+                  });
+              }
+
+              if (phase === "Full Moon") {
+                  registration.showNotification("🌕 Pournami Today", {
+                      body: "Today is Pournami (Full Moon).",
+                      icon: "assets/icon.png",
+                      requireInteraction: true,
+                      tag: "moonPhase"
+                  });
+              }
+          }
         // ---------- Calculation History Functions ----------
                 function renderHistory() {
                   const list = byId('calculationHistoryList');
@@ -3173,38 +3194,6 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
- // MOON PHASE Notification (same concept as others, no summary)
-if (appData.notifMoonPhase) {
-
-    const today = new Date();
-    const phaseName = getMoonPhase(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-    );
-
-    // Only trigger on New Moon or Full Moon
-    if (phaseName === "New Moon" || phaseName === "Full Moon") {
-
-        const title =
-            phaseName === "New Moon"
-                ? "🌑 Amavasai Today"
-                : "🌕 Pournami Today";
-
-        const body =
-            phaseName === "New Moon"
-                ? "Today is Amavasai (New Moon)."
-                : "Today is Pournami (Full Moon).";
-
-        registration.showNotification(title, {
-            body: body,
-            icon: "assets/icon.png",
-            requireInteraction: true,
-            tag: "moonPhase",            // same concept as other features (unique tag)
-        });
-    }
-}
-
               // ---------- End Initial Render Code ----------
               })();
     </script>
