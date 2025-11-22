@@ -799,13 +799,14 @@
           </label>
         </div>
         <div class="notif-setting-item">
-      <span>🌙 Moon Phase</span>
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggleMoonPhase" />
-        <span class="slider"></span>
-      </label>
+          <span>  Moon Phase Alerts</span>
+        <label class="toggle-switch">
+  <input type="checkbox" id="toggleMoonPhase"/>
+ <span class="slider"></span>
+</label>
+</div>
       </div>
-      </div>
+      
 
       <div id="terms" class="page hidden">
         <h2>Privacy Policy!</h2>
@@ -1318,10 +1319,8 @@
             if(byId('toggleNotes')) byId('toggleNotes').checked = appData.notifNotes;
             if(byId('toggleChecklist')) byId('toggleChecklist').checked = appData.notifChecklist;
             if(byId('toggleBudget')) byId('toggleBudget').checked = appData.notifBudget;
-            if (byId('toggleMoonPhase')) byId('toggleMoonPhase').checked = appData.notifMoonPhase; byId('toggleMoonPhase')?.addEventListener("change", (e) => {appData.notifMoonPhase = e.target.checked;
-            saveAll();
-        });
         }
+
         // Function to handle custom toggle changes
         function handleCustomNotifToggle(category, event) {
             appData[category] = event.target.checked;
@@ -1381,6 +1380,8 @@
             if (byId('notifications') && !byId('notifications').classList.contains('hidden')) {
                renderNotificationPage();
             }
+            if (byId('toggleMoonPhase'))
+    byId('toggleMoonPhase').checked = appData.notifMoonPhase;
             // NOTIFICATION CHANGE: Trigger notification check on every data save.
             await checkNotifications(); // Correctly awaiting the async function
           } catch (err) {
@@ -2424,29 +2425,7 @@
                   });
               }
           }
-        
-    // MOON PHASE Notification (same concept as other sections, no summary needed)
-
-
-    // Only show notification if it's New Moon or Full Moon
-    if (phase === "New Moon") {
-        registration.showNotification("🌑 Amavasai Today", {
-            body: "Today is Amavasai (New Moon).",
-            icon: 'assets/icon.png',
-            requireInteraction: true,
-            tag: 'moonPhase'
-        });
-    }
-
-    if (phase === "Full Moon") {
-        registration.showNotification("🌕 Pournami Today", {
-            body: "Today is Pournami (Full Moon).",
-            icon: 'assets/icon.png',
-            requireInteraction: true,
-            tag: 'moonPhase'
-        });
-    }
-}
+        }
 
         // ---------- Calculation History Functions ----------
                 function renderHistory() {
@@ -3005,6 +2984,9 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                 byId('toggleNotes').addEventListener('change', (e) => handleCustomNotifToggle('notifNotes', e));
                 byId('toggleChecklist').addEventListener('change', (e) => handleCustomNotifToggle('notifChecklist', e));
                 byId('toggleBudget').addEventListener('change', (e) => handleCustomNotifToggle('notifBudget', e));
+document.getElementById('toggleMoonPhase')
+  .addEventListener('change', (e) =>
+      handleCustomNotifToggle('notifMoonPhase', e));
 
 
                 byId('showAddFormBtn').addEventListener('click', function() {
@@ -3190,6 +3172,30 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
+             // 🌙 MOON PHASE Summary (Amavasai / Pournami Only)
+if (appData.notifMoonPhase) {
+    const today = new Date();
+    const phaseName = getMoonPhase(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
+
+    if (phaseName === "New Moon" || phaseName === "Full Moon") {
+        const tamil = tamilPhase(phaseName);
+        const emoji = moonEmoji(phaseName);
+
+        const bodyText = `Today is ${tamil} ${emoji}\n(${phaseName})`;
+
+        registration.showNotification("Nothing Reminder - 🌙 Moon Phase", {
+            body: bodyText,
+            icon: 'assets/icon.png',
+            requireInteraction: true,
+            tag: 'moonphase'
+        });
+    }
+}
+
               // ---------- End Initial Render Code ----------
               })();
     </script>
