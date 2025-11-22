@@ -3097,30 +3097,34 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                 renderBudgets();
                 renderChecklists();
                 renderHistory(); // NEW: Initial render for history
-                
-
-
                 // NEW: Initialize calculator mode
                 switchCalculatorMode();
-function showMoonPhaseNotification() {
-    if (!appData.notifMoonPhase) return;
-    if (Notification.permission !== "granted") return;
+                async function showMoonPhaseNotification() {
+                    if (!appData.notifMoonPhase) return;
+                    if (Notification.permission !== "granted") return;
 
-    const phase = getTodayPhase();
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (!registration) return;
 
-    if (phase === "pournami") {
-        new Notification("🌕 Pournami Today!", {
-            body: "Full Moon (Pournami) is happening today.",
-            icon: "assets/icon.png"
-        });
-    }
-    else if (phase === "amavasai") {
-        new Notification("🌑 Amavasai Today!", {
-            body: "New Moon (Amavasai) is today.",
-            icon: "assets/icon.png"
-        });
-    }
-}
+                    const phase = getTodayPhase();
+
+                    if (phase === "pournami") {
+                        registration.showNotification("🌕 Pournami Today!", {
+                            body: "Full Moon (Pournami) is happening today.",
+                            icon: "assets/icon.png",
+                            requireInteraction: true,
+                            tag: "moon-phase"
+                        });
+                    }
+                    else if (phase === "amavasai") {
+                        registration.showNotification("🌑 Amavasai Today!", {
+                            body: "New Moon (Amavasai) is today.",
+                            icon: "assets/icon.png",
+                            requireInteraction: true,
+                            tag: "moon-phase"
+                        });
+                    }
+                }
                 // 3. Setup notifications
                 // Notifications are now checked on page load (below) and on every data save (in saveAll).
                 if ("Notification" in window) {
