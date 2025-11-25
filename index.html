@@ -184,7 +184,7 @@
       /* Consistent button styling for all sections */
       #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
       #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
-      #viewCheckToggle, #viewRemindersToggle,#moonPhaseToggle, #sunBtn,#monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
+      #viewCheckToggle,#homeOverviewToggle ,#viewRemindersToggle,#moonPhaseToggle, #sunBtn,#monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
         position: relative;
         user-select: none;
         display: flex;
@@ -519,7 +519,7 @@
       <button class="menu-btn" data-page="Check">✒ Check List</button>
       <button class="menu-btn" data-page="utilities">🛠️ Utilities</button>
       <button class="menu-btn" data-page="trash">🗑️ Trash Bin</button>
-      <button class="menu-btn" data-page="other">🎲 Other Apps</button>
+      <button class="menu-btn" data-page="other">🎲 More Apps</button>
 
       <div id="settingsContainer" style="margin-top:auto;">
         <button id="settingsBtn" class="icon-btn" aria-expanded="false">
@@ -589,7 +589,33 @@
           </button>
           <div id="homeCheckContainer" class="form" aria-hidden="true"></div>
         </div>
+        <div class="add-area">
+          <button id="homeOverviewToggle" class="add-btn" aria-expanded="false">
+            📊 REMINDERS OVERVIEW <span class="arrow">▼</span>
+          </button>
 
+          <div id="homeOverviewContainer" class="form" aria-hidden="true">
+            <table style="width:100%; border-collapse: collapse; text-align:center;">
+              <tr style="font-weight:600;">
+                <td>TITLE</td>
+                <td>ACTIVE</td>
+                <td>INACTIVE</td>
+              </tr>
+
+              <tr>
+                <td>Reminders</td>
+                <td id="activeRemindersCount">0</td>
+                <td id="inactiveRemindersCount">0</td>
+              </tr>
+
+              <tr>
+                <td>Checklists</td>
+                <td id="activeChecklistsCount">0</td>
+                <td id="inactiveChecklistsCount">0</td>
+              </tr>
+            </table>
+          </div>
+        </div>
         <div class="branding-footer">
           <a href="https://github.com/spydernet3" target="_blank"
             >By Spydernet</a
@@ -642,7 +668,6 @@
                 accept="image/*,.pdf,.doc,.docx,.mp3,.mp4"
               />
             </label>
-
             <label>
               Note<textarea
                 id="noteText"
@@ -650,12 +675,10 @@
                 placeholder="Create a note here, use | to add a title and --- to separate columns for table format."
               ></textarea>
             </label>
-
             <label>
               Table Format<input type="checkbox" id="tableFormatCheckbox" />
               <span>Enable table format</span>
             </label>
-
             <div class="form-actions">
               <button id="saveNoteBtn" class="primary">Save</button>
               <button id="cancelNoteBtn" class="secondary">Cancel</button>
@@ -669,7 +692,6 @@
           <ul id="noteList" class="list scrollable-list form"></ul>
         </div>
       </div>
-
       <div id="budget" class="page hidden">
         <h2>💰 Budget Tracker</h2>
         <div class="add-area">
@@ -704,7 +726,6 @@
           <ul id="budgetList" class="list scrollable-list form"></ul>
         </div>
       </div>
-
       <div id="Check" class="page hidden">
         <h2>✒ Check List</h2>
         <div class="add-area">
@@ -745,7 +766,6 @@
           <ul id="checkList" class="list scrollable-list form"></ul>
         </div>
       </div>
-
       <div id="notifications" class="page hidden">
         <h2>🔔 Notification Settings</h2>
 
@@ -845,8 +865,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.5.7</p>
-          <p>Last Updated: 17-Nov-2025</p>
+          <p>Version 13.5.9</p>
+          <p>Last Updated: 23-Nov-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -857,9 +877,18 @@
         <ul>
           <li>
             By Pressing Add to Home Screen Button There You can see Install App
-            to install page as PWA
+            to install page as PWA [Faster and unique icon compared to webpage] 
           </li>
-          <li>In App Notification logic used </li>
+          </ul>
+          <h3>App Lock</h3>
+        <hr />
+        <ul>
+          <li>
+            By installing page as PWA you can use By Defauly App lock that contains your device
+        </li>
+        <li>
+          By enabling App lock for Browswer also the way you can protect the data without intalling page as app
+        </li>
         </ul>
         <h3>Reminder!</h3>
         <hr />
@@ -941,6 +970,7 @@
             then Open index.html without internet in any broweser.
           </li>
           <li>Note: notifications are not supposed to working</li>
+          <li> New features you may missed</li>
         </ul>
       </div>
       <div id="utilities" class="page hidden">
@@ -1137,10 +1167,13 @@
       <div id="trash" class="page hidden">
         <h2>🗑️ Trash Bin</h2>
         <p style="opacity:0.8;">Deleted Items are here.</p>
+        <button id="emptyTrashBtn" class="icon-small" style="margin-bottom:100px;background:#d9534f;color:white;border:none;border-radius:6px;padding:8px 50px;cursor:pointer;">
+          🧹 EMPTY TRASH
+        </button>
         <ul id="trashList" class="list scrollable-list form"></ul>
       </div>
       <div id="other" class="page hidden">
-        <h2>🎲 Other Apps</h2>
+        <h2>🎲 More Apps</h2>
         <div
           style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 10px;"
         >
@@ -1443,7 +1476,7 @@
           const list = byId('reminderList'); list.innerHTML = '';
             if(appData.reminders.length === 0){
             const li = document.createElement('li'); li.textContent='No reminders yet.'; li.style.opacity='0.7'; list.appendChild(li);
-            renderHomeReminders(); renderHomeNotes(); renderHomeCheck(); return;
+            renderHomeReminders(); renderHomeNotes(); renderHomeCheck();renderHomeOverview(); return;
           }
           const frag = document.createDocumentFragment();
           appData.reminders.forEach((r,i)=>{
@@ -1470,7 +1503,7 @@
             li.appendChild(left); li.appendChild(right); frag.appendChild(li);
           });
           list.appendChild(frag);
-          renderHomeReminders(); renderHomeNotes(); renderHomeCheck();
+          renderHomeReminders(); renderHomeNotes(); renderHomeCheck();renderHomeOverview();
         }
 
         function renderHomeReminders(){
@@ -1533,7 +1566,7 @@
             if(n.isTable && n.text) {
               // Show first few rows of table in home view
               const lines = n.text.split('\n');
-              let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">';
+              let tableHTML = '<table border=\"1\" style=\"border-collapse: collapse;text-align:center; width: 100%;\">';
 
               lines.forEach((line, index) => {
                 if(line.includes('---')) {
@@ -1544,9 +1577,9 @@
                   cells.forEach(cell => {
                     const cellContent = cell.trim();
                     if(index === 0) {
-                      tableHTML += `<th style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</th>`;
+                      tableHTML += `<th style=\"border: 1px solid #ddd;text-align:center; padding: 4px;\">${cellContent}</th>`;
                     } else {
-                      tableHTML += `<td style=\"border: 1px solid #ddd; padding: 4px;\">${cellContent}</td>`;
+                      tableHTML += `<td style=\"border: 1px solid #ddd;text-align:center; padding: 4px;\">${cellContent}</td>`;
                     }
                   });
                 }
@@ -1893,7 +1926,7 @@
           const reminderObj={ title, startDate:start, endDate:end };
           if(editingIndex!==null){ appData.reminders[editingIndex]=reminderObj; editingIndex=null; }
           else{ appData.reminders.push(reminderObj); }
-          saveAll(); renderReminders(); hideForm(byId('reminderFormContainer')); clearReminderForm();
+          saveAll(); renderReminders();renderHomeOverview(); hideForm(byId('reminderFormContainer')); clearReminderForm();
         }
 
         function clearReminderForm(){
@@ -2087,7 +2120,7 @@
           }
           if(appData.checklists.length === 0){
             const li = document.createElement('li'); li.textContent='No checklists yet.'; li.style.opacity='0.7'; list.appendChild(li);
-            renderHomeCheck(); return;
+            renderHomeCheck();return;
           }
           const frag = document.createDocumentFragment();
           appData.checklists.forEach((check,i)=>{
@@ -2160,7 +2193,7 @@
             li.appendChild(left); li.appendChild(right); frag.appendChild(li);
           });
           list.appendChild(frag);
-          renderHomeCheck();
+          renderHomeCheck();renderHomeOverview();
         }
           // ---------- Trash Bin ----------
           function renderTrash(){
@@ -2218,6 +2251,18 @@
               renderTrash();
             }
           }
+          function emptyTrashAll() {
+          if (!appData.trash.length) {
+            alert("Trash already empty.");
+            return;
+          }
+          if (confirm("Clear all items from Trash?")) {
+            appData.trash = [];
+            saveAll();
+            renderTrash();
+            alert("Trash cleared successfully.");
+          }
+        }
         // ---------- Form Show/Hide ----------
         function showForm(el){ el.classList.add('visible'); }
         function hideForm(el){ el.classList.remove('visible'); }
@@ -2602,47 +2647,47 @@
             saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${result}`, result);
                 }
                 // ---------- BMI Calculator Logic ----------
-function calculateBMI() {
-  const age = parseInt(byId('bmiAge').value);
-  const height = parseFloat(byId('bmiHeight').value);
-  const weight = parseFloat(byId('bmiWeight').value);
-  const resultEl = byId('bmiResult');
-
-  if (!age || !height || !weight) {
-    resultEl.textContent = '⚠️ Please fill all fields.';
-    return;
-  }
-
-  // Calculate BMI
-  const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
-
-  // Determine category
-  let category = '';
-  if (bmi < 18.5) category = 'Underweight';
-  else if (bmi < 25) category = 'Normal';
-  else if (bmi < 30) category = 'Overweight';
-  else category = 'Obese';
-
-  // Include age relevance
-  let ageNote = '';
-  if (age < 18 && bmi > 24) ageNote = '⚠️ For children/teens, consult pediatric BMI charts.';
-  else if (age >= 18 && bmi > 24.9) ageNote = '⚠️ High for adult. Consider healthy diet/exercise.';
-
-  resultEl.textContent = `BMI: ${bmi} (${category}) ${ageNote}`;
-
-  // Save BMI history to appData
-  const historyObj = {
-    title: `BMI Result`,
-    result: `Age: ${age} | Height: ${height}cm | Weight: ${weight}kg | BMI: ${bmi} (${category})`,
-    createdAt: formatDateDMYWithTime(new Date())
-  };
-  if (!appData.calculationHistory) appData.calculationHistory = [];
-  appData.calculationHistory.push(historyObj);
-  saveAll();
-  renderHistory();
-}
-
-byId('calcBMIButton').addEventListener('click', calculateBMI);
+                function calculateBMI() {
+                  const age = parseInt(byId('bmiAge').value);
+                  const height = parseFloat(byId('bmiHeight').value);
+                  const weight = parseFloat(byId('bmiWeight').value);
+                  const resultEl = byId('bmiResult');
+                
+                  if (!age || !height || !weight) {
+                    resultEl.textContent = '⚠️ Please fill all fields.';
+                    return;
+                  }
+                
+                  // Calculate BMI
+                  const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+                
+                  // Determine category
+                  let category = '';
+                  if (bmi < 18.5) category = 'Underweight';
+                  else if (bmi < 25) category = 'Normal';
+                  else if (bmi < 30) category = 'Overweight';
+                  else category = 'Obese';
+                
+                  // Include age relevance
+                  let ageNote = '';
+                  if (age < 18 && bmi > 24) ageNote = '⚠️ For children/teens, consult pediatric BMI charts.';
+                  else if (age >= 18 && bmi > 24.9) ageNote = '⚠️ High for adult. Consider healthy diet/exercise.';
+                
+                  resultEl.textContent = `BMI: ${bmi} (${category}) ${ageNote}`;
+                
+                  // Save BMI history to appData
+                  const historyObj = {
+                    title: `BMI Result`,
+                    result: `Age: ${age} | Height: ${height}cm | Weight: ${weight}kg | BMI: ${bmi} (${category})`,
+                    createdAt: formatDateDMYWithTime(new Date())
+                  };
+                  if (!appData.calculationHistory) appData.calculationHistory = [];
+                  appData.calculationHistory.push(historyObj);
+                  saveAll();
+                  renderHistory();
+                }
+                
+                byId('calcBMIButton').addEventListener('click', calculateBMI);
 
                 // ---------- Calculator Mode Switcher ----------
                 function switchCalculatorMode() {
@@ -2787,14 +2832,13 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                   return icons[eng] || "🌙";
                 }
                 function getTodayPhase() {
-    const now = new Date();
-    const phase = getMoonPhase(now.getFullYear(), now.getMonth(), now.getDate());
-
-    if (phase === "Full Moon") return "pournami";
-    if (phase === "New Moon") return "amavasai";
-    return "none";
-}
-
+                const now = new Date();
+                const phase = getMoonPhase(now.getFullYear(), now.getMonth(), now.getDate());
+            
+                if (phase === "Full Moon") return "pournami";
+                if (phase === "New Moon") return "amavasai";
+                return "none";
+                }
                 // ---------------- SUNRISE / SUNSET ----------------
                 document.getElementById("sunBtn").addEventListener("click", () => {
                   let box = document.getElementById("sunBox");
@@ -2992,7 +3036,6 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                 byId('toggleChecklist').addEventListener('change', (e) => handleCustomNotifToggle('notifChecklist', e));
                 byId('toggleBudget').addEventListener('change', (e) => handleCustomNotifToggle('notifBudget', e));
 
-
                 byId('showAddFormBtn').addEventListener('click', function() {
                   toggleCollapse(byId('reminderFormContainer'), byId('showAddFormBtn'));
                 });
@@ -3037,7 +3080,9 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
                 byId('homeCheckToggle').addEventListener('click', function() {
                   toggleCollapse(byId('homeCheckContainer'), byId('homeCheckToggle'));
                 });
-
+                byId('homeOverviewToggle').addEventListener('click', function() {
+                  toggleCollapse(byId('homeOverviewContainer'), byId('homeOverviewToggle'));
+                });
                 byId('showAddBudgetBtn').addEventListener('click', function() {
                   toggleCollapse(byId('budgetFormContainer'), byId('showAddBudgetBtn'));
                 });
@@ -3134,6 +3179,7 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               window.addEventListener('load', () => {
                 if (!appData.trash) appData.trash = [];
                 renderTrash();
+                byId('emptyTrashBtn')?.addEventListener('click', emptyTrashAll);
               });
               // Ensure only Home is visible and sidebar is hidden on initial page load
               window.addEventListener('load', () => {
@@ -3200,6 +3246,31 @@ byId('calcBMIButton').addEventListener('click', calculateBMI);
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
+             function renderHomeOverview() {
+              // --- Reminders Count ---
+              let activeRem = 0;
+              let inactiveRem = 0;
+
+              appData.reminders.forEach(r => {
+                const diff = daysLeft(r.endDate);
+                if (diff < 0) inactiveRem++;
+                else activeRem++;
+              });
+
+              // --- Checklists Count ---
+              let activeChk = 0;
+              let inactiveChk = 0;
+
+              appData.checklists.forEach(c => {
+                if (c.status === "open") activeChk++;
+                else inactiveChk++;
+              });
+
+              byId("activeRemindersCount").textContent = activeRem;
+              byId("inactiveRemindersCount").textContent = inactiveRem;
+              byId("activeChecklistsCount").textContent = activeChk;
+              byId("inactiveChecklistsCount").textContent = inactiveChk;
+            }
               // ---------- End Initial Render Code ----------
               })();
     </script>
