@@ -1166,7 +1166,7 @@
       </div>
       <div id="trash" class="page hidden">
         <h2>🗑️ Trash Bin</h2>
-        <p style="opacity:0.8;">Deleted Items are here.</p>
+        <p style="opacity:0.8;">DELETED ITEM'S ARE HERE.</p>
         <button id="emptyTrashBtn" class="icon-small" style="margin-bottom:10px;background:#d9534f;color:white;border:none;border-radius:6px;padding:9px 50px;cursor:pointer;">
           🧹 EMPTY TRASH
         </button>
@@ -2252,16 +2252,17 @@
             }
           }
           function emptyTrashAll() {
-          if (!appData.trash.length) {
+          if (!appData.trash || appData.trash.length === 0) {
             alert("Trash already empty.");
             return;
           }
-          if (confirm("Clear all items from Trash?")) {
-            appData.trash = [];
-            saveAll();
-            renderTrash();
-            alert("Trash cleared successfully.");
-          }
+
+          if (!confirm("Clear all items from Trash?")) return;
+
+          appData.trash = [];
+          saveAll();
+          renderTrash();
+          alert("Trash cleared successfully.");
         }
         // ---------- Form Show/Hide ----------
         function showForm(el){ el.classList.add('visible'); }
