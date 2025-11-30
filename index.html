@@ -184,7 +184,7 @@
       /* Consistent button styling for all sections */
       #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
       #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
-      #viewCheckToggle,#homeOverviewToggle ,#viewRemindersToggle,#moonPhaseToggle, #sunBtn,#monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
+      #viewCheckToggle,#homeOverviewToggle, #goldRateToggle ,#viewRemindersToggle,#moonPhaseToggle, #sunBtn,#monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
         position: relative;
         user-select: none;
         display: flex;
@@ -865,7 +865,7 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.5.9</p>
+          <p>Version 13.5.10</p>
           <p>Last Updated: 23-Nov-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
@@ -1152,7 +1152,40 @@
           </div>
           <div id="sunResult" style="margin-top:10px; font-weight:600;"></div>
         </div>
-        </div>
+       
+        <!-- GOLD RATE (MINIMAL, API-ONLY, NO EXTRA OPTIONS) -->
+<div class="add-area">
+<button id="goldRateToggle" class="add-btn" aria-expanded="false">
+  🥇 GOLD RATE TODAY <span class="arrow">▼</span>
+</button>
+
+<div id="goldRateForm" class="form" aria-hidden="true">
+
+  <label>GoldAPI.io FREE API Key</label>
+  <input id="goldApiKeyInput" placeholder="Paste Free API Key" 
+    style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;">
+
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button id="saveGoldApiKeyBtn" class="primary" style="flex:1;">Save Key</button>
+    <button id="clearGoldApiKeyBtn" class="secondary" style="flex:1;">Clear</button>
+  </div>
+
+  <label style="margin-top:12px;">Select Place 1</label>
+  <select id="goldPlace1"></select>
+
+  <label style="margin-top:12px;">Select Place 2</label>
+  <select id="goldPlace2"></select>
+
+  <div id="goldStatus" style="margin-top:10px;font-weight:600;"></div>
+
+  <div id="goldTables" style="margin-top:12px;"></div>
+
+  <button id="goldRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">
+    Refresh
+  </button>
+</div>
+</div>
+
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -3272,6 +3305,195 @@
               byId("activeChecklistsCount").textContent = activeChk;
               byId("inactiveChecklistsCount").textContent = inactiveChk;
             }
+     /* ------------ GOLD RATE MINIMAL (API ONLY, NO EXTRAS) ------------ */
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const toggleBtn = $("goldRateToggle");
+  const formDiv   = $("goldRateForm");
+  const apiInput  = $("goldApiKeyInput");
+  const saveKeyBtn = $("saveGoldApiKeyBtn");
+  const clearKeyBtn = $("clearGoldApiKeyBtn");
+  const place1Sel = $("goldPlace1");
+  const place2Sel = $("goldPlace2");
+  const statusEl  = $("goldStatus");
+  const tablesEl  = $("goldTables");
+  const refreshBtn = $("goldRefreshBtn");
+
+  const API_KEY = "gold_api_key_simple_v1";
+  const SNAP    = "gold_snap_simple_v1";
+
+  const PLACES = [
+    "Chennai","Madurai","Coimbatore","Trichy","Tirunelveli","Kanyakumari",
+    "Pondicherry","Salem","Erode","Vellore","Thanjavur","Nagercoil",
+    "Dindigul","Tirupur","Karur","Kanchipuram","Chengalpattu",
+    "Bengaluru","Kochi","Thiruvananthapuram","Calicut","Ernakulam",
+    "Pune","Mumbai","Hyderabad"
+  ];
+
+  const loadJSON = k => {try{return JSON.parse(localStorage.getItem(k)||"{}");}catch(e){return{}}};
+  const saveJSON = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+  const fmt = v => v==null ? "—" : "₹ " + Number(v).toLocaleString("en-IN");
+
+  function showStatus(msg,err=false){
+    statusEl.style.color = err ? "#d32f2f" : "#222";
+    statusEl.innerHTML = "⏳ " + msg;
+  }
+
+  // Populate place dropdowns
+  (function(){
+    PLACES.forEach(p=>{
+      const o1=document.createElement("option"); o1.value=p;o1.textContent=p;
+      const o2=document.createElement("option"); o2.value=p;o2.textContent=p;
+      place1Sel.appendChild(o1); place2Sel.appendChild(o2);
+    });
+    place2Sel.selectedIndex = 1;
+  })();
+
+  /* ---------------- API FETCH (GoldAPI.io FREE) ---------------- */
+  async function fetchGoldAPI(apiKey){
+    const url = "https://www.goldapi.io/api/XAU/INR";
+
+    const r = await fetch(url,{
+      method:"GET",
+      headers:{
+        "x-access-token": apiKey,
+        "Content-Type":"application/json"
+      }
+    });
+
+    if(!r.ok) throw new Error("GoldAPI Error ("+r.status+")");
+
+    const j = await r.json();
+
+    return {
+      "24k": Math.round(j.price_gram_24k),
+      "22k": Math.round(j.price_gram_22k),
+      "18k": Math.round(j.price_gram_18k)
+    };
+  }
+
+  /* ---------------- SNAPSHOT ---------------- */
+  function saveSnapshot(place,data){
+    const s = loadJSON(SNAP);
+    const today = new Date().toISOString().slice(0,10);
+    s[today] = s[today] || {};
+    s[today][place] = data;
+    saveJSON(SNAP,s);
+  }
+
+  function getYesterday(place){
+    const s = loadJSON(SNAP);
+    const d = new Date(); d.setDate(d.getDate()-1);
+    const y = d.toISOString().slice(0,10);
+    return s[y]?.[place] || null;
+  }
+
+  /* ---------------- TABLE ---------------- */
+  function buildTable(place, t, y){
+    const diff = (a,b)=>!a||!b?"—":`${a-b>0?"+":"-"}₹${Math.abs(a-b)}`;
+    return `
+      <div style="margin-bottom:14px;border:1px solid #ccc;padding:10px;border-radius:8px;">
+        <h3>${place}</h3>
+        <table style="width:100%;border-collapse:collapse;text-align:center;">
+          <tr style="background:#eee;font-weight:700;">
+            <td>Price</td><td>18K</td><td>22K</td><td>24K</td>
+          </tr>
+          <tr>
+            <td>Today</td>
+            <td>${fmt(t["18k"])}</td>
+            <td>${fmt(t["22k"])}</td>
+            <td>${fmt(t["24k"])}</td>
+          </tr>
+          <tr>
+            <td>Yesterday</td>
+            <td>${fmt(y?.["18k"])}</td>
+            <td>${fmt(y?.["22k"])}</td>
+            <td>${fmt(y?.["24k"])}</td>
+          </tr>
+          <tr>
+            <td>Change</td>
+            <td>${diff(t["18k"],y?.["18k"])}</td>
+            <td>${diff(t["22k"],y?.["22k"])}</td>
+            <td>${diff(t["24k"],y?.["24k"])}</td>
+          </tr>
+        </table>
+      </div>
+    `;
+  }
+
+  /* ---------------- MAIN FETCH ---------------- */
+  async function renderGold(){
+    const apiKey = localStorage.getItem(API_KEY)||"";
+    if(apiKey===""){
+      showStatus("Please enter API key.",true);
+      return;
+    }
+
+    showStatus("Fetching live rates...");
+
+    try{
+      const p1 = place1Sel.value;
+      const p2 = place2Sel.value;
+
+      const r1 = await fetchGoldAPI(apiKey);
+      const r2 = await fetchGoldAPI(apiKey);
+
+      saveSnapshot(p1,r1);
+      saveSnapshot(p2,r2);
+
+      const y1 = getYesterday(p1);
+      const y2 = getYesterday(p2);
+
+      tablesEl.innerHTML =
+        buildTable(p1,r1,y1) +
+        buildTable(p2,r2,y2);
+
+      showStatus("Updated");
+    }
+    catch(e){
+      console.error(e);
+      showStatus("API error — check key",true);
+    }
+  }
+
+  /* ---------------- UI EVENTS ---------------- */
+
+  toggleBtn.addEventListener("click",()=>{
+    const exp = toggleBtn.getAttribute("aria-expanded")==="true";
+    toggleBtn.setAttribute("aria-expanded",String(!exp));
+    toggleBtn.classList.toggle("open");
+    formDiv.classList.toggle("visible");
+
+    if(!exp){
+      apiInput.value = localStorage.getItem(API_KEY)||"";
+      renderGold();
+    }
+  });
+
+  saveKeyBtn.addEventListener("click",()=>{
+    if(apiInput.value.trim()===""){
+      showStatus("Enter valid API key",true); return;
+    }
+    localStorage.setItem(API_KEY,apiInput.value.trim());
+    showStatus("API key saved.");
+  });
+
+  clearKeyBtn.addEventListener("click",()=>{
+    localStorage.removeItem(API_KEY);
+    apiInput.value="";
+    showStatus("API key cleared.");
+  });
+
+  refreshBtn.addEventListener("click",renderGold);
+
+  place1Sel.addEventListener("change",renderGold);
+  place2Sel.addEventListener("change",renderGold);
+
+})();
+
+
               // ---------- End Initial Render Code ----------
               })();
     </script>
