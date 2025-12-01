@@ -489,6 +489,28 @@
         border:1px solid #444;
         margin-top:5px;
       }
+      .form {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.form.visible {
+    max-height: 5000px;   /* LARGE SAFE VALUE */
+    overflow: visible;
+    padding-bottom: 10px; /* Extra bottom space for full visibility */
+}
+
+.gold-table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.gold-table-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
     </style>
   </head>
   <body>
@@ -1161,7 +1183,7 @@
 
 <div id="goldRateForm" class="form" aria-hidden="true">
 
-  <label>GoldAPI.io FREE API Key</label>
+  <label>GoldAPI.io FREE API Key (Per day limits may appilicable for results)</label>
   <input id="goldApiKeyInput" placeholder="Paste Free API Key" 
     style="width:100%;padding:8px;border-radius:6px;border:1px solid #444;">
 
@@ -1177,9 +1199,9 @@
   <select id="goldPlace2"></select>
 
   <div id="goldStatus" style="margin-top:10px;font-weight:600;"></div>
-
+  
   <div id="goldTables" style="margin-top:12px;"></div>
-
+<div class="gold-table-wrapper">
   <button id="goldRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">
     Refresh
   </button>
