@@ -21,7 +21,7 @@
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica          Neue", Arial;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
         background: var(--bg);
         color: var(--text);
       }
@@ -126,7 +126,7 @@
         gap:6px;
         transition: left 0s;
       }
-      .form input[type="text"], .form input[type="date"], .form textarea,          .form select {
+      .form input[type="text"], .form input[type="date"], .form textarea, .form select {
         padding:8px;
         border-radius:6px;
         border:1px solid #ccc;
@@ -170,7 +170,7 @@
       }
       .dark .main { background:#151515; color:var(--text); }
       .dark .form { background: #232323; }
-      .dark .menu-btn, .dark .icon-btn { background:#333; color:var(--text);       }
+      .dark .menu-btn, .dark .icon-btn { background:#333; color:var(--text); }
 
       /* Settings panel styles */
       .settings-panel {
@@ -184,8 +184,8 @@
       /* Consistent button styling for all sections */
       #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
       #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
-      #viewCheckToggle,#homeOverviewToggle ,#viewRemindersToggle,#moonPhaseToggle, #sunBtn,
-      #goldRateToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
+      #viewCheckToggle, #homeOverviewToggle, #viewRemindersToggle,#moonPhaseToggle, #sunBtn,
+      #goldRateToggle, #weatherToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
         position: relative;
         user-select: none;
         display: flex;
@@ -490,27 +490,23 @@
         border:1px solid #444;
         margin-top:5px;
       }
-           .form {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease;
-}
-
-.form.visible {
-    max-height: 5000px;   /* LARGE SAFE VALUE */
-    overflow: visible;
-    padding-bottom: 10px; /* Extra bottom space for full visibility */
-}
-
-.gold-table-wrapper {
-    overflow-x: auto;
-    overflow-y: visible;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-.gold-table-wrapper::-webkit-scrollbar {
-    display: none;
-}
+     
+      .form.visible {
+          max-height: 5000px;   /* LARGE SAFE VALUE */
+          overflow: visible;
+          padding-bottom: 10px; /* Extra bottom space for full visibility */
+      }
+      
+      .gold-table-wrapper {
+          overflow-x: auto;
+          overflow-y: visible;
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+      .gold-table-wrapper::-webkit-scrollbar {
+          display: none;
+      }
+      
     </style>
   </head>
   <body>
@@ -887,8 +883,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.5.10</p>
-          <p>Last Updated: 23-Nov-2025</p>
+          <p>Version 13.6.1</p>
+          <p>Last Updated: 04-Dec-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -1030,6 +1026,12 @@
                 <div>S</div>
               </div>
             </div>
+            <!-- CURRENT TAMIL MONTH BOX -->
+          <div id="currentTamilMonthBox"
+               style="padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;background:#f8f8f8;">
+            <h3 style="text-align:center;margin:0 0 8px 0;">இன்றைய தமிழ் மாதம்</h3>
+            <p id="currentTamilMonthText" style="font-weight:600;text-align:center;"></p>
+          </div>
           </div>
         </div>
         <div class="add-area">
@@ -1044,6 +1046,7 @@
                 <option value="age">Age Calculator</option>
                 <option value="date">Date Difference Calculator</option>
                 <option value="bmi">BMI Calculator</option>
+                <option value="eb">EB Calculator</option>
                 <option value="scientific" disabled>
                   Scientific Calculator (WIP)
                 </option>
@@ -1149,7 +1152,25 @@
           <button id="calcBMIButton">Calculate BMI</button>
           <p id="bmiResult" style="margin-top: 8px; font-weight: 600;"></p>
         </div>
-        </div>
+        
+        <div id="ebCalculator" class="calculator-mode hidden">
+        <h3>⚡ EB BILL CALCULATOR</h3>
+      
+        <label>EB No / Name (optional)
+          <input type="text" id="ebConsumerName" placeholder="Consumer No / Name">
+        </label>
+      
+        <label>Enter Units Consumed
+          <input type="number" id="ebUnits" placeholder="e.g., 350">
+        </label>
+      
+        <button id="calcEbBtn" class="primary">Calculate EB Bill</button>
+      
+        <h4 style="margin-top:10px;">Editable Tariff Table</h4>
+      <table id="ebTariffTable" style="width:100%;border-collapse:collapse;"></table>
+        <p id="ebResult" style="margin-top:10px;font-weight:700;"></p>
+      </div>
+    </div>
         <button id="moonPhaseToggle">🌙 MOON PHASE<span class="arrow">▼</span></button>
         <div id="moonPhaseContainer" class="hidden"></div>
         <button id="sunBtn">🌅 SUNRISE & SUNSET<span class="arrow">▼</span></button>
@@ -1199,6 +1220,22 @@
           </button>
         </div>
         </div>
+        <div class="add-area">
+        <button id="weatherToggle" class="add-btn" aria-expanded="false">
+        ☁️ WEATHER FORECAST <span class="arrow">▼</span>
+      </button>
+      
+      <div id="weatherForm" class="form" aria-hidden="true">
+        
+        <label>Select Place</label>
+        <select id="weatherCity"></select>
+      
+        <div id="weatherStatus" style="margin-top:10px;font-weight:600;"></div>
+        <div id="weatherOutput" style="margin-top:12px;"></div>
+      
+        <button id="weatherRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">Refresh</button>
+      </div>
+      </div>
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -1786,9 +1823,10 @@
 
           const used = b.expenses ? b.expenses.reduce((sum, e) => sum + e.amount, 0) : 0;
           const remaining = b.amount - used;
+          
           const start = b.startDate ? new Date(b.startDate) : null;
           const end = b.endDate ? new Date(b.endDate) : null;
-          const days = (start && end) ? daysBetween(b.startDate, b.endDate) : 1;
+          const days = daysLeft(b.endDate);
           const remainingPerDay = days > 0 ? (remaining / days).toFixed(2) : remaining;
           const title = document.createElement('div');
           title.textContent = `Title: ${b.title}`;
@@ -1833,9 +1871,11 @@
             // --- Buttons section ---
             const right = document.createElement('div');
             right.style.display = 'flex';
+            right.style.flexDirection = 'column';
+            right.style.justifyContent = 'center';
             right.style.alignItems = 'center';
-            right.style.gap = '4px';
-
+            right.style.gap = '10px';
+            right.style.paddingTop = '6px';
             const addBtn = document.createElement('button');
             addBtn.textContent = '➕';
             addBtn.className = 'icon-small';
@@ -1867,8 +1907,6 @@
 
               if (!b.expenses) b.expenses = [];
               b.expenses.push({ title: expTitle, amount: expAmt, date: expDate });
-              b.amount = b.amount - expAmt;
-
               saveAll();
               renderBudgets();
             });
@@ -1904,14 +1942,15 @@
           appData.budget.forEach(b => {
             if (!b.expenses) b.expenses = [];
 
-            // Calculate total expenses and remaining
+             // Calculate total expenses and remaining
             const used = b.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
             const remaining = b.amount - used;
-
-            // Calculate cost per day (optional — still using full amount)
-            const costPerDay = calculateCostPerDay(remaining, b.startDate, b.endDate);
-            const days = daysBetween(b.startDate, b.endDate);
-
+            
+            // Correct dynamic remaining days
+            const days = daysLeft(b.endDate);  
+            
+            // Recalculate cost per day
+            const costPerDay = days > 0 ? (remaining / days).toFixed(2) : 0;
             const li = document.createElement('li');
             li.style.fontSize = '14px';
             li.style.marginBottom = '5px';
@@ -2448,7 +2487,7 @@
             let summary = [];
             if (appData.budget.length === 0) return "No active budgets to track.";
             appData.budget.forEach(b => {
-                const days = daysBetween(b.startDate, b.endDate);
+                const days = daysLeft(b.endDate);
                 const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
                 if (days > 0 && costPerDay > 0) {
                     summary.push(`- ${b.title}: ₹${costPerDay}/day for ${days} days`);
@@ -2751,7 +2790,10 @@
                     else if (mode === 'bmi') {
                     byId('bmiCalculator').classList.remove('hidden');
                   }
-
+                    else if (mode === "eb") {
+                    document.getElementById("ebCalculator").classList.remove("hidden");
+                    renderEbTable(); // Load editable tariff table
+                }
                   // Reset history index when mode changes
                   editingHistoryIndex = null;
                   }
@@ -2886,6 +2928,63 @@
                 if (phase === "New Moon") return "amavasai";
                 return "none";
                 }
+                // TAMIL MONTH DATA (STATIC RANGE)
+                const tamilMonths = [
+                  { name: "சித்திரை",   start: "04-14", end: "05-14", info: "On This Month Tamil New Year, Chitra Pournami" },
+                  { name: "வைகாசி",    start: "05-15", end: "06-14", info: "On This Month Vaikasi Visakam" },
+                  { name: "ஆனி",       start: "06-15", end: "07-16", info: "On This Month Aani Thirumanjanam" },
+                  { name: "ஆடி",       start: "07-17", end: "08-16", info: "On This Month Aadi Perukku, Aadi Amavasai" },
+                  { name: "ஆவணி",     start: "08-17", end: "09-16", info: "On This Month Avani Avittam" },
+                  { name: "புரட்டாசி", start: "09-17", end: "10-16", info: "On This Month Purattasi Saturdays" },
+                  { name: "ஐப்பசி",    start: "10-17", end: "11-15", info: "On This Month Deepavali" },
+                  { name: "கார்த்திகை", start: "11-16", end: "12-15", info: "On This Month Karthigai Deepam" },
+                  { name: "மார்கழி",   start: "12-16", end: "01-13", info: "On This Month Tiruppavai, Thiruvempavai" },
+                  { name: "தை",        start: "01-14", end: "02-12", info: "On This Month Pongal, Thai Poosam" },
+                  { name: "மாசி",      start: "02-13", end: "03-13", info: "On This Month Maasi Magam" },
+                  { name: "பங்குனி",   start: "03-14", end: "04-13", info: "On This Month Panguni Uthiram" }
+                ];
+                
+                // FUNCTION — Returns current Tamil month object
+                function getCurrentTamilMonth() {
+                  const today = new Date();
+                  const mmdd = (today.getMonth() + 1).toString().padStart(2,'0') + '-' +
+                               today.getDate().toString().padStart(2,'0');
+                
+                  for (let m of tamilMonths) {
+                    // Months crossing next year boundary (Margazhi)
+                    if (m.start > m.end) {
+                      if (mmdd >= m.start || mmdd <= m.end) return m;
+                    }
+                    // Normal month range
+                    if (mmdd >= m.start && mmdd <= m.end) return m;
+                  }
+                  return null;
+                }
+                
+                // DISPLAY CURRENT TAMIL MONTH
+                function formatDM(md) {
+                  const [mm, dd] = md.split('-');
+                  return dd + '-' + mm;
+                }
+                
+                function renderCurrentTamilMonth() {
+                  const m = getCurrentTamilMonth();
+                  const box = document.getElementById("currentTamilMonthText");
+                
+                  if (!m) {
+                    box.textContent = "Unable to detect Tamil month.";
+                    return;
+                  }
+                
+                  box.innerHTML = `
+                    <b>${m.name}</b><br>
+                    <small>${formatDM(m.start)} → ${formatDM(m.end)}</small><br>
+                    <span style="opacity:0.8;">${m.info}</span>
+                  `;
+                }
+                // Run immediately when opening Utilities page
+                renderCurrentTamilMonth();
+
                 // ---------------- SUNRISE / SUNSET ----------------
                 document.getElementById("sunBtn").addEventListener("click", () => {
                   let box = document.getElementById("sunBox");
@@ -3189,6 +3288,7 @@
                 renderBudgets();
                 renderChecklists();
                 renderHistory(); // NEW: Initial render for history
+                renderCalculationHistory()
                 // NEW: Initialize calculator mode
                 switchCalculatorMode();
                 async function showMoonPhaseNotification() {
@@ -3319,237 +3419,675 @@
               byId("inactiveChecklistsCount").textContent = inactiveChk;
             }
             /* ---------------- GOLD RATE OPTION A (GOOGLE FINANCE SPOT PRICE) ---------------- */
-(function(){
+            (function(){
+            
+              const $ = id => document.getElementById(id);
+            
+              const toggleBtn = $("goldRateToggle");
+              const formDiv   = $("goldRateForm");
+              const place1Sel = $("goldPlace1");
+              const place2Sel = $("goldPlace2");
+              const statusEl  = $("goldStatus");
+              const tablesEl  = $("goldTables");
+              const refreshBtn = $("goldRefreshBtn");
+            
+              const SNAP = "gold_snap_google_v1";
+            
+              const PLACES = [
+                "Chennai","Madurai","Coimbatore","Trichy","Tirunelveli","Kanyakumari",
+                "Pondicherry","Salem","Erode","Vellore","Thanjavur","Nagercoil",
+                "Dindigul","Tirupur","Karur","Kanchipuram","Chengalpattu",
+                "Bengaluru","Kochi","Thiruvananthapuram","Calicut","Ernakulam",
+                "Pune","Mumbai","Hyderabad"
+              ];
+            
+              // city price difference calibration (to match GoodReturns)
+              const CITY_ADJUST = {
+                "Chennai": 0,
+                "Madurai": 15,
+                "Coimbatore": 12,
+                "Trichy": 10,
+                "Tirunelveli": 8,
+                "Kanyakumari": 5,
+                "Pondicherry": 3,
+                "Salem": 4,
+                "Erode": 5,
+                "Vellore": 6,
+                "Thanjavur": 7,
+                "Nagercoil": 8,
+                "Dindigul": 10,
+                "Tirupur": 12,
+                "Karur": 11,
+                "Kanchipuram": 5,
+                "Chengalpattu": 6,
+                "Bengaluru": 20,
+                "Kochi": -10,
+                "Thiruvananthapuram": -8,
+                "Calicut": -12,
+                "Ernakulam": -10,
+                "Pune": 18,
+                "Mumbai": 22,
+                "Hyderabad": 20
+              };
+            
+              const load = k => {try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return{}}};
+              const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+              const fmt = v => v==null ? "—" : "₹ " + Math.round(Number(v)).toLocaleString("en-IN");
+            
+              // populate dropdowns
+              (function(){
+                PLACES.forEach(p=>{
+                  const o1=document.createElement("option"); o1.value=p; o1.textContent=p;
+                  const o2=document.createElement("option"); o2.value=p; o2.textContent=p;
+                  place1Sel.appendChild(o1); place2Sel.appendChild(o2);
+                });
+                place2Sel.selectedIndex=1;
+              })();
+            
+              /* ---------------- FETCH SPOT PRICE FROM GOOGLE FINANCE ---------------- */
+            async function fetchSpotINR() {
+            
+                // 1) Fetch live gold per ounce in USD
+                const goldRes = await fetch("https://data-asg.goldprice.org/dbXRates/USD");
+                const goldData = await goldRes.json();
+            
+                if (!goldData.items || !goldData.items[0].xauPrice)
+                    throw new Error("Live XAU price unavailable");
+            
+                const xauUSD = goldData.items[0].xauPrice;
+            
+                // 2) Fetch USD → INR rate
+                const fxRes = await fetch("https://open.er-api.com/v6/latest/USD");
+                const fxData = await fxRes.json();
+            
+                if (!fxData.rates || !fxData.rates.INR)
+                    throw new Error("INR rate unavailable");
+            
+                const usdToInr = fxData.rates.INR;
+            
+            
+            function convertToIndianRetailPrice(base24_inr_per_gram) {
+            
+                let price = Number(base24_inr_per_gram);
+            
+                // 6% import duty
+                price += price * 0.06;
+            
+                // 3% GST
+                price += price * 0.03;
+            
+                // Dealer premium (tune 150–250)
+                const dealerPremium = 180;
+                price += dealerPremium;
+            
+                const retail24 = Math.round(price);
+            
+                return {
+                    retail24k: retail24,
+                    retail22k: Math.round(retail24 * 0.916),
+                    retail18k: Math.round(retail24 * 0.750)
+                };
+            }
+            
+            
+            const perGram24K = (xauUSD * usdToInr) / 31.1035; // 31.1035 grams in a troy ounce
+            
+            return Math.round(perGram24K);
+            }
+            
+            
+              /* ---------------- GENERATE PURITY VALUES ---------------- */
+             function purityRates(spot, place){
+                const adj = CITY_ADJUST[place] || 0; 
+                
+                // --- ADD THESE TWO LINES ---
+                const RETAIL_MARKUP = 0.05; // 5% assumed for making charge/jeweler margin (adjust as needed)
+                const GST_RATE = 0.03;      // 3% Goods and Services Tax 
+                // ---------------------------
+                
+                // Gold rates per 10 grams for 24k (pure)
+                const base = spot * 1;
+                
+                // --- CHANGE 'const' to 'let' for these three lines ---
+                let rate24k = base + adj; 
+                let rate22k = (base * 0.916) + adj;
+                let rate18k = (base * 0.750) + adj;
+                // ----------------------------------------------------
+            
+                // --- ADD THESE THREE LINES TO APPLY MARKUP AND GST ---
+                // Retail Price = (Gold Price + Markup) + GST on the total
+                rate24k = (rate24k * (1 + RETAIL_MARKUP)) * (1 + GST_RATE);
+                rate22k = (rate22k * (1 + RETAIL_MARKUP)) * (1 + GST_RATE);
+                rate18k = (rate18k * (1 + RETAIL_MARKUP)) * (1 + GST_RATE);
+                // -----------------------------------------------------
+            
+               return {
+                "18k": Math.round(rate18k),
+                "22k": Math.round(rate22k),
+                "24k": Math.round(rate24k),
+                "place": place,
+                "time": new Date().getTime(),
+              }
+              }
+            
+              /* ---------------- SAVE SNAPSHOT ---------------- */
+              function saveSnap(place,data){
+                const s = load(SNAP);
+                const t = new Date().toISOString().slice(0,10);
+                s[t] = s[t] || {};
+                s[t][place] = data;
+                save(SNAP,s);
+              }
+              function getYesterday(place){
+                const s = load(SNAP);
+                let d = new Date(); d.setDate(d.getDate()-1);
+                const y = d.toISOString().slice(0,10);
+                return s[y]?.[place] || null;
+              }
+            
+              /* ---------------- BUILD TABLE ---------------- */
+              function buildTable(place,t,y){
+                const diff = (a, b) => {
+                if (!a || !b) return "—";
+                const change = Math.round(a - b);
+                const sign = change > 0 ? "+" : "-";
+                return `${sign}₹${Math.abs(change)}`;
+              };
 
-  const $ = id => document.getElementById(id);
+                return `
+                  <div class="gold-table-wrapper">
+                    <div style="border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:15px;background:#fff;">
+                      <h3>${place}</h3>
+                      <table style="width:100%;border-collapse:collapse;">
+                        <tr style="background:#f3f3f3;font-weight:700;">
+                          <td>Price</td><td>18K</td><td>22K</td><td>24K</td>
+                        </tr>
+                        <tr><td>Today</td><td>${fmt(t["18k"])}</td><td>${fmt(t["22k"])}</td><td>${fmt(t["24k"])}</td></tr>
+                        <tr><td>Yesterday</td><td>${fmt(y?.["18k"])}</td><td>${fmt(y?.["22k"])}</td><td>${fmt(y?.["24k"])}</td></tr>
+                        <tr><td>Change</td><td>${diff(t["18k"],y?.["18k"])}</td><td>${diff(t["22k"],y?.["22k"])}</td><td>${diff(t["24k"],y?.["24k"])}</td></tr>
+                      </table>
+                    </div>
+                  </div>
+                `;
+              }
+            
+              /* ---------------- MAIN ---------------- */
+              async function renderGold(){
+                statusEl.innerHTML = "⏳ Fetching live spot price...";
+            
+                try{
+                  const spot = await fetchSpotINR();
+            
+                  const p1 = place1Sel.value;
+                  const p2 = place2Sel.value;
+            
+                  const r1 = purityRates(spot,p1);
+                  const r2 = purityRates(spot,p2);
+            
+                  saveSnap(p1,r1);
+                  saveSnap(p2,r2);
+            
+                  const y1 = getYesterday(p1);
+                  const y2 = getYesterday(p2);
+            
+                  tablesEl.innerHTML =
+                    buildTable(p1,r1,y1) +
+                    buildTable(p2,r2,y2);
+            
+                  statusEl.innerHTML = "⏳ Almost Accurate Data Updated";
+                }
+                catch(e){
+                  statusEl.innerHTML = "❌ Failed: "+e.message;
+                }
+              }
+            
+              /* ---------------- UI EVENTS ---------------- */
+            
+              toggleBtn.addEventListener("click",()=>{
+                const exp = toggleBtn.getAttribute("aria-expanded")==="true";
+                toggleBtn.setAttribute("aria-expanded",String(!exp));
+                toggleBtn.classList.toggle("open");
+                formDiv.classList.toggle("visible");
+                if(!exp) renderGold();
+              });
+            
+              place1Sel.addEventListener("change", renderGold);
+              place2Sel.addEventListener("change", renderGold);
+              refreshBtn.addEventListener("click", renderGold);
+            
+            })();
+            /* ---------------- WEATHER FORECAST (TODAY & TOMORROW) ---------------- */
+            (function(){
+              const $ = id => document.getElementById(id);
+            
+              const toggleBtn = $("weatherToggle");
+              const formDiv = $("weatherForm");
+              const citySel = $("weatherCity");
+              const statusEl = $("weatherStatus");
+              const outEl = $("weatherOutput");
+              const refreshBtn = $("weatherRefreshBtn");
+            
+              const CITIES = [
+                "Chennai",
+                "Madurai",
+                "Coimbatore",
+                "Trichy",
+                "Tirunelveli",
+                "Salem",
+                "Erode",
+                "Vellore",
+                "Thanjavur",
+                "Tanjore",
+                "Tuticorin",
+                "Tiruppur",
+                "Kanyakumari",
+                "Dindigul",
+                "Karur",
+                "Namakkal",
+                "Kanchipuram",
+                "Chengalpattu",
+                "Cuddalore",
+                "Villupuram",
+                "Dharmapuri",
+                "Krishnagiri",
+                "Nagapattinam",
+                "Sivagangai",
+                "Ramanathapuram",
+                "Tiruvarur",
+                "Virudhunagar",
+                "Nagercoil",
+                "Perambalur",
+                "Pudukkottai",
+              ];
+            
+              // fill dropdown
+              CITIES.forEach(c=>{
+                const o = document.createElement("option");
+                o.value = c;
+                o.textContent = c;
+                citySel.appendChild(o);
+              });
+            
+              function getIcon(desc){
+                const d = desc.toLowerCase();
+                if(d.includes("sun") || d.includes("clear")) return "☀️";
+                if(d.includes("cloud")) return "⛅";
+                if(d.includes("rain")) return "🌧️";
+                if(d.includes("storm") || d.includes("thunder")) return "⛈️";
+                if(d.includes("fog")) return "🌫️";
+                if(d.includes("snow")) return "❄️";
+                return "⛅";
+              }
+            
+              async function fetchWeather(city){
+              statusEl.textContent = "⏳ Fetching hourly forecast…";
+            
+              // 1) geocode the city (open-meteo geocoding)
+              const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+              const gres = await fetch(geoUrl, { cache: 'no-store' });
+              if(!gres.ok) throw new Error('Geocode failed');
+              const gdata = await gres.json();
+              const place = (gdata.results && gdata.results[0]);
+              if(!place) throw new Error('City not found');
+            
+              const lat = place.latitude;
+              const lon = place.longitude;
+            
+              // 2) prepare date range: today and tomorrow (ISO YYYY-MM-DD)
+              const todayDate = new Date();
+              const todayISO = todayDate.toISOString().slice(0,10);
+              const tomorrowDate = new Date(todayDate);
+              tomorrowDate.setDate(tomorrowDate.getDate()+1);
+              const tomorrowISO = tomorrowDate.toISOString().slice(0,10);
+              // fetch full 2-day hourly data (start today 00:00 -> end tomorrow 23:00)
+              const start = todayISO;
+              const end = tomorrowISO;
+            
+              // 3) fetch hourly forecast from Open-Meteo
+              // request: temperature_2m, relativehumidity_2m, precipitation_probability, weathercode
+              const params = [
+                `latitude=${lat}`,
+                `longitude=${lon}`,
+                `hourly=temperature_2m,relativehumidity_2m,precipitation_probability,weathercode`,
+                `start_date=${start}`,
+                `end_date=${end}`,
+                `timezone=Asia/Kolkata`
+              ].join('&');
+            
+              const fUrl = `https://api.open-meteo.com/v1/forecast?${params}`;
+              const fres = await fetch(fUrl, { cache: 'no-store' });
+              if(!fres.ok) throw new Error('Forecast fetch failed');
+              const fdata = await fres.json();
+            
+              // 4) normalize hourly arrays into objects keyed by ISO date-time 'YYYY-MM-DDTHH:MM'
+              const times = fdata.hourly.time || []; // e.g. "2025-12-04T00:00"
+              const temps = fdata.hourly.temperature_2m || [];
+              const hums  = fdata.hourly.relativehumidity_2m || [];
+              const precs = fdata.hourly.precipitation_probability || [];
+              const wc    = fdata.hourly.weathercode || [];
+            
+              // build list of hourly entries
+              const hourly = [];
+              for(let i=0;i<times.length;i++){
+                const tISO = times[i];                   // "YYYY-MM-DDTHH:MM"
+                const dt = new Date(tISO);
+                const hour24 = dt.getHours();            // 0..23 (local tz because we requested Asia/Kolkata)
+                const date = tISO.slice(0,10);           // YYYY-MM-DD
+                hourly.push({
+                  date,
+                  hour24,
+                  timeISO: tISO,
+                  temp: temps[i] != null ? Math.round(temps[i]) : null,
+                  humidity: hums[i] != null ? Math.round(hums[i]) : null,
+                  precipProb: precs[i] != null ? Math.round(precs[i]) : null,
+                  weathercode: wc[i] != null ? wc[i] : null
+                });
+              }
+            
+              // 5) pick today's 0..23 and tomorrow's 0..23 arrays (ensures full 24 entries each)
+              const todayHours = [];
+              const tomorrowHours = [];
+            
+              for(let h=0; h<24; h++){
+                // find hour entry for today date + hour h
+                const tEntry = hourly.find(x => x.date === todayISO && x.hour24 === h) || {
+                  date: todayISO, hour24: h, timeISO: `${todayISO}T${String(h).padStart(2,'0')}:00`, temp:null, humidity:null, precipProb:null, weathercode:null
+                };
+                todayHours.push(tEntry);
+            
+                const tmEntry = hourly.find(x => x.date === tomorrowISO && x.hour24 === h) || {
+                  date: tomorrowISO, hour24: h, timeISO: `${tomorrowISO}T${String(h).padStart(2,'0')}:00`, temp:null, humidity:null, precipProb:null, weathercode:null
+                };
+                tomorrowHours.push(tmEntry);
+              }
+            
+              // 6) map to UI-friendly format: time12, temp, rain, humidity, icon
+              const getIconFromCodeOrProb = (entry) => {
+                // If precipitation probability high -> rain; else use weathercode bands
+                if(entry.precipProb != null && entry.precipProb >= 50) return '🌧️';
+                const code = entry.weathercode;
+                if(code === null || code === undefined) {
+                  // fallback by temp/humidity
+                  if(entry.temp != null && entry.temp >= 30) return '☀️';
+                  return '⛅';
+                }
+                // open-meteo weathercode mapping (simple)
+                // 0 clear, 1-3 partly cloudy, 45/48 fog, 51-67 drizzle/rain, 71-77 snow, 95-99 thunder
+                if(code === 0) return '☀️';
+                if(code >= 1 && code <= 3) return '⛅';
+                if(code === 45 || code === 48) return '🌫️';
+                if((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️';
+                if(code >= 71 && code <= 77) return '❄️';
+                if(code >= 95) return '⛈️';
+                return '⛅';
+              };
+            
+              const to12 = (h) => {
+                let hr = Number(h) % 24;
+                const ampm = hr >= 12 ? 'PM' : 'AM';
+                hr = hr % 12;
+                if(hr === 0) hr = 12;
+                return `${hr}:00 ${ampm}`;
+              };
+            
+              const todayUI = todayHours.map(e => ({
+                time12: to12(e.hour24),
+                temp: e.temp,
+                rain: e.precipProb,
+                humidity: e.humidity,
+                icon: getIconFromCodeOrProb(e)
+              }));
+            
+              const tomorrowUI = tomorrowHours.map(e => ({
+                time12: to12(e.hour24),
+                temp: e.temp,
+                rain: e.precipProb,
+                humidity: e.humidity,
+                icon: getIconFromCodeOrProb(e)
+              }));
+            
+              // final normalized object
+              return {
+                cityResolved: place.name + (place.country ? (', ' + place.country) : ''),
+                todayHours: todayUI,
+                tomorrowHours: tomorrowUI
+              };
+            }
+              function buildWeatherUI(city, w){
+              const tableRows = arr => arr.map(h=>`
+                <tr>
+                  <td style="padding:6px 8px;width:14%">${h.time12}</td>
+                  <td style="padding:6px 8px;width:8%;text-align:center">${h.icon}</td>
+                  <td style="padding:6px 8px;width:24%;text-align:center">${h.temp==null?'—':h.temp+'°C'}</td>
+                  <td style="padding:6px 8px;width:24%;text-align:center">${h.rain==null?'—':h.rain+'%'}</td>
+                  <td style="padding:6px 8px;width:24%;text-align:center">${h.humidity==null?'—':h.humidity+'%'}</td>
+                </tr>
+              `).join('');
+            
+              return `
+                <div style="border:1px solid #ddd;border-radius:10px;padding:12px;background:#fff;">
+                  <h3 style="margin:0 0 8px 0">${city} — Hourly Forecast</h3>
+            
+                  <h4 style="margin:8px 0 6px 0;font-size:14px">Today</h4>
+                  <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;">
+                      <tr style="background:#f3f3f3;font-weight:700">
+                        <td>Time</td><td style="text-align:center">Icon</td><td style="text-align:center">Temp</td><td style="text-align:center">Rain %</td><td style="text-align:center">Humidity</td>
+                      </tr>
+                      ${tableRows(w.todayHours)}
+                    </table>
+                  </div>
+            
+                  <h4 style="margin:12px 0 6px 0;font-size:14px">Tomorrow</h4>
+                  <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;">
+                      <tr style="background:#f3f3f3;font-weight:700">
+                        <td>Time</td><td style="text-align:center">Icon</td><td style="text-align:center">Temp</td><td style="text-align:center">Rain %</td><td style="text-align:center">Humidity</td>
+                      </tr>
+                      ${tableRows(w.tomorrowHours)}
+                    </table>
+                  </div>
+                </div>
+              `;
+            }
+             async function renderWeather(){
+              try{
+                const city = citySel.value || citySel.options[0]?.value;
+                statusEl.textContent = '⏳ Fetching hourly forecast...';
+                const w = await fetchWeather(city);
+                outEl.innerHTML = buildWeatherUI(w.cityResolved, w);
+                statusEl.textContent = '✔ Hourly forecast updated';
+                // save last city for notifications if you use that
+                localStorage.setItem('last_weather_city', city);
+                // optionally save snapshot for offline fallback
+                localStorage.setItem('weather_snapshot_' + new Date().toISOString().slice(0,10), JSON.stringify(w));
+              } catch(err){
+                console.error('Weather error', err);
+                statusEl.textContent = '❌ Hourly forecast failed: ' + (err.message||'');
+                outEl.innerHTML = `<div style="color:#d32f2f;padding:10px;border:1px solid #ffdede;border-radius:8px;">Failed to fetch hourly forecast.</div>`;
+              }
+            }
+              toggleBtn.addEventListener("click", ()=>{
+                const exp = toggleBtn.getAttribute("aria-expanded") === "true";
+                toggleBtn.setAttribute("aria-expanded", !exp);
+                toggleBtn.classList.toggle("open");
+                formDiv.classList.toggle("visible");
+                if(!exp) renderWeather();
+              });
+            
+              refreshBtn.addEventListener("click", renderWeather);
+              citySel.addEventListener("change", renderWeather);
+            
+            })();
+            /* ==========================
+   EB TAMIL NADU TARIFF SLABS
+   USER EDITABLE
+========================== */
 
-  const toggleBtn = $("goldRateToggle");
-  const formDiv   = $("goldRateForm");
-  const place1Sel = $("goldPlace1");
-  const place2Sel = $("goldPlace2");
-  const statusEl  = $("goldStatus");
-  const tablesEl  = $("goldTables");
-  const refreshBtn = $("goldRefreshBtn");
+let ebSlabs = [
+  { from: 1, to: 100, cost: 0 },
+  { from: 101, to: 200, cost: 2.35 },
+  { from: 201, to: 400, cost: 4.70 },
+  { from: 401, to: 500, cost: 6.30 },
+  { from: 501, to: 600, cost: 8.40 },
+  { from: 601, to: 800, cost: 9.45 },
+  { from: 801, to: 1000, cost: 10.50 },
+  { from: 1001, to: Infinity, cost: 11.55 }
+];
 
-  const SNAP = "gold_snap_google_v1";
+/* Build editable tariff table */
+function renderEbTable() {
+  const tbl = document.getElementById("ebTariffTable");
+  tbl.innerHTML = `
+    <tr style="background:#ddd;">
+      <th>From</th>
+      <th>To</th>
+      <th>Rate ₹</th>
+    </tr>
+  `;
 
-  const PLACES = [
-    "Chennai","Madurai","Coimbatore","Trichy","Tirunelveli","Kanyakumari",
-    "Pondicherry","Salem","Erode","Vellore","Thanjavur","Nagercoil",
-    "Dindigul","Tirupur","Karur","Kanchipuram","Chengalpattu",
-    "Bengaluru","Kochi","Thiruvananthapuram","Calicut","Ernakulam",
-    "Pune","Mumbai","Hyderabad"
-  ];
-
-  // city price difference calibration (to match GoodReturns)
-  const CITY_ADJUST = {
-    "Chennai": 0,
-    "Madurai": 15,
-    "Coimbatore": 12,
-    "Trichy": 10,
-    "Tirunelveli": 8,
-    "Kanyakumari": 5,
-    "Pondicherry": 3,
-    "Salem": 4,
-    "Erode": 5,
-    "Vellore": 6,
-    "Thanjavur": 7,
-    "Nagercoil": 8,
-    "Dindigul": 10,
-    "Tirupur": 12,
-    "Karur": 11,
-    "Kanchipuram": 5,
-    "Chengalpattu": 6,
-    "Bengaluru": 20,
-    "Kochi": -10,
-    "Thiruvananthapuram": -8,
-    "Calicut": -12,
-    "Ernakulam": -10,
-    "Pune": 18,
-    "Mumbai": 22,
-    "Hyderabad": 20
-  };
-
-  const load = k => {try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return{}}};
-  const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
-  const fmt = v => v==null?"—":"₹ " + Number(v).toLocaleString("en-IN");
-
-  // populate dropdowns
-  (function(){
-    PLACES.forEach(p=>{
-      const o1=document.createElement("option"); o1.value=p; o1.textContent=p;
-      const o2=document.createElement("option"); o2.value=p; o2.textContent=p;
-      place1Sel.appendChild(o1); place2Sel.appendChild(o2);
-    });
-    place2Sel.selectedIndex=1;
-  })();
-
-  /* ---------------- FETCH SPOT PRICE FROM GOOGLE FINANCE ---------------- */
-async function fetchSpotINR() {
-
-    // 1) Fetch live gold per ounce in USD
-    const goldRes = await fetch("https://data-asg.goldprice.org/dbXRates/USD");
-    const goldData = await goldRes.json();
-
-    if (!goldData.items || !goldData.items[0].xauPrice)
-        throw new Error("Live XAU price unavailable");
-
-    const xauUSD = goldData.items[0].xauPrice;
-
-    // 2) Fetch USD → INR rate
-    const fxRes = await fetch("https://open.er-api.com/v6/latest/USD");
-    const fxData = await fxRes.json();
-
-    if (!fxData.rates || !fxData.rates.INR)
-        throw new Error("INR rate unavailable");
-
-    const usdToInr = fxData.rates.INR;
-
-
-function convertToIndianRetailPrice(base24_inr_per_gram) {
-
-    let price = Number(base24_inr_per_gram);
-
-    // 6% import duty
-    price += price * 0.06;
-
-    // 3% GST
-    price += price * 0.03;
-
-    // Dealer premium (tune 150–250)
-    const dealerPremium = 180;
-    price += dealerPremium;
-
-    const retail24 = Math.round(price);
-
-    return {
-        retail24k: retail24,
-        retail22k: Math.round(retail24 * 0.916),
-        retail18k: Math.round(retail24 * 0.750)
-    };
-}
-
-
-const perGram24K = (xauUSD * usdToInr) / 31.1035; // 31.1035 grams in a troy ounce
-
-return Math.round(perGram24K);
-}
-
-
-  /* ---------------- GENERATE PURITY VALUES ---------------- */
- function purityRates(spot, place){
-    const adj = CITY_ADJUST[place] || 0; 
-    
-    // --- ADD THESE TWO LINES ---
-    const RETAIL_MARKUP = 0.05; // 5% assumed for making charge/jeweler margin (adjust as needed)
-    const GST_RATE = 0.03;      // 3% Goods and Services Tax 
-    // ---------------------------
-    
-    // Gold rates per 10 grams for 24k (pure)
-    const base = spot * 1;
-    
-    // --- CHANGE 'const' to 'let' for these three lines ---
-    let rate24k = base + adj; 
-    let rate22k = (base * 0.916) + adj;
-    let rate18k = (base * 0.750) + adj;
-    // ----------------------------------------------------
-
-    // --- ADD THESE THREE LINES TO APPLY MARKUP AND GST ---
-    // Retail Price = (Gold Price + Markup) + GST on the total
-    rate24k = (rate24k * (1 + RETAIL_MARKUP)) * (1 + GST_RATE);
-    rate22k = (rate22k * (1 + RETAIL_MARKUP)) * (1 + GST_RATE);
-    rate18k = (rate18k * (1 + RETAIL_MARKUP)) * (1 + GST_RATE);
-    // -----------------------------------------------------
-
-    return {
-      "18k": rate18k,
-      "22k": rate22k,
-      "24k": rate24k,
-      "place": place,
-      "time": new Date().getTime(),
-    }
-  }
-
-  /* ---------------- SAVE SNAPSHOT ---------------- */
-  function saveSnap(place,data){
-    const s = load(SNAP);
-    const t = new Date().toISOString().slice(0,10);
-    s[t] = s[t] || {};
-    s[t][place] = data;
-    save(SNAP,s);
-  }
-  function getYesterday(place){
-    const s = load(SNAP);
-    let d = new Date(); d.setDate(d.getDate()-1);
-    const y = d.toISOString().slice(0,10);
-    return s[y]?.[place] || null;
-  }
-
-  /* ---------------- BUILD TABLE ---------------- */
-  function buildTable(place,t,y){
-    const diff=(a,b)=>(!a||!b)?"—":`${a-b>0?"+":"-"}₹${Math.abs(a-b)}`;
-    return `
-      <div class="gold-table-wrapper">
-        <div style="border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:15px;background:#fff;">
-          <h3>${place}</h3>
-          <table style="width:100%;border-collapse:collapse;">
-            <tr style="background:#f3f3f3;font-weight:700;">
-              <td>Price</td><td>18K</td><td>22K</td><td>24K</td>
-            </tr>
-            <tr><td>Today</td><td>${fmt(t["18k"])}</td><td>${fmt(t["22k"])}</td><td>${fmt(t["24k"])}</td></tr>
-            <tr><td>Yesterday</td><td>${fmt(y?.["18k"])}</td><td>${fmt(y?.["22k"])}</td><td>${fmt(y?.["24k"])}</td></tr>
-            <tr><td>Change</td><td>${diff(t["18k"],y?.["18k"])}</td><td>${diff(t["22k"],y?.["22k"])}</td><td>${diff(t["24k"],y?.["24k"])}</td></tr>
-          </table>
-        </div>
-      </div>
+  ebSlabs.forEach((slab, i) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${slab.from}</td>
+      <td>${slab.to === Infinity ? "∞" : slab.to}</td>
+      <td>
+        <input type="number" step="0.01" 
+          id="ebRate_${i}" 
+          value="${slab.cost}"
+          style="width:80px;padding:3px;border:1px solid #999;border-radius:4px;">
+      </td>
     `;
-  }
+    tbl.appendChild(row);
+  });
+}
+/* Calculate EB Amount */
+function calculateEbBill(units) {
+  let total = 0;
 
-  /* ---------------- MAIN ---------------- */
-  async function renderGold(){
-    statusEl.innerHTML = "⏳ Fetching live spot price...";
-
-    try{
-      const spot = await fetchSpotINR();
-
-      const p1 = place1Sel.value;
-      const p2 = place2Sel.value;
-
-      const r1 = purityRates(spot,p1);
-      const r2 = purityRates(spot,p2);
-
-      saveSnap(p1,r1);
-      saveSnap(p2,r2);
-
-      const y1 = getYesterday(p1);
-      const y2 = getYesterday(p2);
-
-      tablesEl.innerHTML =
-        buildTable(p1,r1,y1) +
-        buildTable(p2,r2,y2);
-
-      statusEl.innerHTML = "⏳ Almost Accurate Data Updated";
-    }
-    catch(e){
-      statusEl.innerHTML = "❌ Failed: "+e.message;
-    }
-  }
-
-  /* ---------------- UI EVENTS ---------------- */
-
-  toggleBtn.addEventListener("click",()=>{
-    const exp = toggleBtn.getAttribute("aria-expanded")==="true";
-    toggleBtn.setAttribute("aria-expanded",String(!exp));
-    toggleBtn.classList.toggle("open");
-    formDiv.classList.toggle("visible");
-    if(!exp) renderGold();
+  // update slab rates from user editable inputs
+  ebSlabs.forEach((slab, i) => {
+    const box = document.getElementById(`ebRate_${i}`);
+    if (box) slab.cost = parseFloat(box.value);
   });
 
-  place1Sel.addEventListener("change", renderGold);
-  place2Sel.addEventListener("change", renderGold);
-  refreshBtn.addEventListener("click", renderGold);
+  ebSlabs.forEach(slab => {
+    if (units >= slab.from) {
+      const used = Math.min(units, slab.to) - slab.from + 1;
+      if (used > 0) total += used * slab.cost;
+    }
+  });
 
-})();
+  return total.toFixed(2);
+}
+document.getElementById("calcEbBtn").addEventListener("click", () => {
+
+  const units = parseInt(document.getElementById("ebUnits").value);
+  const name = document.getElementById("ebConsumerName").value || "Not Provided";
+
+  if (!units || units < 1) {
+    alert("Enter valid units!");
+    return;
+  }
+
+  const amount = calculateEbBill(units);
+
+  // Show result
+  document.getElementById("ebResult").innerHTML = `
+    <div style="padding:10px;background:#f2f2f2;border-radius:6px;">
+      <b>EB Consumer:</b> ${name}<br>
+      <b>Units:</b> ${units}<br>
+      <b>Total Bill:</b> ₹ ${amount}
+    </div>
+  `;
+
+  // -------------- SAVE TO HISTORY --------------
+  const historyEntry = {
+    type: "EB Bill",
+    title: `EB: ${units} units`,
+    value: `₹ ${amount}`,
+    timestamp: new Date().toISOString()
+  };
+
+  appData.calculationHistory.push(historyEntry);
+  saveAll();   // your app's storage save function
+
+  renderCalculationHistory(); // re-render the list
+});
+function renderCalculationHistory() {
+  const list = document.getElementById("calculationHistoryList");
+  list.innerHTML = "";
+
+  if (!appData.calculationHistory || appData.calculationHistory.length === 0) {
+    list.innerHTML = `<li>No calculation history yet.</li>`;
+    return;
+  }
+
+  appData.calculationHistory.forEach((h, index) => {
+    const li = document.createElement("li");
+
+    const left = document.createElement("div");
+    left.className = "item-left";
+
+    left.innerHTML = `
+      <div><b>${h.type}</b></div>
+      <div>${h.title}</div>
+      <div>${h.value}</div>
+      <small style="opacity:0.7;">${new Date(h.timestamp).toLocaleString()}</small>
+    `;
+
+    const right = document.createElement("div");
+    right.style.display = "flex";
+    right.style.alignItems = "center";
+
+    // EDIT BUTTON
+    const editBtn = document.createElement("button");
+    editBtn.className = "icon-small";
+    editBtn.textContent = "✏️";
+    editBtn.title = "Edit";
+    editBtn.onclick = () => editHistory(index);
+
+    // DELETE BUTTON
+    const delBtn = document.createElement("button");
+    delBtn.className = "icon-small";
+    delBtn.textContent = "🗑️";
+    delBtn.title = "Delete";
+    delBtn.onclick = () => deleteHistory(index);
+
+    right.appendChild(editBtn);
+    right.appendChild(delBtn);
+
+    li.appendChild(left);
+    li.appendChild(right);
+
+    list.appendChild(li);
+  });
+}
+
+function editHistory(i){
+  const item = appData.calculationHistory[i];
+  if(!item) return;
+  // Open EB calculator if the entry is EB Bill and preload values
+  if(item.type === 'EB Bill'){
+    // optional: try parse units from title "EB: 350 units"
+    const m = item.title.match(/EB:\s*(\d+)/);
+    if(m){
+      byId('calculatorMode').value = 'eb';
+      switchCalculatorMode();
+      byId('ebUnits').value = m[1];
+      // if you saved name inside item (add it), preload ebConsumerName too
+    }
+  }
+  // allow quick edit of displayed value (simple inline edit)
+  const newVal = prompt('Edit display value:', item.value);
+  if(newVal === null) return;
+  item.value = newVal;
+  item.timestamp = new Date().toISOString();
+  saveAll();
+  renderCalculationHistory();
+}
+
+
               // ---------- End Initial Render Code ----------
               })();
     </script>
