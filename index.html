@@ -510,12 +510,30 @@
     display: block;
     margin-bottom: 15px; /* controls spacing between each input */
     }
+    #installBtn {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    z-index: 9999;
+    display: none;
+    cursor: pointer;
+  }
+  
+  #installBtn:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
     </style>
   </head>
   <body>
-    <button id="installBtn" onclick="installApp()" 
-     style="display:none;padding:10px;border-radius:6px;background:#4caf50;color:white;">
-      📱 Install App
+    <button id="installBtn" onclick="installApp()">
+  📱 Install App
     </button>
     <div id="sidebar" class="sidebar">
       <div class="profile">
@@ -1392,6 +1410,7 @@
       deferredPrompt = null;
       document.getElementById("installBtn").style.display = "none";
     }
+    
       (function () {
         // ---------- Helpers ----------
         function byId(id){ return document.getElementById(id); }
