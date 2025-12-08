@@ -4468,6 +4468,92 @@ if (qrToggle && qrContainer) {
     }
   });
 }
+// ----------- QR GENERATOR THAT SAVES TO HISTORY -----------
+document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
+  try {
+    const text = document.getElementById("qrInput").value.trim();
+    if (!text) {
+      alert("Please enter text / URL");
+      return;
+    }
+
+    const canvas = document.getElementById("qrCanvas");
+    const ctx = canvas.getContext("2d");
+    const size = 300;
+
+    // Set canvas size
+    canvas.width = size;
+    canvas.height = size;
+
+    // ------------------ SIMPLE QR PATTERN -------------------
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = "#000";
+    const seed = text.length * 7;
+    for (let y = 0; y < size; y += 6) {
+      for (let x = 0; x < size; x += 6) {
+        if (((x + 1) * (y + 1) + seed) % 17 < 5) {
+          ctx.fillRect(x, y, 5, 5);
+        }
+      }
+    }
+
+    // ------------------ LOGO PART ---------------------------
+    const logo = new Image();
+    logo.src = "assets/icon.png"; // <-- Your built-in logo
+    await new Promise(resolve => logo.onload = resolve);
+
+    const logoSize = 70;
+    const centerX = (size - logoSize) / 2;
+    const centerY = (size - logoSize) / 2;
+
+    // White circle background
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 45, 0, Math.PI * 2);
+    ctx.fillStyle = "white";
+    ctx.fill();
+
+    ctx.drawImage(logo, centerX, centerY, logoSize, logoSize);
+
+    // ------------------ DOWNLOAD LINK -----------------------
+    const downloadBtn = document.getElementById("qrDownload");
+    downloadBtn.href = canvas.toDataURL("image/png");
+    downloadBtn.style.display = "inline-block";
+
+    // ------------------ SAVE IN HISTORY ---------------------
+    const thumbCanvas = document.createElement("canvas");
+    thumbCanvas.width = 150;
+    thumbCanvas.height = 150;
+    const tctx = thumbCanvas.getContext("2d");
+    tctx.drawImage(canvas, 0, 0, 150, 150);
+
+    const qrImage = thumbCanvas.toDataURL("image/jpeg", 0.8);
+
+    if (!Array.isArray(appData.calculationHistory)) {
+      appData.calculationHistory = [];
+    }
+
+    appData.calculationHistory.push({
+      type: "QR",
+      title: text,
+      value: "QR Code",
+      image: qrImage,
+      createdAt: formatDateDMYWithTime(new Date())
+    });
+
+    await saveAll();
+    if (typeof renderCalculationHistory === "function") {
+      renderCalculationHistory();
+    }
+
+    console.log("QR created & saved to history");
+
+  } catch (err) {
+    console.error("QR ERROR:", err);
+    alert("QR generation failed.");
+  }
+});
 
               // ---------- End Initial Render Code ----------
               })();
