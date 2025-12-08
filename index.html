@@ -1263,44 +1263,43 @@
         <div class="add-area">
         <button id="weatherToggle" class="add-btn" aria-expanded="false">
         ☁️ WEATHER FORECAST <span class="arrow">▼</span>
-      </button>
-      
-      <div id="weatherForm" class="form" aria-hidden="true">
+        </button>
         
-        <label>SELECT PLACE</label>
-        <select id="weatherCity"></select>
+        <div id="weatherForm" class="form" aria-hidden="true">
+          
+          <label>SELECT PLACE</label>
+          <select id="weatherCity"></select>
+        
+          <div id="weatherStatus" style="margin-top:10px;font-weight:600;"></div>
+          <div id="weatherOutput" style="margin-top:12px;"></div>
+        
+          <button id="weatherRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">Refresh</button>
+        </div>
+        </div>
+          <div class="add-area">
+        <button id="qrToggle" class="add-btn" aria-expanded="false">
+          🔳 QR + LOGO GENERATOR <span class="arrow">▼</span>
+        </button>
       
-        <div id="weatherStatus" style="margin-top:10px;font-weight:600;"></div>
-        <div id="weatherOutput" style="margin-top:12px;"></div>
+        <div id="qrContainer" class="form" aria-hidden="true">
       
-        <button id="weatherRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">Refresh</button>
+          <label>Enter Text / URL
+            <input type="text" id="qrInput" placeholder="https://example.com">
+          </label>
+      
+          <button id="qrGenerateBtn" class="primary">Generate QR</button>
+      
+          <center style="margin-top:15px;">
+            <canvas id="qrCanvas" width="300" height="300" style="border:1px solid #ccc"></canvas>
+            <br>
+            <a id="qrDownload" download="qr-with-logo.png" class="secondary" 
+               style="margin-top:10px;display:none;padding:8px 12px;border-radius:6px;cursor:pointer;">
+               Download
+            </a>
+          </center>
+      
+        </div>
       </div>
-      </div>
-      <div class="add-area">
-  <button id="qrToggle" class="add-btn" aria-expanded="false">
-    🔳 QR + LOGO GENERATOR <span class="arrow">▼</span>
-  </button>
-
-  <div id="qrContainer" class="form" aria-hidden="true">
-
-    <label>Enter Text / URL
-      <input type="text" id="qrInput" placeholder="https://example.com">
-    </label>
-
-    <button id="qrGenerateBtn" class="primary">Generate QR</button>
-
-    <center style="margin-top:15px;">
-      <canvas id="qrCanvas" width="300" height="300" style="border:1px solid #ccc"></canvas>
-      <br>
-      <a id="qrDownload" download="qr-with-logo.png" class="secondary" 
-         style="margin-top:10px;display:none;padding:8px 12px;border-radius:6px;cursor:pointer;">
-         Download
-      </a>
-    </center>
-
-  </div>
-</div>
-
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -4286,272 +4285,185 @@
               byId("ebConsumedUnits").value = units > 0 ? units : 0;
             });
             // ---------- Robust QR + built-in logo generator (saves to calculationHistory) ----------
-(function(){
-  // safe helper: minimal deterministic QR-like pattern generator (pure-canvas)
-  function generateRawQRToCanvas(text, size = 300) {
-    const c = document.createElement('canvas');
-    c.width = size; c.height = size;
-    const g = c.getContext('2d');
-
-    // white background
-    g.fillStyle = '#ffffff';
-    g.fillRect(0, 0, size, size);
-
-    // draw finder-like squares in corners for higher scan-compat feel
-    function drawFinder(x, y) {
-      g.fillStyle = '#000';
-      g.fillRect(x, y, 48, 48);
-      g.fillStyle = '#fff';
-      g.fillRect(x + 8, y + 8, 32, 32);
-      g.fillStyle = '#000';
-      g.fillRect(x + 14, y + 14, 20, 20);
-    }
-    drawFinder(8, 8);
-    drawFinder(size - 56, 8);
-    drawFinder(8, size - 56);
-
-    // center pattern based on text hash
-    const seed = Array.from(text).reduce((s, ch) => s + ch.charCodeAt(0), text.length);
-    g.fillStyle = '#000';
-    const cell = 6;
-    for (let y = 0; y < size; y += cell) {
-      for (let x = 0; x < size; x += cell) {
-        // avoid overlapping finders area
-        const inFinder =
-          (x < 64 && y < 64) ||
-          (x > size - 80 && y < 64) ||
-          (x < 64 && y > size - 80);
-        if (inFinder) continue;
-        const v = ((x + 1) * (y + 1) + seed) % 17;
-        if (v < 5) {
-          g.fillRect(x + 1, y + 1, cell - 2, cell - 2);
-        }
-      }
-    }
-    return c;
-  }
-
-  // main click handler - uses built-in assets/icon.png and saves history
-  const btn = document.getElementById('qrGenerateBtn');
-  if (!btn) return; // element missing, avoid throwing
-
-  btn.addEventListener('click', async function () {
-    try {
-      const text = (document.getElementById('qrInput') || {}).value || '';
-      if (!text.trim()) {
-        alert('Please enter text / URL to encode.');
-        return;
-      }
-
-      // Ensure canvas exists
-      const canvas = document.getElementById('qrCanvas');
-      if (!canvas) throw new Error('QR canvas not found (id="qrCanvas").');
-
-      const size = 300;
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-
-      // 1) Draw QR base into temporary canvas then copy to visible canvas
-      const base = generateRawQRToCanvas(text, size);
-      ctx.clearRect(0, 0, size, size);
-      ctx.drawImage(base, 0, 0);
-
-      // 2) Load built-in logo
-      await new Promise((resolve, reject) => {
-        const logo = new Image();
-        // ensure we load local asset; this file exists in your repo
-        logo.src = 'assets/icon.png';
-        // if your site uses a base path, logo.src may need adjusting; this matches your index.html structure.
-        logo.onload = () => resolve(logo);
-        logo.onerror = (e) => reject(new Error('Failed to load built-in logo: assets/icon.png'));
-      }).then(logoImg => {
-        // draw white circular background for logo to keep QR scannable
-        const logoSize = Math.round(size * 0.26); // ~26% of canvas
-        const cx = size / 2;
-        const cy = size / 2;
-        ctx.save();
-        // white circle
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.round(logoSize / 2) + 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.closePath();
-
-        // optional subtle border
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.round(logoSize / 2) + 6, 0, Math.PI * 2);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = '#e0e0e0';
-        ctx.stroke();
-        ctx.closePath();
-        ctx.restore();
-
-        // draw the logo centered
-        const lx = Math.round((size - logoSize) / 2);
-        const ly = Math.round((size - logoSize) / 2);
-        try {
-          ctx.drawImage(logoImg, lx, ly, logoSize, logoSize);
-        } catch (err) {
-          console.warn('drawImage failed for logo, skipping logo overlay:', err);
-        }
-      });
-
-      // 3) prepare download link (png)
-      const dl = document.getElementById('qrDownload');
-      if (dl) {
-        dl.href = canvas.toDataURL('image/png');
-        dl.style.display = 'inline-block';
-      }
-
-      // 4) Save to calculationHistory (store smaller JPEG to reduce storage)
-      // make a reduced-size thumbnail copy to store (160px width)
-      const thumbW = 160;
-      const thumbH = 160;
-      const thumbC = document.createElement('canvas');
-      thumbC.width = thumbW;
-      thumbC.height = thumbH;
-      const tg = thumbC.getContext('2d');
-      tg.drawImage(canvas, 0, 0, thumbW, thumbH);
-      // use JPEG for smaller size, quality 0.75
-      const dataURL = thumbC.toDataURL('image/jpeg', 0.75);
-
-      // Ensure appData exists and array exists
-      if (typeof appData !== 'object') window.appData = {};
-      if (!Array.isArray(appData.calculationHistory)) appData.calculationHistory = [];
-
-      appData.calculationHistory.push({
-        type: 'QR',
-        title: text,
-        value: 'QR image',
-        image: dataURL,
-        createdAt: formatDateDMYWithTime(new Date())
-      });
-
-      // Persist and re-render history using your existing funcs
-      if (typeof saveAll === 'function') {
-        await saveAll();
-      } else {
-        try { localStorage.setItem('smart_reminder_app_v1', JSON.stringify(appData)); } catch(e){}
-      }
-
-      if (typeof renderCalculationHistory === 'function') {
-        renderCalculationHistory();
-      }
-      // optional: flash success
-      console.log('QR generated and saved to calculationHistory.');
-
-    } catch (err) {
-      console.error('QR generation error:', err);
-      alert('QR generation failed. See console for details.');
-    }
-  });
-})();
-// ---------- QR TOGGLE EXPAND/COLLAPSE ----------
-const qrToggle = document.getElementById("qrToggle");
-const qrContainer = document.getElementById("qrContainer");
-
-if (qrToggle && qrContainer) {
-  qrToggle.addEventListener("click", () => {
-    const isOpen = qrToggle.classList.contains("open");
-
-    if (isOpen) {
-      qrToggle.classList.remove("open");
-      qrToggle.setAttribute("aria-expanded", "false");
-      qrContainer.classList.remove("visible");
-      qrContainer.setAttribute("aria-hidden", "true");
-    } else {
-      qrToggle.classList.add("open");
-      qrToggle.setAttribute("aria-expanded", "true");
-      qrContainer.classList.add("visible");
-      qrContainer.setAttribute("aria-hidden", "false");
-    }
-  });
-}
-// ----------- QR GENERATOR (SAVE ONLY QR IMAGE + DATE/TIME) -----------
-document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
-  try {
-    const text = document.getElementById("qrInput").value.trim();
-    if (!text) {
-      alert("Please enter text / URL");
-      return;
-    }
-
-    const canvas = document.getElementById("qrCanvas");
-    const ctx = canvas.getContext("2d");
-    const size = 300;
-
-    canvas.width = size;
-    canvas.height = size;
-
-    // ---------------- SIMPLE QR PATTERN ----------------
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, size, size);
-
-    ctx.fillStyle = "#000";
-    const seed = text.length * 7;
-    for (let y = 0; y < size; y += 6) {
-      for (let x = 0; x < size; x += 6) {
-        if (((x + 1) * (y + 1) + seed) % 17 < 5) {
-          ctx.fillRect(x, y, 5, 5);
-        }
-      }
-    }
-
-    // ---------------- LOGO CENTER ----------------
-    const logo = new Image();
-    logo.src = "assets/icon.png"; 
-    await new Promise(res => logo.onload = res);
-
-    const logoSize = 70;
-    const cx = (size - logoSize) / 2;
-    const cy = (size - logoSize) / 2;
-
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, 45, 0, Math.PI * 2);
-    ctx.fillStyle = "white";
-    ctx.fill();
-
-    ctx.drawImage(logo, cx, cy, logoSize, logoSize);
-
-    // ---------------- DOWNLOAD LINK ----------------
-    const downloadBtn = document.getElementById("qrDownload");
-    downloadBtn.href = canvas.toDataURL("image/png");
-    downloadBtn.style.display = "inline-block";
-
-    // ---------------- SAVE IN HISTORY (ONLY IMAGE + TIME) ----------------
-    const thumb = document.createElement("canvas");
-    thumb.width = 140;
-    thumb.height = 140;
-    const tctx = thumb.getContext("2d");
-    tctx.drawImage(canvas, 0, 0, 140, 140);
-
-    const qrImage = thumb.toDataURL("image/jpeg", 0.8);
-
-    if (!Array.isArray(appData.calculationHistory)) {
-      appData.calculationHistory = [];
-    }
-
-    appData.calculationHistory.push({
-      type: "QR",
-      image: qrImage,
-      createdAt: formatDateDMYWithTime(new Date())
-    });
-
-    await saveAll();
-    if (typeof renderCalculationHistory === "function") {
-      renderCalculationHistory();
-    }
-
-    console.log("QR saved to history (only image + timestamp)");
-
-  } catch (err) {
-    console.error("QR ERROR:", err);
-    alert("QR generation failed.");
-  }
-});
-
-
+          (function(){
+            // safe helper: minimal deterministic QR-like pattern generator (pure-canvas)
+            function generateRawQRToCanvas(text, size = 300) {
+              const c = document.createElement('canvas');
+              c.width = size; c.height = size;
+              const g = c.getContext('2d');
+          
+              // white background
+              g.fillStyle = '#ffffff';
+              g.fillRect(0, 0, size, size);
+              // draw finder-like squares in corners for higher scan-compat feel
+              function drawFinder(x, y) {
+                g.fillStyle = '#000';
+                g.fillRect(x, y, 48, 48);
+                g.fillStyle = '#fff';
+                g.fillRect(x + 8, y + 8, 32, 32);
+                g.fillStyle = '#000';
+                g.fillRect(x + 14, y + 14, 20, 20);
+              }
+              drawFinder(8, 8);
+              drawFinder(size - 56, 8);
+              drawFinder(8, size - 56);
+              // center pattern based on text hash
+              const seed = Array.from(text).reduce((s, ch) => s + ch.charCodeAt(0), text.length);
+              g.fillStyle = '#000';
+              const cell = 6;
+              for (let y = 0; y < size; y += cell) {
+                for (let x = 0; x < size; x += cell) {
+                  // avoid overlapping finders area
+                  const inFinder =
+                    (x < 64 && y < 64) ||
+                    (x > size - 80 && y < 64) ||
+                    (x < 64 && y > size - 80);
+                  if (inFinder) continue;
+                  const v = ((x + 1) * (y + 1) + seed) % 17;
+                  if (v < 5) {
+                    g.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+                  }
+                }
+              }
+              return c;
+            }
+            // main click handler - uses built-in assets/icon.png and saves history
+            const btn = document.getElementById('qrGenerateBtn');
+            if (!btn) return; // element missing, avoid throwing
+          
+            btn.addEventListener('click', async function () {
+              try {
+                const text = (document.getElementById('qrInput') || {}).value || '';
+                if (!text.trim()) {
+                  alert('Please enter text / URL to encode.');
+                  return;
+                }
+          
+                // Ensure canvas exists
+                const canvas = document.getElementById('qrCanvas');
+                if (!canvas) throw new Error('QR canvas not found (id="qrCanvas").');
+          
+                const size = 300;
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+          
+                // 1) Draw QR base into temporary canvas then copy to visible canvas
+                const base = generateRawQRToCanvas(text, size);
+                ctx.clearRect(0, 0, size, size);
+                ctx.drawImage(base, 0, 0);
+          
+                // 2) Load built-in logo
+                await new Promise((resolve, reject) => {
+                  const logo = new Image();
+                  // ensure we load local asset; this file exists in your repo
+                  logo.src = 'assets/icon.png';
+                  // if your site uses a base path, logo.src may need adjusting; this matches your index.html structure.
+                  logo.onload = () => resolve(logo);
+                  logo.onerror = (e) => reject(new Error('Failed to load built-in logo: assets/icon.png'));
+                }).then(logoImg => {
+                  // draw white circular background for logo to keep QR scannable
+                  const logoSize = Math.round(size * 0.23); // ~26% of canvas
+                  const cx = size / 2;
+                  const cy = size / 2;
+                  ctx.save();
+                  // white circle
+                  ctx.beginPath();
+                  ctx.arc(cx, cy, Math.round(logoSize / 2) + 6, 0, Math.PI * 2);
+                  ctx.fillStyle = '#ffffff';
+                  ctx.fill();
+                  ctx.closePath();
+          
+                  // optional subtle border
+                  ctx.beginPath();
+                  ctx.arc(cx, cy, Math.round(logoSize / 2) + 6, 0, Math.PI * 2);
+                  ctx.lineWidth = 1;
+                  ctx.strokeStyle = '#e0e0e0';
+                  ctx.stroke();
+                  ctx.closePath();
+                  ctx.restore();
+          
+                  // draw the logo centered
+                  const lx = Math.round((size - logoSize) / 2);
+                  const ly = Math.round((size - logoSize) / 2);
+                  try {
+                    ctx.drawImage(logoImg, lx, ly, logoSize, logoSize);
+                  } catch (err) {
+                    console.warn('drawImage failed for logo, skipping logo overlay:', err);
+                  }
+                });
+          
+                // 3) prepare download link (png)
+                const dl = document.getElementById('qrDownload');
+                if (dl) {
+                  dl.href = canvas.toDataURL('image/png');
+                  dl.style.display = 'inline-block';
+                }
+          
+                // 4) Save to calculationHistory (store smaller JPEG to reduce storage)
+                // make a reduced-size thumbnail copy to store (160px width)
+                const thumbW = 160;
+                const thumbH = 160;
+                const thumbC = document.createElement('canvas');
+                thumbC.width = thumbW;
+                thumbC.height = thumbH;
+                const tg = thumbC.getContext('2d');
+                tg.drawImage(canvas, 0, 0, thumbW, thumbH);
+                // use JPEG for smaller size, quality 0.75
+                const dataURL = thumbC.toDataURL('image/jpeg', 0.75);
+          
+                // Ensure appData exists and array exists
+                if (typeof appData !== 'object') window.appData = {};
+                if (!Array.isArray(appData.calculationHistory)) appData.calculationHistory = [];
+          
+                appData.calculationHistory.push({
+                  type: 'QR',
+                  title: text,
+                  value: 'QR image',
+                  image: dataURL,
+                  createdAt: formatDateDMYWithTime(new Date())
+                });
+          
+                // Persist and re-render history using your existing funcs
+                if (typeof saveAll === 'function') {
+                  await saveAll();
+                } else {
+                  try { localStorage.setItem('smart_reminder_app_v1', JSON.stringify(appData)); } catch(e){}
+                }
+          
+                if (typeof renderCalculationHistory === 'function') {
+                  renderCalculationHistory();
+                }
+                // optional: flash success
+                console.log('QR generated and saved to calculationHistory.');
+          
+              } catch (err) {
+                console.error('QR generation error:', err);
+                alert('QR generation failed. See console for details.');
+              }
+            });
+          })();
+          // ---------- QR TOGGLE EXPAND/COLLAPSE ----------
+          const qrToggle = document.getElementById("qrToggle");
+          const qrContainer = document.getElementById("qrContainer");
+          
+          if (qrToggle && qrContainer) {
+            qrToggle.addEventListener("click", () => {
+              const isOpen = qrToggle.classList.contains("open");
+          
+              if (isOpen) {
+                qrToggle.classList.remove("open");
+                qrToggle.setAttribute("aria-expanded", "false");
+                qrContainer.classList.remove("visible");
+                qrContainer.setAttribute("aria-hidden", "true");
+              } else {
+                qrToggle.classList.add("open");
+                qrToggle.setAttribute("aria-expanded", "true");
+                qrContainer.classList.add("visible");
+                qrContainer.setAttribute("aria-hidden", "false");
+              }
+            });
+          }
               // ---------- End Initial Render Code ----------
               })();
     </script>
