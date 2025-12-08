@@ -4468,7 +4468,7 @@ if (qrToggle && qrContainer) {
     }
   });
 }
-// ----------- QR GENERATOR THAT SAVES TO HISTORY -----------
+// ----------- QR GENERATOR (SAVE ONLY QR IMAGE + DATE/TIME) -----------
 document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
   try {
     const text = document.getElementById("qrInput").value.trim();
@@ -4481,11 +4481,10 @@ document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
     const ctx = canvas.getContext("2d");
     const size = 300;
 
-    // Set canvas size
     canvas.width = size;
     canvas.height = size;
 
-    // ------------------ SIMPLE QR PATTERN -------------------
+    // ---------------- SIMPLE QR PATTERN ----------------
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, size, size);
 
@@ -4499,36 +4498,35 @@ document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
       }
     }
 
-    // ------------------ LOGO PART ---------------------------
+    // ---------------- LOGO CENTER ----------------
     const logo = new Image();
-    logo.src = "assets/icon.png"; // <-- Your built-in logo
-    await new Promise(resolve => logo.onload = resolve);
+    logo.src = "assets/icon.png"; 
+    await new Promise(res => logo.onload = res);
 
     const logoSize = 70;
-    const centerX = (size - logoSize) / 2;
-    const centerY = (size - logoSize) / 2;
+    const cx = (size - logoSize) / 2;
+    const cy = (size - logoSize) / 2;
 
-    // White circle background
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, 45, 0, Math.PI * 2);
     ctx.fillStyle = "white";
     ctx.fill();
 
-    ctx.drawImage(logo, centerX, centerY, logoSize, logoSize);
+    ctx.drawImage(logo, cx, cy, logoSize, logoSize);
 
-    // ------------------ DOWNLOAD LINK -----------------------
+    // ---------------- DOWNLOAD LINK ----------------
     const downloadBtn = document.getElementById("qrDownload");
     downloadBtn.href = canvas.toDataURL("image/png");
     downloadBtn.style.display = "inline-block";
 
-    // ------------------ SAVE IN HISTORY ---------------------
-    const thumbCanvas = document.createElement("canvas");
-    thumbCanvas.width = 150;
-    thumbCanvas.height = 150;
-    const tctx = thumbCanvas.getContext("2d");
-    tctx.drawImage(canvas, 0, 0, 150, 150);
+    // ---------------- SAVE IN HISTORY (ONLY IMAGE + TIME) ----------------
+    const thumb = document.createElement("canvas");
+    thumb.width = 140;
+    thumb.height = 140;
+    const tctx = thumb.getContext("2d");
+    tctx.drawImage(canvas, 0, 0, 140, 140);
 
-    const qrImage = thumbCanvas.toDataURL("image/jpeg", 0.8);
+    const qrImage = thumb.toDataURL("image/jpeg", 0.8);
 
     if (!Array.isArray(appData.calculationHistory)) {
       appData.calculationHistory = [];
@@ -4536,8 +4534,6 @@ document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
 
     appData.calculationHistory.push({
       type: "QR",
-      title: text,
-      value: "QR Code",
       image: qrImage,
       createdAt: formatDateDMYWithTime(new Date())
     });
@@ -4547,13 +4543,14 @@ document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
       renderCalculationHistory();
     }
 
-    console.log("QR created & saved to history");
+    console.log("QR saved to history (only image + timestamp)");
 
   } catch (err) {
     console.error("QR ERROR:", err);
     alert("QR generation failed.");
   }
 });
+
 
               // ---------- End Initial Render Code ----------
               })();
