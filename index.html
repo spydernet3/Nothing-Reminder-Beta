@@ -4246,7 +4246,14 @@
                   <div>${value}</div>
                   <small style="opacity:0.7;">${formattedDate}</small>
                 `;
-            
+                // SHOW QR IMAGE IF EXISTS
+                if (h.image) {
+                  left.innerHTML += `
+                    <img src="${h.image}" 
+                         width="120" 
+                         style="margin-top:6px;border-radius:6px;">
+                  `;
+                }
                 const right = document.createElement("div");
                 right.style.display = "flex";
                 right.style.alignItems = "center";
