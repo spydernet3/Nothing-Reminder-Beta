@@ -1263,43 +1263,42 @@
         <div class="add-area">
         <button id="weatherToggle" class="add-btn" aria-expanded="false">
         ☁️ WEATHER FORECAST <span class="arrow">▼</span>
-        </button>
+      </button>
+      
+      <div id="weatherForm" class="form" aria-hidden="true">
         
-        <div id="weatherForm" class="form" aria-hidden="true">
-          
-          <label>SELECT PLACE</label>
-          <select id="weatherCity"></select>
-        
-          <div id="weatherStatus" style="margin-top:10px;font-weight:600;"></div>
-          <div id="weatherOutput" style="margin-top:12px;"></div>
-        
-          <button id="weatherRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">Refresh</button>
-        </div>
-        </div>
-          <div class="add-area">
-        <button id="qrToggle" class="add-btn" aria-expanded="false">
-          🔳 QR + LOGO GENERATOR <span class="arrow">▼</span>
-        </button>
+        <label>SELECT PLACE</label>
+        <select id="weatherCity"></select>
       
-        <div id="qrContainer" class="form" aria-hidden="true">
+        <div id="weatherStatus" style="margin-top:10px;font-weight:600;"></div>
+        <div id="weatherOutput" style="margin-top:12px;"></div>
       
-          <label>Enter Text / URL
-            <input type="text" id="qrInput" placeholder="https://example.com">
-          </label>
-      
-          <button id="qrGenerateBtn" class="primary">Generate QR</button>
-      
-          <center style="margin-top:15px;">
-            <canvas id="qrCanvas" width="300" height="300" style="border:1px solid #ccc"></canvas>
-            <br>
-            <a id="qrDownload" download="qr-with-logo.png" class="secondary" 
-               style="margin-top:10px;display:none;padding:8px 12px;border-radius:6px;cursor:pointer;">
-               Download
-            </a>
-          </center>
-      
-        </div>
+        <button id="weatherRefreshBtn" class="secondary" style="width:100%;margin-top:12px;">Refresh</button>
       </div>
+      </div>
+      <!-- QR GENERATOR BUTTON -->
+<div class="add-area">
+  <button id="qrToggle" class="add-btn" aria-expanded="false">
+    🔳 QR GENERATOR <span class="arrow">▼</span>
+  </button>
+
+  <div id="qrForm" class="form" aria-hidden="true">
+
+    <label>ENTER CONTENT</label>
+    <textarea id="qrInput" rows="3" placeholder="Type text or URL"></textarea>
+
+    <label>QR COLOR</label>
+    <input type="color" id="qrColor" value="#000000">
+
+    <label>BACKGROUND COLOR</label>
+    <input type="color" id="qrBgColor" value="#ffffff">
+
+    <button id="generateQRBtn" class="primary">Generate QR</button>
+
+    <div id="qrOutput" style="text-align:center;margin-top:12px;"></div>
+  </div>
+</div>
+
         <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
@@ -4284,138 +4283,99 @@
               const units = newR - oldR;
               byId("ebConsumedUnits").value = units > 0 ? units : 0;
             });
-       // ---------------- REAL QR ENCODER (Minimal Version) ----------------
-const QR = {
-  PAD0: 0xEC,
-  PAD1: 0x11,
-  generate(text) {
-    return QR._create(text);
-  },
-  _create(data) {
-    const type = 4; // QR version 4 (fits URLs)
-    const size = 33;
-    const modules = [...Array(size)].map(() => Array(size).fill(null));
+            /* ==========================
+   QR GENERATOR MODULE
+========================== */
 
-    // Simple: place data along a zig-zag (real QR pattern simplified but 100% scannable)
-    let bits = QR._stringToBits(data);
+(function() {
+  const $ = id => document.getElementById(id);
 
-    let row = size - 1, col = size - 1, dir = -1;
+  const toggleBtn = $("qrToggle");
+  const qrForm = $("qrForm");
+  const qrInput = $("qrInput");
+  const qrColor = $("qrColor");
+  const qrBgColor = $("qrBgColor");
+  const qrOutput = $("qrOutput");
 
-    for (let i = 0; i < bits.length; i++) {
-      modules[row][col] = bits[i];
+  toggleBtn.addEventListener("click", () => {
+    qrForm.classList.toggle("visible");
+    toggleBtn.classList.toggle("open");
+  });
 
-      col--;
-      if (col < 0) {
-        col = size - 1;
-        row += dir;
-        if (row < 0 || row >= size) {
-          row -= dir;
-          dir *= -1;
-        }
-      }
-    }
+  $("generateQRBtn").addEventListener("click", generateQR);
 
-    // Fill remaining with pattern
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        if (modules[y][x] === null) {
-          modules[y][x] = ((x * y) % 3 === 0);
-        }
-      }
-    }
+  async function generateQR() {
+    const text = qrInput.value.trim();
+    if (!text) return alert("Enter content!");
 
-    return modules;
-  },
-  _stringToBits(str) {
-    const bits = [];
-    for (let i = 0; i < str.length; i++) {
-      let code = str.charCodeAt(i);
-      for (let b = 7; b >= 0; b--) bits.push((code >> b) & 1);
-    }
-    return bits.slice(0, 900);
-  }
-};
-// ----------- QR GENERATOR (REAL QR + LOGO + SAVE HISTORY) -----------
-document.getElementById("qrGenerateBtn").addEventListener("click", async () => {
-  try {
-    const text = document.getElementById("qrInput").value.trim();
-    if (!text) {
-      alert("Enter text / URL");
-      return;
-    }
+    qrOutput.innerHTML = "Generating...";
 
-    const canvas = document.getElementById("qrCanvas");
-    const ctx = canvas.getContext("2d");
-    const size = 330; // higher resolution
-    canvas.width = size;
-    canvas.height = size;
+    const canvas = document.createElement("canvas");
+    const size = 300;
 
-    // ---------------- REAL QR GENERATION ----------------
-    const qr = QR.generate(text);
-    const cell = size / qr.length;
-
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, size, size);
-
-    ctx.fillStyle = "#000";
-    for (let y = 0; y < qr.length; y++) {
-      for (let x = 0; x < qr.length; x++) {
-        if (qr[y][x]) ctx.fillRect(x * cell, y * cell, cell, cell);
-      }
-    }
-
-    // ---------------- LOGO - TRANSPARENT BACKGROUND ----------------
-    const logo = new Image();
-    logo.src = "assets/icon.png"; 
-    await new Promise(res => logo.onload = res);
-
-    const logoSize = size * 0.22; // good balance for scan reliability
-    const lx = (size - logoSize) / 2;
-    const ly = (size - logoSize) / 2;
-
-    ctx.drawImage(logo, lx, ly, logoSize, logoSize);
-
-    // ---------------- DOWNLOAD ----------------
-    const downloadBtn = document.getElementById("qrDownload");
-    downloadBtn.href = canvas.toDataURL("image/png");
-    downloadBtn.style.display = "inline-block";
-
-    // ---------------- SAVE TO HISTORY ----------------
-    let thumb = document.createElement("canvas");
-    thumb.width = 150;
-    thumb.height = 150;
-    let tctx = thumb.getContext("2d");
-    tctx.drawImage(canvas, 0, 0, 150, 150);
-
-    const qrImage = thumb.toDataURL("image/png");
-
-    if (!Array.isArray(appData.calculationHistory))
-      appData.calculationHistory = [];
-
-    appData.calculationHistory.push({
-      type: "QR",
-      image: qrImage,
-      createdAt: formatDateDMYWithTime(new Date())
+    const qr = new QRious({
+      element: canvas,
+      value: text,
+      size: size,
+      foreground: qrColor.value,
+      background: qrBgColor.value,
+      level: 'H'
     });
 
-    await saveAll();
-    if (typeof renderCalculationHistory === "function")
-      renderCalculationHistory();
+    // Draw logo in center
+    const ctx = canvas.getContext("2d");
+    const logo = new Image();
+    logo.src = "assets/icon.png";
 
-    console.log("QR generated + saved to history successfully");
+    logo.onload = () => {
+      const logoSize = size * 0.22;
+      ctx.drawImage(logo, (size - logoSize) / 2, (size - logoSize) / 2, logoSize, logoSize);
 
-  } catch (err) {
-    console.error(err);
-    alert("QR generation failed.");
+      const dataURL = canvas.toDataURL("image/png");
+
+      // Display QR + Download
+      qrOutput.innerHTML = `
+        <img src="${dataURL}" width="250" style="border-radius:8px;margin-bottom:10px;">
+        <br>
+        <a download="qr.png" href="${dataURL}" class="primary" 
+            style="padding:6px 12px;border-radius:6px;display:inline-block;">
+          ⬇ DOWNLOAD
+        </a>
+      `;
+
+      // Save to history
+      saveQRHistory(text, dataURL);
+    };
   }
-});
-document.getElementById("qrToggle").addEventListener("click", () => {
-  qrToggle.classList.toggle("open");
-  qrContainer.classList.toggle("visible");
-});
+
+  function saveQRHistory(text, image) {
+    const item = {
+      type: "QR Code",
+      title: "QR Generated",
+      content: text,
+      image: image,
+      createdAt: new Date().toLocaleString()
+    };
+
+    // Push to calculationHistory list
+    appData.calculationHistory.push({
+      type: "QR Code",
+      title: text,
+      value: "[QR Image Saved]",
+      image: image,
+      timestamp: new Date().toISOString()
+    });
+
+    saveAll();
+    renderCalculationHistory();
+  }
+
+})();
 
               // ---------- End Initial Render Code ----------
               })();
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
   </body>
 </html>
