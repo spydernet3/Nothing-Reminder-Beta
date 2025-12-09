@@ -257,13 +257,7 @@
         padding: 8px;
         margin-top: 8px;
       }
-      /* Responsive full-height trash bin scroll list */
-      #trashList {
-        height: calc(100vh - 180px) !important;
-        max-height: calc(100vh - 180px) !important;
-        overflow-y: auto;
-      }
-      
+
       /* Scrollbar styling */
       .scrollable-list::-webkit-scrollbar {
         width: 8px;
@@ -1291,22 +1285,22 @@
           <label>ENTER CONTENT</label>
           <textarea id="qrInput" rows="3" placeholder="Type text or URL"></textarea>
           <div style="display:flex; gap:20px; align-items:center; margin-top:10px;">
-        <div style="display:flex; flex-direction:column;">
-          <label>QR COLOR</label>
-          <input type="color" id="qrColor" value="#000000" 
-                 style="width:60px;height:35px;margin-top:10px;margin-bottom:10px;">
+          <div style="display:flex; flex-direction:column;">
+            <label>QR COLOR</label>
+            <input type="color" id="qrColor" value="#000000" 
+            style="width:60px;height:35px;margin-top:10px;margin-bottom:10px;">
+          </div>
+          <div style="display:flex; flex-direction:column;">
+            <label>BG COLOR</label>
+            <input type="color" id="qrBgColor" value="#ffffff" 
+            style="width:60px;height:35px;margin-top:10px;margin-bottom:10px;">
+          </div>
         </div>
-        <div style="display:flex; flex-direction:column;">
-          <label>BG COLOR</label>
-          <input type="color" id="qrBgColor" value="#ffffff" 
-                 style="width:60px;height:35px;margin-top:10px;margin-bottom:10px;">
+            <button id="generateQRBtn" class="primary">GENERATE QR</button>
+            <div id="qrOutput" style="text-align:center;margin-top:3px;"></div>
+          </div>
         </div>
-      </div>
-          <button id="generateQRBtn" class="primary">GENERATE QR</button>
-          <div id="qrOutput" style="text-align:center;margin-top:3px;"></div>
-        </div>
-      </div>
-        <div class="add-area">
+          <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
           </button>
@@ -4350,10 +4344,10 @@
                     qrOutput.innerHTML = `
                       <img src="${dataURL}" width="250" style="border-radius:8px;margin-bottom:10px;">
                       <br>
-                      <a download="qr.png" href="${dataURL}" class="primary" 
-                          style="padding:6px 12px;border-radius:6px;display:inline-block;">
-                        ⬇ DOWNLOAD
-                      </a>
+                      <a download="qr.png" href="${dataURL}" class="primary"
+                     style="padding:6px 12px;border-radius:6px;display:inline-block;text-decoration:none;">
+                    ⬇ DOWNLOAD
+                    </a>
                     `;
               
                     // Save to history
