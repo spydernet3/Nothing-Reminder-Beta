@@ -257,7 +257,14 @@
         padding: 8px;
         margin-top: 8px;
       }
-
+        
+     /* Responsive full-height trash bin scroll list */
+      #trashList {
+        height: calc(100vh - 180px) !important;
+        max-height: calc(100vh - 180px) !important;
+        overflow-y: auto;
+      }
+        
       /* Scrollbar styling */
       .scrollable-list::-webkit-scrollbar {
         width: 8px;
@@ -2722,11 +2729,20 @@
                     const details = document.createElement('div');
                     details.style.fontSize = '13px';
                     details.style.opacity = '0.85';
-                    details.textContent = `${item.result} | ${item.createdAt}`;
-
+                    const res = item.result || item.value || "";
+                    const time = item.timestamp || item.createdAt || "";
+                    details.textContent = `${res} | ${time}`;
                     left.appendChild(title);
                     left.appendChild(details);
-
+                    if (item.qrImage) {
+                      const img = document.createElement("img");
+                      img.src = item.qrImage;
+                      img.style.width = "120px";
+                      img.style.marginTop = "6px";
+                      img.style.border = "1px solid #ccc";
+                      img.style.borderRadius = "6px";
+                      left.appendChild(img);
+                    }
                     const right = document.createElement('div');
                     right.style.display = 'flex';
                     right.style.alignItems = 'center';
@@ -2844,35 +2860,57 @@
 
                   saveHistory(`Age as of: ${age_years} years & ${age_months} months, & ${age_days} days.`, result);
                 }
-
                 // ---------- Date Difference Calculator Logic ----------
                 function calculateDateDifference() {
                   const startStr = byId('dateDiffStart').value;
                   const endStr = byId('dateDiffEnd').value;
                   const resultEl = byId('dateDiffResult');
-
+                
                   if (!startStr || !endStr) {
                     resultEl.textContent = 'Please enter both start and end dates.';
                     return;
                   }
-                   const start = new Date(startStr);
-               const end = new Date(endStr);
-              const diffTime = Math.abs(end - start);
-               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)+1);
-
-              // Calculate months and remaining days
-              const totalMonths = Math.floor(diffDays / 30); // Approximate month as 30 days
-              const remainingDays = diffDays % 30;
-  
-              let result;
-              if (diffDays > 31) {
-                result = `${totalMonths} month(s) and ${remainingDays} day(s)`;
-              } else {
-                result = `${diffDays} day(s)`;
-              }
-  
-              saveHistory(`Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${result}`, result);
+                
+                  let start = new Date(startStr);
+                  let end = new Date(endStr);
+                
+                  // Ensure start ≤ end
+                  if (end < start) [start, end] = [end, start];
+                
+                  // --- YEAR, MONTH, DAY LOGIC (Same as Age Calculator) ---
+                  let years = end.getFullYear() - start.getFullYear();
+                  let months = end.getMonth() - start.getMonth();
+                  let days = end.getDate() - start.getDate();
+                
+                  // Fix negative days
+                  if (days < 0) {
+                    months--;
+                    const prevMonthDays = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+                    days += prevMonthDays;
                   }
+                
+                  // Fix negative months
+                  if (months < 0) {
+                    years--;
+                    months += 12;
+                  }
+                
+                  // --- TODAY + TOMORROW = 2 DAYS RULE ---
+                  const rawDiff = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+                  if (rawDiff === 2 && years === 0 && months === 0 && days === 1) {
+                    days = 2; // force today→tomorrow = 2 days
+                  }
+                
+                  const result = `${years} year(s), ${months} month(s), ${days} day(s)`;
+                
+                  // Display result
+                  resultEl.textContent = result;
+                
+                  saveHistory(
+                    `Date Difference: ${formatDMY(startStr)} to ${formatDMY(endStr)} = ${result}`,
+                    result
+                  );
+                }
                 // ---------- BMI Calculator Logic ----------
                 function calculateBMI() {
                   const age = parseInt(byId('bmiAge').value);
@@ -3253,7 +3291,20 @@
                 function restoreFromTrash(i){
                   const t = appData.trash[i];
                   if(!t) return;
-                
+                // Special case for QR history restore
+                if (t.type === "calculationHistory" && t.item.qrImage) {
+                  appData.calculationHistory.push({
+                    type: "QR Code",
+                    title: t.item.title,
+                    value: t.item.value,
+                    qrImage: t.item.qrImage,
+                    timestamp: t.item.timestamp
+                  });
+                  appData.trash.splice(i,1);
+                  saveAll();
+                  renderHistory();
+                  return;
+                }
                   // put back in its collection
                   if (Array.isArray(appData[t.type])) {
                     appData[t.type].push(t.item);
@@ -3670,11 +3721,16 @@
                   place1Sel.appendChild(o1); place2Sel.appendChild(o2);
                 });
                 place2Sel.selectedIndex=1;
-              })();
+                // --- START: restore last selected gold places (add these 6 lines) ---
+                const savedGold1 = localStorage.getItem('last_gold_place1');
+                const savedGold2 = localStorage.getItem('last_gold_place2');
+                if (savedGold1 && Array.from(place1Sel.options).some(o => o.value === savedGold1)) place1Sel.value = savedGold1;
+                if (savedGold2 && Array.from(place2Sel.options).some(o => o.value === savedGold2)) place2Sel.value = savedGold2;
+                // --- END: restore last selected gold places ---
+                })();
             
               /* ---------------- FETCH SPOT PRICE FROM GOOGLE FINANCE ---------------- */
-            async function fetchSpotINR() {
-            
+               async function fetchSpotINR() {
                 // 1) Fetch live gold per ounce in USD
                 const goldRes = await fetch("https://data-asg.goldprice.org/dbXRates/USD");
                 const goldData = await goldRes.json();
@@ -3808,7 +3864,9 @@
             
                   const p1 = place1Sel.value;
                   const p2 = place2Sel.value;
-            
+                  // persist the last selected places for next load:
+                  localStorage.setItem('last_gold_place1', p1);
+                  localStorage.setItem('last_gold_place2', p2);
                   const r1 = purityRates(spot,p1);
                   const r2 = purityRates(spot,p2);
             
@@ -3854,40 +3912,61 @@
               const statusEl = $("weatherStatus");
               const outEl = $("weatherOutput");
               const refreshBtn = $("weatherRefreshBtn");
-            
               const CITIES = [
-                "Chennai",
-                "Madurai",
-                "Coimbatore",
-                "Trichy",
-                "Tirunelveli",
-                "Salem",
-                "Erode",
-                "Vellore",
-                "Thanjavur",
-                "Tanjore",
-                "Tuticorin",
-                "Tiruppur",
-                "Kanyakumari",
-                "Dindigul",
-                "Karur",
-                "Namakkal",
-                "Kanchipuram",
-                "Chengalpattu",
-                "Cuddalore",
-                "Villupuram",
-                "Dharmapuri",
-                "Krishnagiri",
-                "Nagapattinam",
-                "Sivagangai",
-                "Ramanathapuram",
-                "Tiruvarur",
-                "Virudhunagar",
-                "Nagercoil",
-                "Perambalur",
-                "Pudukkottai",
+                "Chennai", "Madurai", "Coimbatore", "Trichy", "Tirunelveli", "Salem",
+                "Erode", "Vellore", "Thanjavur", "Tanjore", "Tuticorin", "Tiruppur",
+                "Kanyakumari", "Dindigul", "Karur", "Namakkal", "Kanchipuram",
+                "Chengalpattu", "Cuddalore", "Villupuram", "Dharmapuri", "Krishnagiri",
+                "Nagapattinam", "Sivagangai", "Ramanathapuram", "Tiruvarur",
+                "Virudhunagar", "Nagercoil", "Perambalur", "Pudukkottai",
+              
+                // Newly added districts
+                "Ariyalur", "Tenkasi", "Mayiladuthurai", "Ranipet", "Tirupattur",
+              
+                // Major towns & cities
+                "Theni", "Udumalpet", "Pollachi", "Hosur", "Ambur", "Arakkonam",
+                "Avadi", "Tambaram", "Palani", "Kodaikanal", "Mettur", "Gudalur",
+                "Ooty", "Coonoor", "Sirkazhi", "Chidambaram", "Karaikal",
+                "Mannargudi", "Pattukkottai", "Paramakudi", "Kovilpatti",
+                "Sankarankovil", "Rajapalayam", "Srivilliputhur", "Arani",
+                "Tindivanam", "Kallakurichi", "Tiruvannamalai", "Tiruttani",
+                "Melur", "Usilampatti", "Vedaranyam", "Papanasam", "Keezhakarai",
+                "Bodinayakanur", "Manapparai", "Oddanchatram",
+              
+                // Additional towns
+                "Sivakasi", "Aruppukottai", "Natham", "Batlagundu", "Vandavasi",
+                "Cheyyar", "Walajapet", "Gudiyatham", "Vaniyambadi", "Pernambut",
+                "Dharmapuri", "Pennagaram", "Harur", "Palacode", "Anthiyur",
+                "Bhavani", "Sathyamangalam", "Gobichettipalayam", "Kodumudi",
+                "Perundurai", "Chennimalai", "Negamam", "Kinathukadavu", "Sulur",
+              
+                // More places
+                "Alangulam", "Ambasamudram", "Tenkasi", "Veerakeralampudur",
+                "Vallioor", "Cheranmahadevi", "Panagudi", "Nanguneri", "Alangudi",
+                "Kumbakonam", "Thirukattupalli", "Orathanadu", "Kudavasal",
+                "Needamangalam", "Valangaiman", "Thiruthuraipoondi", "Kodavasal",
+                "Porayar", "Thiruvidaimarudur",
+              
+                // Coastal towns
+                "Velankanni", "Nagore", "Muthupet", "Poombuhar", "Tranquebar",
+                "Marakkanam", "Mahabalipuram", "Kalpakkam",
+              
+                // Northern TN
+                "Red Hills", "Ponneri", "Gummidipoondi", "Thiruvallur",
+                "Poondi", "Poonamallee", "Sriperumbudur", "Padappai",
+                "Perungalathur", "Sholinganallur", "Kelambakkam",
+              
+                // Western TN
+                "Mettupalayam", "Karamadai", "Anaikatti", "Madukkarai", "Chinnampalayam",
+              
+                // Southern TN
+                "Shencottai", "Tiruchendur", "Ettayapuram", "Srivaikuntam",
+                "Sathankulam", "Nazareth", "Viralimalai", "Aranthangi",
+              
+                // Eastern TN
+                "Sethiathoppu", "Bhuvanagiri", "Panruti", "Neyveli", "Kurinjipadi",
+                "Ulundurpet", "Sankarapuram", "Tirukoilur"
               ];
-            
               // fill dropdown
               CITIES.forEach(c=>{
                 const o = document.createElement("option");
@@ -3895,7 +3974,12 @@
                 o.textContent = c;
                 citySel.appendChild(o);
               });
-            
+              // --- START: restore last selected weather city (add these lines) ---
+              const savedWeatherCity = localStorage.getItem('last_weather_city');
+              if (savedWeatherCity && Array.from(citySel.options).some(o => o.value === savedWeatherCity)) {
+                citySel.value = savedWeatherCity;
+              }
+              // --- END: restore last selected weather city ---
               function getIcon(desc){
                 const d = desc.toLowerCase();
                 if(d.includes("sun") || d.includes("clear")) return "☀️";
@@ -4070,7 +4154,7 @@
                   <div style="overflow-x:auto">
                     <table style="width:100%;border-collapse:collapse;">
                       <tr style="background:#f3f3f3;font-weight:700">
-                        <td>Time</td><td style="text-align:center">Icon</td><td style="text-align:center">Temp</td><td style="text-align:center">Rain %</td><td style="text-align:center">Humidity</td>
+                        <td>Time</td><td style="text-align:center">Weather</td><td style="text-align:center">Temp</td><td style="text-align:center">Rain %</td><td style="text-align:center">Humidity</td>
                       </tr>
                       ${tableRows(w.tomorrowHours)}
                     </table>
@@ -4365,14 +4449,29 @@
                   };
               
                   // Push to calculationHistory list
-                  appData.calculationHistory.push({
-                    type: "QR Code",
-                    title: text,
-                    value: "[QR Image Saved]",
-                    image: image,
-                    timestamp: new Date().toISOString()
-                  });
-              
+                 const dataUrl = canvas.toDataURL("image/png");
+                // 12-hour timestamp
+                function to12hr(date) {
+                  let h = date.getHours();
+                  let m = date.getMinutes().toString().padStart(2, "0");
+                  const ampm = h >= 12 ? "PM" : "AM";
+                  h = h % 12;
+                  if (h === 0) h = 12;
+                
+                  const day = date.getDate().toString().padStart(2,'0');
+                  const month = date.toLocaleString('en-IN',{month:'short'});
+                  const year = date.getFullYear();
+                
+                  return `${day}-${month}-${year} ${h}:${m} ${ampm}`;
+                }
+                
+                appData.calculationHistory.push({
+                  type: "QR Code",
+                  title: text,
+                  value: "QR generated",
+                  qrImage: dataUrl,
+                  timestamp: to12hr(new Date())
+                });
                   saveAll();
                   renderCalculationHistory();
                 }
