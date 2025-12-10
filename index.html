@@ -1590,22 +1590,23 @@
               }
             }
           }
-
-        function daysLeft(endDateStr){
+          function daysLeft(endDateStr){
           if(!endDateStr) return null;
           const [y,m,d] = endDateStr.split('-').map(Number);
-          const end = new Date(y,m-1,d);
+          const end = new Date(y, m-1, d);
           const now = new Date();
-          const diffTime = end.setHours(0,0,0,0) - now.setHours(0,0,0,0);
-          return Math.floor(diffTime / (1000*60*60*24));
-        }
-
-        function formatDMY(dateStr){
-          if(!dateStr) return '';
-          const [y,m,d] = dateStr.split('-');
-          return `${d.toString().padStart(2,'0')}/${m.toString().padStart(2,'0')}/${y}`;
-        }
-
+          // normalize to midnight for whole-day calculation
+          end.setHours(0,0,0,0);
+          now.setHours(0,0,0,0);
+          const diffDays = Math.floor((end - now) / (1000 * 60 * 60 * 24));
+          // If end already passed, return 0 (no negative days)
+          return diffDays < 0 ? 0 : diffDays;
+          }
+          function formatDMY(dateStr){
+            if(!dateStr) return '';
+            const [y,m,d] = dateStr.split('-');
+            return `${d.toString().padStart(2,'0')}/${m.toString().padStart(2,'0')}/${y}`;
+          }
         // Format date as DD-MMM-YYYY with IST time (12-hour format)
         function formatDateDMYWithTime(date) {
           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
