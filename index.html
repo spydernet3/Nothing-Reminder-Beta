@@ -4427,25 +4427,21 @@
                   };
                 }
               
-                function saveQRHistory(text, image) {
-                  const item = {
-                    type: "QR Code",
-                    title: "QR Generated",
-                    content: text,
-                    image: image,
-                    createdAt: new Date().toLocaleString()
-                  }
-                  // Push to calculationHistory list
-                  appData.calculationHistory.push({
-                  type: "QR Code",
-                  title: text,
-                  result: "QR Generated",          // <-- required by renderHistory()
-                  qrImage: dataURL,                // <-- required for restore
-                  createdAt: formatDateDMYWithTime(new Date())  // <-- required for timestamp
-                });
-                  saveAll();
-                  renderCalculationHistory();
-                }
+                function saveQRHistory(text, dataURL) {
+  const item = {
+    type: "QR Code",
+    title: text,
+    result: "QR Generated",
+    qrImage: dataURL,                                  // <-- REQUIRED
+    createdAt: formatDateDMYWithTime(new Date())       // <-- REQUIRED 12-hr FORMAT
+  };
+
+  appData.calculationHistory.push(item);
+  saveAll();
+  renderCalculationHistory();
+  renderHistory();
+}
+
               })();
               // ---------- End Initial Render Code ----------
               })();
