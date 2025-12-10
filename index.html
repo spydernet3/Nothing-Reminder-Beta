@@ -2729,19 +2729,20 @@
                     const details = document.createElement('div');
                     details.style.fontSize = '13px';
                     details.style.opacity = '0.85';
-                    const res = item.result || item.value || "";
-                    const time = item.timestamp || item.createdAt || "";
-                    details.textContent = `${res} | ${time}`;
+                    details.textContent = `${item.result} | ${item.createdAt}`;
+                    const r = item.result || "";
+                    const t = item.createdAt || "";
+                    details.textContent = `${r} | ${t}`;
                     left.appendChild(title);
                     left.appendChild(details);
                     if (item.qrImage) {
-                      const img = document.createElement("img");
-                      img.src = item.qrImage;
-                      img.style.width = "120px";
-                      img.style.marginTop = "6px";
-                      img.style.border = "1px solid #ccc";
-                      img.style.borderRadius = "6px";
-                      left.appendChild(img);
+                        const img = document.createElement("img");
+                        img.src = item.qrImage;
+                        img.style.width = "120px";
+                        img.style.border = "1px solid #ccc";
+                        img.style.borderRadius = "6px";
+                        img.style.marginTop = "6px";
+                        left.appendChild(img);
                     }
                     const right = document.createElement('div');
                     right.style.display = 'flex';
@@ -3291,20 +3292,7 @@
                 function restoreFromTrash(i){
                   const t = appData.trash[i];
                   if(!t) return;
-                // Special case for QR history restore
-                if (t.type === "calculationHistory" && t.item.qrImage) {
-                  appData.calculationHistory.push({
-                    type: "QR Code",
-                    title: t.item.title,
-                    value: t.item.value,
-                    qrImage: t.item.qrImage,
-                    timestamp: t.item.timestamp
-                  });
-                  appData.trash.splice(i,1);
-                  saveAll();
-                  renderHistory();
-                  return;
-                }
+                
                   // put back in its collection
                   if (Array.isArray(appData[t.type])) {
                     appData[t.type].push(t.item);
@@ -4446,37 +4434,18 @@
                     content: text,
                     image: image,
                     createdAt: new Date().toLocaleString()
-                  };
-              
+                  }
                   // Push to calculationHistory list
-                 const dataUrl = canvas.toDataURL("image/png");
-                // 12-hour timestamp
-                function to12hr(date) {
-                  let h = date.getHours();
-                  let m = date.getMinutes().toString().padStart(2, "0");
-                  const ampm = h >= 12 ? "PM" : "AM";
-                  h = h % 12;
-                  if (h === 0) h = 12;
-                
-                  const day = date.getDate().toString().padStart(2,'0');
-                  const month = date.toLocaleString('en-IN',{month:'short'});
-                  const year = date.getFullYear();
-                
-                  return `${day}-${month}-${year} ${h}:${m} ${ampm}`;
-                }
-                
-                appData.calculationHistory.push({
+                  appData.calculationHistory.push({
                   type: "QR Code",
                   title: text,
-                  value: "QR generated",
-                  qrImage: dataUrl,
-                  timestamp: to12hr(new Date())
+                  result: "QR Generated",          // <-- required by renderHistory()
+                  qrImage: dataURL,                // <-- required for restore
+                  createdAt: formatDateDMYWithTime(new Date())  // <-- required for timestamp
                 });
                   saveAll();
                   renderCalculationHistory();
-                  renderHistory();
                 }
-              
               })();
               // ---------- End Initial Render Code ----------
               })();
