@@ -4437,10 +4437,10 @@
                   };
                 }
               
-                function saveQRHistory(dataURL) {
+                function saveQRHistory( dataURL) {
                 const item = {
                   type: "QR Code",
-                
+                  title: "",
                   result: "QR Generated",
                   qrImage: dataURL,                                  // <-- REQUIRED
                   image: dataURL, 
