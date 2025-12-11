@@ -917,7 +917,7 @@
         <h3>Version Info!</h3>
         <ul>
           <p>Version 13.6.7</p>
-          <p>Last Updated: 10-Dec-2025</p>
+          <p>Last Updated: 09-Dec-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -2724,7 +2724,7 @@
                     left.className = 'item-left';
 
                     const title = document.createElement('div');
-                    title.innerHTML = item.title ? `<b>${item.title}</b>` : "";
+                    title.innerHTML = `<b>${item.title}</b>`;
                     title.style.fontWeight = '600';
 
                     const details = document.createElement('div');
@@ -4437,10 +4437,10 @@
                   };
                 }
               
-                function saveQRHistory( dataURL) {
+                function saveQRHistory(text, dataURL) {
                 const item = {
                   type: "QR Code",
-                  title: text,
+                  title: "QR Generated",
                   result: "QR Generated",
                   qrImage: dataURL,                                  // <-- REQUIRED
                   image: dataURL, 
