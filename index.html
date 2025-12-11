@@ -2724,7 +2724,7 @@
                     left.className = 'item-left';
 
                     const title = document.createElement('div');
-                    title.innerHTML = `<b>${item.title}</b>`;
+                    title.innerHTML = item.title ? `<b>${item.title}</b>` : "";
                     title.style.fontWeight = '600';
 
                     const details = document.createElement('div');
