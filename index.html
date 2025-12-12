@@ -3324,42 +3324,49 @@
                 }
                 
                 function restoreFromTrash(i){
-                  const t = appData.trash[i];
-                  if(!t) return;
-                
-                  // put back in its collection
-                  if (Array.isArray(appData[t.type])) {
-                    appData[t.type].push(t.item);
-                  }
-                
-                  // remove from trash + persist
-                  appData.trash.splice(i,1);
-                  saveAll();
-                
-                  // live re-render destination page + home widgets
-                  rerenderFor(t.type);
-                  renderTrash();
-                  if (t.type === 'calculationHistory' || t.type === 'utilities') {
-                    if (typeof renderHistory === 'function') renderHistory();
-                    const utilitiesPage = document.getElementById('utilities');
-                    if (utilitiesPage) {
-                      showPage('utilities');
-                    }
-                  
-                    // Optional: scroll to bottom of Utilities history smoothly
-                    setTimeout(() => {
-                      const list = document.getElementById('calculationHistoryList');
-                      if (list) list.scrollTop = list.scrollHeight;
-                    }, 300);
-                  
-                    return; // stop further navigation so it doesn’t jump to wrong section
-                  }
-                  // optional UX: jump to the restored item's page
-                  const targetPageId = (t.type === 'checklists') ? 'Check' : t.type;
-                  if (document.getElementById(targetPageId)) {
-                    showPage(targetPageId);
-                  }
-                }
+    const t = appData.trash[i];
+    if(!t) return;
+
+    // Restore data back into the correct list
+    if (Array.isArray(appData[t.type])) {
+        appData[t.type].push(t.item);
+    }
+
+    // Remove from trash
+    appData.trash.splice(i,1);
+    saveAll();
+
+    // Re-render original module
+    rerenderFor(t.type);
+    renderTrash();
+
+    // Special handling for calculation/history
+    if (t.type === 'calculationHistory' || t.type === 'utilities') {
+        if (typeof renderHistory === 'function') renderHistory();
+        showPage('utilities');
+        return;
+    }
+
+    // ⭐ SPECIAL HANDLING FOR PRICE TRACKER (NEW)
+    if (t.type === "priceTracker") {
+        if (typeof renderPriceTrackerList === "function") {
+            renderPriceTrackerList();
+        }
+        showPage("utilities"); // Jump back to Utilities automatically
+        return;
+    }
+
+    // Default handling for other modules
+    const targetPageId =
+        t.type === 'checklists' ? 'Check' :
+        t.type === 'priceTracker' ? 'utilities' :   // safety mapping
+        t.type;
+
+    if (document.getElementById(targetPageId)) {
+        showPage(targetPageId);
+    }
+}
+
                 // New delete versions
                 function deleteReminder(i){ moveToTrash('reminders', appData.reminders[i], i); renderReminders(); renderHomeReminders(); }
                 function deleteNote(i){ moveToTrash('notes', appData.notes[i], i); renderNotes(); renderHomeNotes(); }
