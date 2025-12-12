@@ -1490,6 +1490,9 @@
           case 'calculationHistoryList':
           targetPageId = 'utilities';
           break;
+          case 'priceTracker':
+          if (typeof window.renderPriceTrackerList === 'function') window.renderPriceTrackerList();
+          break;
               }
             }
         // ---------- NEW: Notification Settings Logic ----------
@@ -4597,20 +4600,28 @@ if (t.type === "priceTracker") {
   /* =====================================================
         5) SAVE PRODUCT ENTRY
   ===================================================== */
-  saveBtn.addEventListener("click", () => {
-    const url = urlInput.value.trim();
-    const title = titleInput.value.trim();
-    if (!url || !title) return alert("Enter title and URL");
+  saveBtn.addEventListener("click", async () => {
+  const rawUrl = urlInput.value.trim();
+  const title = titleInput.value.trim();
+  if (!rawUrl || !title) return alert("Enter title and URL");
 
-    appData.priceTracker.push({
-      title,
-      url,
-      savedAt: formatDateDMYWithTime(new Date())
-    });
+  // normalize and compute key (use expand/convert helpers used in trackPrice)
+  let normalizedUrl = await expandAmazonUrl(rawUrl);
+  if (normalizedUrl.includes("amazon")) normalizedUrl = convertAmazonToMobile(normalizedUrl);
+  if (normalizedUrl.includes("flipkart")) normalizedUrl = convertFlipkart(normalizedUrl);
+  const key = btoa(normalizedUrl);
 
-    saveAll();
-    renderPriceTrackerList();
+  appData.priceTracker.push({
+    title,
+    url: normalizedUrl,
+    key,
+    savedAt: formatDateDMYWithTime(new Date())
   });
+
+  saveAll();
+  renderPriceTrackerList();
+});
+
 
   /* =====================================================
         6) RENDER SAVED PRODUCT LIST
@@ -4844,6 +4855,9 @@ async function trackPrice(){
 
 
   trackBtn.addEventListener("click", trackPrice);
+// expose Price Tracker functions to global scope so other modules can call them
+window.renderPriceTrackerList = renderPriceTrackerList;
+window.trackPrice = trackPrice;
 
   /* RUN ON LOAD */
   renderPriceTrackerList();
