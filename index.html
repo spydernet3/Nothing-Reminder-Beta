@@ -3346,15 +3346,15 @@
         showPage('utilities');
         return;
     }
-
-    // ⭐ SPECIAL HANDLING FOR PRICE TRACKER (NEW)
-    if (t.type === "priceTracker") {
-        if (typeof renderPriceTrackerList === "function") {
-            renderPriceTrackerList();
-        }
-        showPage("utilities"); // Jump back to Utilities automatically
-        return;
+// ⭐ SPECIAL HANDLING FOR PRICE TRACKER
+if (t.type === "priceTracker") {
+    if (typeof renderPriceTrackerList === "function") {
+        renderPriceTrackerList();
     }
+    showPage("utilities"); // open the section automatically
+    return;
+}
+
 
     // Default handling for other modules
     const targetPageId =
