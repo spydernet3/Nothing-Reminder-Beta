@@ -185,7 +185,7 @@
       #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
       #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
       #viewCheckToggle, #homeOverviewToggle, #viewRemindersToggle,#moonPhaseToggle, #sunBtn,
-      #goldRateToggle, #weatherToggle,#qrToggle , #priceTrackerToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
+      #goldRateToggle, #weatherToggle,#qrToggle , #googleTrendsToggle, #priceTrackerToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
         position: relative;
         user-select: none;
         display: flex;
@@ -1065,12 +1065,6 @@
             <h3 style="text-align:center;margin:0 0 8px 0;">இன்றைய தமிழ் மாதம்</h3>
             <p id="currentTamilMonthText" style="font-weight:600;text-align:center;"></p>
           </div>
-         <div id="bankHolidayBox"
-     style="padding:10px;border:1px solid #ccc;border-radius:6px;background:#f9f9ff;">
-  <h3 style="text-align:center;">🏦 Bank Holidays (TN)</h3>
-  <div id="bankHolidayContent">Loading live data…</div>
-</div>
-
           </div>
         </div>
         <div class="add-area">
@@ -3244,24 +3238,6 @@
                 }
                 // Run immediately when opening Utilities page
                 renderCurrentTamilMonth();
-async function loadLiveBankHolidays() {
-  const box = document.getElementById("bankHolidayContent");
-
-  try {
-    const res = await fetch("/api/rbi-proxy");
-    const html = await res.text();
-
-    // VERY SIMPLE extract (table only)
-    const match = html.match(/<table[\s\S]*?<\/table>/i);
-    box.innerHTML = match ? match[0] : "Unable to load data.";
-  } catch (e) {
-    box.textContent = "Live data unavailable.";
-  }
-}
-
-loadLiveBankHolidays();
-
-
 
                 // ---------------- SUNRISE / SUNSET ----------------
                 document.getElementById("sunBtn").addEventListener("click", () => {
