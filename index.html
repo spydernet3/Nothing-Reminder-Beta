@@ -185,7 +185,7 @@
       #showAddFormBtn, #homeRemindersToggle, #showAddNoteBtn, #viewNotesToggle, #homeNotesToggle,
       #homeBudgetsToggle, #homeCheckToggle, #showAddBudgetBtn,#viewbudgetToggle, #showAddCheckBtn,
       #viewCheckToggle, #homeOverviewToggle, #viewRemindersToggle,#moonPhaseToggle, #sunBtn,
-      #goldRateToggle, #weatherToggle,#qrToggle , #googleTrendsToggle, #priceTrackerToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
+      #goldRateToggle, #weatherToggle,#qrToggle , #priceTrackerToggle, #monthlyCalendarToggle,#calculatorToggle, #viewHistoryToggle {
         position: relative;
         user-select: none;
         display: flex;
@@ -916,8 +916,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.6.8</p>
-          <p>Last Updated: 12-Dec-2025</p>
+          <p>Version 13.6.7</p>
+          <p>Last Updated: 11-Dec-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -1065,6 +1065,12 @@
             <h3 style="text-align:center;margin:0 0 8px 0;">இன்றைய தமிழ் மாதம்</h3>
             <p id="currentTamilMonthText" style="font-weight:600;text-align:center;"></p>
           </div>
+         <div id="bankHolidayBox"
+     style="padding:10px;border:1px solid #ccc;border-radius:6px;background:#f9f9ff;">
+  <h3 style="text-align:center;">🏦 Bank Holidays (TN)</h3>
+  <div id="bankHolidayContent">Loading live data…</div>
+</div>
+
           </div>
         </div>
         <div class="add-area">
@@ -1315,7 +1321,7 @@
         <div id="priceTrackerForm" class="form" aria-hidden="true" >
           
           <label>PRODUCT LINK</label>
-          <input id="trackUrl" type="text" placeholder="Paste AMAZON = Page link🌐 / FLIPKART = Product link">
+          <input id="trackUrl" type="text" placeholder="Paste AMAZON = Page link / FLIPKART = Product link">
       
           <label>PRODUCT TITLE</label>
           <input id="trackTitle" type="text" placeholder="Enter a name">
@@ -1365,7 +1371,7 @@
                     </select>
                 </div>
                 <!-- Frame size selection -->
-                <div>
+              
                     <label style="font-weight:600;">Frame Size:</label>
                     <select id="trendsSize" style="padding:6px;border-radius:6px;width:100%;margin-top:5px;">
                         <option value="300">Small</option>
@@ -1374,6 +1380,7 @@
                         <option value="600">Extra Large</option>
                     </select>
                 </div>
+            </div>
             </div>
           <div class="add-area">
           <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
@@ -1531,7 +1538,6 @@
           break;
               }
             }
-            
         // ---------- NEW: Notification Settings Logic ----------
         function updateBrowserPermissionUI() {
             const status = Notification.permission;
@@ -3238,6 +3244,24 @@
                 }
                 // Run immediately when opening Utilities page
                 renderCurrentTamilMonth();
+async function loadLiveBankHolidays() {
+  const box = document.getElementById("bankHolidayContent");
+
+  try {
+    const res = await fetch("/api/rbi-proxy");
+    const html = await res.text();
+
+    // VERY SIMPLE extract (table only)
+    const match = html.match(/<table[\s\S]*?<\/table>/i);
+    box.innerHTML = match ? match[0] : "Unable to load data.";
+  } catch (e) {
+    box.textContent = "Live data unavailable.";
+  }
+}
+
+loadLiveBankHolidays();
+
+
 
                 // ---------------- SUNRISE / SUNSET ----------------
                 document.getElementById("sunBtn").addEventListener("click", () => {
@@ -3579,82 +3603,7 @@
                   el.classList.toggle('visible');
                   btn.classList.toggle('open');
                 }
-                const TRENDS_REGION_KEY = "trends_region";
-                const TRENDS_SIZE_KEY = "trends_size";
-                const TRENDS_STOP_KEY = "trends_stop_state";
-                // OPEN / CLOSE TRENDS
-              document.getElementById("googleTrendsToggle").addEventListener("click", () => {
-                  const btn = document.getElementById("googleTrendsToggle");
-                  const box = document.getElementById("googleTrendsForm");
-              
-                  const expanded = btn.getAttribute("aria-expanded") === "true";
-                  btn.setAttribute("aria-expanded", String(!expanded));
-                  btn.classList.toggle("open");
-                  box.classList.toggle("visible");
-              });
-              
-              // REGION SELECT (Reload iframe)
-              document.getElementById("trendsRegion").addEventListener("change", (e) => {
-              const region = e.target.value;
-              const frame = document.getElementById("googleTrendsFrame");
-          
-              // Save region
-              localStorage.setItem(TRENDS_REGION_KEY, region);
-          
-              frame.src = `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}`;
-              });
-              // FRAME SIZE SELECTOR
-              document.getElementById("trendsSize").addEventListener("change", (e) => {
-              const size = e.target.value;
-          
-              // Save size
-              localStorage.setItem(TRENDS_SIZE_KEY, size);
-          
-              document.getElementById("googleTrendsFrame").style.height = size + "px";
-               });
-              document.getElementById("trendsCheckNow").addEventListener("click", () => {
-              const region = document.getElementById("trendsRegion").value;
-              const ts = Date.now();
-          
-              // Remove stop mode because user is checking now
-              localStorage.setItem(TRENDS_STOP_KEY, "false");
-          
-              document.getElementById("googleTrendsFrame").src =
-                  `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}&_=${ts}`;
-              });
-              // STOP button (hide iframe content)
-              document.getElementById("trendsStop").addEventListener("click", () => {
-              localStorage.setItem(TRENDS_STOP_KEY, "true"); // save stopped state
-              document.getElementById("googleTrendsFrame").src = "about:blank";
-               });
-               window.addEventListener("DOMContentLoaded", () => {
-              const regionEl = document.getElementById("trendsRegion");
-              const sizeEl = document.getElementById("trendsSize");
-              const frame = document.getElementById("googleTrendsFrame");
-          
-              // Restore region
-              const savedRegion = localStorage.getItem(TRENDS_REGION_KEY);
-              if (savedRegion) {
-                  regionEl.value = savedRegion;
-              }
-          
-              // Restore size
-              const savedSize = localStorage.getItem(TRENDS_SIZE_KEY);
-              if (savedSize) {
-                  sizeEl.value = savedSize;
-                  frame.style.height = savedSize + "px";
-              }
-          
-              // Restore stop mode
-              const stopped = localStorage.getItem(TRENDS_STOP_KEY) === "true";
-              if (stopped) {
-                  frame.src = "about:blank";
-              } else {
-                  // Load last region normally
-                  const region = savedRegion || "p3"; // default India
-                  frame.src = `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}`;
-              }
-              });
+
                 // ---------- Initial Render Code ----------
 
                 // 1. Set initial UI states from loaded data
@@ -4988,9 +4937,86 @@
                 const y = d.toISOString().slice(0,10);
                 return appData.priceSnapshots[y]?.[urlKey]?.price || null;
               }
+              const TRENDS_REGION_KEY = "trends_region";
+                const TRENDS_SIZE_KEY = "trends_size";
+                const TRENDS_STOP_KEY = "trends_stop_state";
+                // OPEN / CLOSE TRENDS
+              document.getElementById("googleTrendsToggle").addEventListener("click", () => {
+                  const btn = document.getElementById("googleTrendsToggle");
+                  const box = document.getElementById("googleTrendsForm");
+              
+                  const expanded = btn.getAttribute("aria-expanded") === "true";
+                  btn.setAttribute("aria-expanded", String(!expanded));
+                  btn.classList.toggle("open");
+                  box.classList.toggle("visible");
+              });
+              
+              // REGION SELECT (Reload iframe)
+              document.getElementById("trendsRegion").addEventListener("change", (e) => {
+              const region = e.target.value;
+              const frame = document.getElementById("googleTrendsFrame");
+          
+              // Save region
+              localStorage.setItem(TRENDS_REGION_KEY, region);
+          
+              frame.src = `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}`;
+              });
+              // FRAME SIZE SELECTOR
+              document.getElementById("trendsSize").addEventListener("change", (e) => {
+              const size = e.target.value;
+          
+              // Save size
+              localStorage.setItem(TRENDS_SIZE_KEY, size);
+          
+              document.getElementById("googleTrendsFrame").style.height = size + "px";
+               });
+              document.getElementById("trendsCheckNow").addEventListener("click", () => {
+              const region = document.getElementById("trendsRegion").value;
+              const ts = Date.now();
+          
+              // Remove stop mode because user is checking now
+              localStorage.setItem(TRENDS_STOP_KEY, "false");
+          
+              document.getElementById("googleTrendsFrame").src =
+                  `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}&_=${ts}`;
+              });
+              // STOP button (hide iframe content)
+              document.getElementById("trendsStop").addEventListener("click", () => {
+              localStorage.setItem(TRENDS_STOP_KEY, "true"); // save stopped state
+              document.getElementById("googleTrendsFrame").src = "about:blank";
+               });
+               window.addEventListener("DOMContentLoaded", () => {
+              const regionEl = document.getElementById("trendsRegion");
+              const sizeEl = document.getElementById("trendsSize");
+              const frame = document.getElementById("googleTrendsFrame");
+          
+              // Restore region
+              const savedRegion = localStorage.getItem(TRENDS_REGION_KEY);
+              if (savedRegion) {
+                  regionEl.value = savedRegion;
+              }
+          
+              // Restore size
+              const savedSize = localStorage.getItem(TRENDS_SIZE_KEY);
+              if (savedSize) {
+                  sizeEl.value = savedSize;
+                  frame.style.height = savedSize + "px";
+              }
+          
+              // Restore stop mode
+              const stopped = localStorage.getItem(TRENDS_STOP_KEY) === "true";
+              if (stopped) {
+                  frame.src = "about:blank";
+              } else {
+                  // Load last region normally
+                  const region = savedRegion || "p3"; // default India
+                  frame.src = `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}`;
+              }
+              });
               // ---------- End Initial Render Code ----------
               })();
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   </body>
 </html>
