@@ -2780,7 +2780,7 @@
                     };
                     appData.calculationHistory.push(historyObj);
                     saveAll();
-                    renderHistory();
+                    renderCalculationHistory();
                   }
                 }
 
@@ -2790,7 +2790,7 @@
                   if (newTitle) {
                     item.title = newTitle;
                     saveAll();
-                    renderHistory();
+                   renderCalculationHistory();
                   }
                 }
 
@@ -2951,7 +2951,7 @@
                   if (!appData.calculationHistory) appData.calculationHistory = [];
                   appData.calculationHistory.push(historyObj);
                   saveAll();
-                  renderHistory();
+                  renderCalculationHistory();
                 }
                 
                 byId('calcBMIButton').addEventListener('click', calculateBMI);
@@ -3309,7 +3309,7 @@
             
                 // Special handling for calculation/history
                 if (t.type === 'calculationHistory' || t.type === 'utilities') {
-                    if (typeof renderHistory === 'function') renderHistory();
+                    if (typeof renderHistory === 'function') renderCalculationHistory();
                     showPage('utilities');
                     return;
                 }
@@ -3384,7 +3384,7 @@
                   });
                 });
                 function deleteCheck(i){ moveToTrash('checklists', appData.checklists[i], i); renderChecklists(); renderHomeCheck(); }
-                function deleteHistory(i){moveToTrash('calculationHistory', appData.calculationHistory[i], i); renderHistory(); }
+                function deleteHistory(i){moveToTrash('calculationHistory', appData.calculationHistory[i], i); renderCalculationHistory();}
                                 // ---------- Event Listeners ----------
                 // Utilities Listeners
                 byId('monthlyCalendarToggle').addEventListener('click', function() {
@@ -3519,7 +3519,6 @@
                 renderNotes();
                 renderBudgets();
                 renderChecklists();
-                renderHistory(); // NEW: Initial render for history
                 renderCalculationHistory()
                 // NEW: Initialize calculator mode
                 switchCalculatorMode();
@@ -4454,7 +4453,6 @@
                 appData.calculationHistory.push(item);
                 saveAll();
                 renderCalculationHistory();
-                renderHistory();
               }
               })();
               /* =====================================================
