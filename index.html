@@ -916,8 +916,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.6.7</p>
-          <p>Last Updated: 11-Dec-2025</p>
+          <p>Version 13.6.9</p>
+          <p>Last Updated: 13-Dec-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size    : 7.0KB </p>
         </ul>
@@ -1519,21 +1519,38 @@
         function rerenderFor(type){
         switch(type){
           case 'reminders':
-            renderReminders(); renderHomeReminders(); break;
+            renderReminders();
+            renderHomeReminders();
+            renderHomeOverview();
+            break;
+      
           case 'notes':
-            renderNotes(); renderHomeNotes(); break;
+            renderNotes();
+            renderHomeNotes();
+            break;
+      
           case 'budget':
-            renderBudgets(); renderHomeBudgets(); break;
+            renderBudgets();
+            renderHomeBudgets();
+            break;
+      
           case 'checklists':
-            renderChecklists(); renderHomeCheck(); break;
-          case 'calculationHistoryList':
-          targetPageId = 'utilities';
-          break;
+            renderChecklists();
+            renderHomeCheck();
+            renderHomeOverview();
+            break;
+      
+          case 'calculationHistory':
+            if (typeof renderHistory === 'function') renderHistory();
+            if (typeof renderCalculationHistory === 'function') renderCalculationHistory();
+            break;
+      
           case 'priceTracker':
-          if (typeof window.renderPriceTrackerList === 'function') window.renderPriceTrackerList();
-          break;
-              }
-            }
+            if (typeof window.renderPriceTrackerList === 'function')
+              window.renderPriceTrackerList();
+            break;
+        }
+      }
         // ---------- NEW: Notification Settings Logic ----------
         function updateBrowserPermissionUI() {
             const status = Notification.permission;
@@ -1625,6 +1642,7 @@
           notifMoonPhase: true,
           // NEW: Calculation History
           calculationHistory: [],
+          utilityHistory: [],
           trash: [],
           priceTracker: [],
           priceSnapshots: {}
@@ -1675,7 +1693,7 @@
           now.setHours(0,0,0,0);
           const diffDays = Math.floor((end - now) / (1000 * 60 * 60 * 24));
           // If end already passed, return 0 (no negative days)
-          return diffDays < 0 ? 0 : diffDays;
+          return diffDays;
           }
           function formatDMY(dateStr){
             if(!dateStr) return '';
@@ -1733,7 +1751,7 @@
 
             const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
             const badge=document.createElement('div'); badge.className='badge';
-            const diff = daysLeft(r.endDate);
+            const diff = Math.max(0, daysLeft(r.endDate))
             if(diff === null){ badge.textContent='No date'; }
             else if(diff < 0){ badge.textContent='Expired'; }
             else if(diff === 0){ badge.textContent='Today'; }
@@ -1756,9 +1774,8 @@
           container.innerHTML='';
           // Filter reminders to show only today and 1 day left
           const filteredReminders = appData.reminders.filter(r => {
-            const diff = daysLeft(r.endDate);
-            return diff === 0 || diff === 1 || diff < 0;
-
+            const diff = Math.max(0, daysLeft(r.endDate))
+            return diff <= 1;
           });
 
           if(filteredReminders.length === 0){
@@ -1772,7 +1789,7 @@
           const frag=document.createDocumentFragment();
           filteredReminders.forEach(r=>{
             const li=document.createElement('li');
-            const diff = daysLeft(r.endDate);
+            const diff = Math.max(0, daysLeft(r.endDate))
             let badgeText='';
             if(diff === null){ badgeText='No date'; }
             else if(diff < 0){ badgeText='Expired'; }
@@ -2516,17 +2533,6 @@
             });
             list.appendChild(frag);
           }
-          
-          function restoreFromTrash(i){
-            const t = appData.trash[i];
-            if(!t) return;
-            if(Array.isArray(appData[t.type])) appData[t.type].push(t.item);
-            appData.trash.splice(i,1);
-            saveAll();
-            renderTrash();
-            alert(`${t.type} item restored.`);
-          }
-          
           function deleteForever(i){
             if(confirm('Delete permanently?')){
               appData.trash.splice(i,1);
@@ -2653,7 +2659,7 @@
         function buildReminderSummary() {
             let summary = [];
             appData.reminders.forEach(r => {
-                const diff = daysLeft(r.endDate);
+                const diff = Math.max(0, daysLeft(r.endDate))
                 if (diff < 0) {
               summary.push(`${r.title} — ❗Expired (${formatDMY(r.endDate)})`);
               }
@@ -3381,7 +3387,7 @@
                 // Re-render original module
                 rerenderFor(t.type);
                 renderTrash();
-            
+                renderHomeOverview();
                 // Special handling for calculation/history
                 if (t.type === 'calculationHistory' || t.type === 'utilities') {
                     if (typeof renderHistory === 'function') renderHistory();
@@ -3706,11 +3712,13 @@
               let inactiveRem = 0;
 
               appData.reminders.forEach(r => {
-                const diff = daysLeft(r.endDate);
-                if (diff < 0) inactiveRem++;
-                else activeRem++;
+                const diff = Math.max(0, daysLeft(r.endDate))
+                if (diff < 0) {
+                inactiveRem++;
+              } else {
+                activeRem++;
+              }
               });
-
               // --- Checklists Count ---
               let activeChk = 0;
               let inactiveChk = 0;
@@ -4363,7 +4371,7 @@
                 type: name || "New Calculation",
                 title: `Old(${oldR}) - New(${newR}) = Units(${units})`,
                 value: `₹${amount}`,
-                timestamp: formatDateDMYWithTime(new Date())
+                createdAt: formatDateDMYWithTime(new Date())
               });
             
               saveAll();
@@ -4529,7 +4537,7 @@
                 appData.calculationHistory.push(item);
                 saveAll();
                 renderCalculationHistory();
-                renderHistory();
+               
               }
               })();
               /* =====================================================
@@ -4933,32 +4941,30 @@
               document.getElementById("googleTrendsFrame").style.height = size + "px";
                });
               document.getElementById("trendsCheckNow").addEventListener("click", () => {
-  const region = document.getElementById("trendsRegion").value;
-  const frame = document.getElementById("googleTrendsFrame");
-  const status = document.getElementById("trendsStatus");
-
-  localStorage.setItem(TRENDS_STOP_KEY, "false");
-
-  status.style.display = "none";
-  frame.style.display = "block";
-
-  frame.src =
-    `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}&_=${Date.now()}`;
-});
-
+              const region = document.getElementById("trendsRegion").value;
+              const frame = document.getElementById("googleTrendsFrame");
+              const status = document.getElementById("trendsStatus");
+            
+              localStorage.setItem(TRENDS_STOP_KEY, "false");
+            
+              status.style.display = "none";
+              frame.style.display = "block";
+            
+              frame.src =
+                `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}&_=${Date.now()}`;
+             });
               // STOP button (hide iframe content)
               document.getElementById("trendsStop").addEventListener("click", () => {
-  localStorage.setItem(TRENDS_STOP_KEY, "true");
-
-  const frame = document.getElementById("googleTrendsFrame");
-  const status = document.getElementById("trendsStatus");
-
-  frame.style.display = "none";
-  frame.src = "";
-
-  status.style.display = "block";
-});
-
+              localStorage.setItem(TRENDS_STOP_KEY, "true");
+            
+              const frame = document.getElementById("googleTrendsFrame");
+              const status = document.getElementById("trendsStatus");
+            
+              frame.style.display = "none";
+              frame.src = "";
+            
+              status.style.display = "block";
+              });
                if (localStorage.getItem("trends_stop_state") === null) {
               localStorage.setItem("trends_stop_state", "true");
               }
@@ -4969,24 +4975,20 @@
               const savedRegion = localStorage.getItem("trends_region") || "p3";
               const savedSize = localStorage.getItem("trends_size") || "350";
               const stopped = localStorage.getItem("trends_stop_state") === "true";
-          
+
               // restore UI values
               regionEl.value = savedRegion;
               sizeEl.value = savedSize;
               frame.style.height = savedSize + "px";
-          
               const status = document.getElementById("trendsStatus");
-
-if (stopped) {
-  frame.style.display = "none";
-  status.style.display = "block";
-}
-
+              if (stopped) {
+                frame.style.display = "none";
+                status.style.display = "block";
+              }
               });
               // ---------- End Initial Render Code ----------
               })();
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   </body>
 </html>
