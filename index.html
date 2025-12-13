@@ -1519,38 +1519,21 @@
         function rerenderFor(type){
         switch(type){
           case 'reminders':
-            renderReminders();
-            renderHomeReminders();
-            renderHomeOverview();
-            break;
-      
+            renderReminders(); renderHomeReminders(); break;
           case 'notes':
-            renderNotes();
-            renderHomeNotes();
-            break;
-      
+            renderNotes(); renderHomeNotes(); break;
           case 'budget':
-            renderBudgets();
-            renderHomeBudgets();
-            break;
-      
+            renderBudgets(); renderHomeBudgets(); break;
           case 'checklists':
-            renderChecklists();
-            renderHomeCheck();
-            renderHomeOverview();
-            break;
-      
-          case 'calculationHistory':
-            if (typeof renderHistory === 'function') renderHistory();
-            if (typeof renderCalculationHistory === 'function') renderCalculationHistory();
-            break;
-      
+            renderChecklists(); renderHomeCheck(); break;
+          case 'calculationHistoryList':
+          targetPageId = 'utilities';
+          break;
           case 'priceTracker':
-            if (typeof window.renderPriceTrackerList === 'function')
-              window.renderPriceTrackerList();
-            break;
-        }
-      }
+          if (typeof window.renderPriceTrackerList === 'function') window.renderPriceTrackerList();
+          break;
+              }
+            }
         // ---------- NEW: Notification Settings Logic ----------
         function updateBrowserPermissionUI() {
             const status = Notification.permission;
@@ -1642,7 +1625,6 @@
           notifMoonPhase: true,
           // NEW: Calculation History
           calculationHistory: [],
-          utilityHistory: [],
           trash: [],
           priceTracker: [],
           priceSnapshots: {}
@@ -1751,7 +1733,7 @@
 
             const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center';
             const badge=document.createElement('div'); badge.className='badge';
-            const diff = Math.max(0, daysLeft(r.endDate))
+            const diff = daysLeft(r.endDate);
             if(diff === null){ badge.textContent='No date'; }
             else if(diff < 0){ badge.textContent='Expired'; }
             else if(diff === 0){ badge.textContent='Today'; }
@@ -1774,7 +1756,7 @@
           container.innerHTML='';
           // Filter reminders to show only today and 1 day left
           const filteredReminders = appData.reminders.filter(r => {
-            const diff = Math.max(0, daysLeft(r.endDate))
+            const diff = daysLeft(r.endDate);
             return diff <= 1;
           });
 
@@ -1789,7 +1771,7 @@
           const frag=document.createDocumentFragment();
           filteredReminders.forEach(r=>{
             const li=document.createElement('li');
-            const diff = Math.max(0, daysLeft(r.endDate))
+            const diff = daysLeft(r.endDate);
             let badgeText='';
             if(diff === null){ badgeText='No date'; }
             else if(diff < 0){ badgeText='Expired'; }
@@ -2533,6 +2515,7 @@
             });
             list.appendChild(frag);
           }
+          
           function deleteForever(i){
             if(confirm('Delete permanently?')){
               appData.trash.splice(i,1);
@@ -2659,7 +2642,7 @@
         function buildReminderSummary() {
             let summary = [];
             appData.reminders.forEach(r => {
-                const diff = Math.max(0, daysLeft(r.endDate))
+                const diff = daysLeft(r.endDate);
                 if (diff < 0) {
               summary.push(`${r.title} — ❗Expired (${formatDMY(r.endDate)})`);
               }
@@ -2785,72 +2768,8 @@
               }
           }
         }
-
         // ---------- Calculation History Functions ----------
-                function renderHistory() {
-                  const list = byId('calculationHistoryList');
-                  list.innerHTML = '';
-                  if (appData.calculationHistory.length === 0) {
-                    const li = document.createElement('li');
-                    li.textContent = 'No calculation history yet.';
-                    li.style.opacity = '0.7';
-                    list.appendChild(li);
-                    return;
-                  }
-
-                  const frag = document.createDocumentFragment();
-                  appData.calculationHistory.forEach((item, i) => {
-                    const li = document.createElement('li');
-                    const left = document.createElement('div');
-                    left.className = 'item-left';
-
-                    const title = document.createElement('div');
-                    title.innerHTML = `<b>${item.title}</b>`;
-                    title.style.fontWeight = '600';
-
-                    const details = document.createElement('div');
-                    details.style.fontSize = '13px';
-                    details.style.opacity = '0.85';
-                    details.textContent = `${item.result} | ${item.createdAt}`;
-                    const r = item.result || item.value || "";
-                    const t = item.createdAt || "";
-                    details.textContent = `${r} | ${t}`;
-                    left.appendChild(title);
-                    left.appendChild(details);
-                    if (item.qrImage) {
-                        const img = document.createElement("img");
-                        img.src = item.qrImage;
-                        img.style.width = "120px";
-                        img.style.border = "1px solid #ccc";
-                        img.style.borderRadius = "6px";
-                        img.style.marginTop = "6px";
-                        left.appendChild(img);
-                    }
-                    const right = document.createElement('div');
-                    right.style.display = 'flex';
-                    right.style.alignItems = 'center';
-
-                    const editBtn = document.createElement('button');
-                    editBtn.className = 'icon-small';
-                    editBtn.textContent = '✏️';
-                    editBtn.title = 'Edit Title';
-                    editBtn.addEventListener('click', () => editHistory(i));
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'icon-small';
-                    delBtn.textContent = '🗑️';
-                    delBtn.title = 'Delete';
-                    delBtn.addEventListener('click', () => deleteHistory(i));
-
-                    right.appendChild(editBtn);
-                    right.appendChild(delBtn);
-                    li.appendChild(left);
-                    li.appendChild(right);
-                    frag.appendChild(li);
-                  });
-                  list.appendChild(frag);
-                }
-
+                
                 function saveHistory(result) {
                   const title = 'New Calculation';
                   if (title) {
@@ -3387,7 +3306,7 @@
                 // Re-render original module
                 rerenderFor(t.type);
                 renderTrash();
-                renderHomeOverview();
+            
                 // Special handling for calculation/history
                 if (t.type === 'calculationHistory' || t.type === 'utilities') {
                     if (typeof renderHistory === 'function') renderHistory();
@@ -3712,13 +3631,11 @@
               let inactiveRem = 0;
 
               appData.reminders.forEach(r => {
-                const diff = Math.max(0, daysLeft(r.endDate))
-                if (diff < 0) {
-                inactiveRem++;
-              } else {
-                activeRem++;
-              }
+                const diff = daysLeft(r.endDate);
+                if (diff < 0) inactiveRem++;
+                else activeRem++;
               });
+
               // --- Checklists Count ---
               let activeChk = 0;
               let inactiveChk = 0;
@@ -4371,7 +4288,7 @@
                 type: name || "New Calculation",
                 title: `Old(${oldR}) - New(${newR}) = Units(${units})`,
                 value: `₹${amount}`,
-                createdAt: formatDateDMYWithTime(new Date())
+                timestamp: formatDateDMYWithTime(new Date())
               });
             
               saveAll();
@@ -4537,7 +4454,7 @@
                 appData.calculationHistory.push(item);
                 saveAll();
                 renderCalculationHistory();
-               
+                renderHistory();
               }
               })();
               /* =====================================================
@@ -4989,6 +4906,7 @@
               // ---------- End Initial Render Code ----------
               })();
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   </body>
 </html>
