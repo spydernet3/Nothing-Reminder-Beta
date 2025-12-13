@@ -4961,32 +4961,25 @@
               localStorage.setItem(TRENDS_STOP_KEY, "true"); // save stopped state
               document.getElementById("googleTrendsFrame").src = "about:blank";
                });
+               if (localStorage.getItem("trends_stop_state") === null) {
+              localStorage.setItem("trends_stop_state", "true");
+              }
                window.addEventListener("DOMContentLoaded", () => {
               const regionEl = document.getElementById("trendsRegion");
               const sizeEl = document.getElementById("trendsSize");
               const frame = document.getElementById("googleTrendsFrame");
+              const savedRegion = localStorage.getItem("trends_region") || "p3";
+              const savedSize = localStorage.getItem("trends_size") || "350";
+              const stopped = localStorage.getItem("trends_stop_state") === "true";
           
-              // Restore region
-              const savedRegion = localStorage.getItem(TRENDS_REGION_KEY);
-              if (savedRegion) {
-                  regionEl.value = savedRegion;
-              }
+              // restore UI values
+              regionEl.value = savedRegion;
+              sizeEl.value = savedSize;
+              frame.style.height = savedSize + "px";
           
-              // Restore size
-              const savedSize = localStorage.getItem(TRENDS_SIZE_KEY);
-              if (savedSize) {
-                  sizeEl.value = savedSize;
-                  frame.style.height = savedSize + "px";
-              }
-          
-              // Restore stop mode
-              const stopped = localStorage.getItem(TRENDS_STOP_KEY) === "true";
+              // 🔴 IMPORTANT: DO NOT AUTO LOAD
               if (stopped) {
-                  frame.src = "about:blank";
-              } else {
-                  // Load last region normally
-                  const region = savedRegion || "p3"; // default India
-                  frame.src = `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}`;
+                  frame.src = "about:blank";   // default + stopped
               }
               });
               // ---------- End Initial Render Code ----------
