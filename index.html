@@ -4681,48 +4681,65 @@
                 /* =====================================================
                       4) PRICE EXTRACTION
                 ===================================================== */
-                function extractPrice(html) {
+               function extractPrice(html, title = "") {
 
-  // 1️⃣ JSON-LD (most reliable)
+  /* =========================
+     1️⃣ JSON-LD SELLING PRICE
+     ========================= */
   try {
     const scripts = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
     if (scripts) {
       for (const s of scripts) {
         const json = JSON.parse(s.replace(/<[^>]+>/g, ""));
         const items = Array.isArray(json) ? json : [json];
-
         for (const item of items) {
-          if (item?.offers?.price) {
-            return Number(String(item.offers.price).replace(/,/g, ""));
+          if (item?.offers?.price && !item.offers.priceCurrency) {
+            return Number(String(item.offers.price).replace(/,/g,""));
           }
         }
       }
     }
-  } catch(e){}
+  } catch {}
 
-  // 2️⃣ Amazon / Flipkart selling price patterns
-  const priceSelectors = [
-    /a-price-whole[^>]*>([\d,]+)/i,          // Amazon
-    /_30jeq3[^>]*>([\d,]+)/i,                // Flipkart
-    /priceToPay[^>]*>([\d,]+)/i
-  ];
+  /* =========================
+     2️⃣ AMAZON SELLING PRICE
+     ========================= */
+  let m =
+    html.match(/priceToPay[^>]*>[\s\S]*?a-price-whole[^>]*>([\d,]+)/i) ||
+    html.match(/a-price-whole[^>]*>([\d,]+)/i);
 
-  for (const re of priceSelectors) {
-    const m = html.match(re);
-    if (m) return Number(m[1].replace(/,/g, ""));
+  if (m) return Number(m[1].replace(/,/g,""));
+
+  /* =========================
+     3️⃣ FLIPKART SELLING PRICE
+     ========================= */
+  m = html.match(/_30jeq3[^>]*>([\d,]+)/i);
+  if (m) return Number(m[1].replace(/,/g,""));
+
+  /* =========================
+     4️⃣ VARIANT-AWARE FILTER (GB only)
+     ========================= */
+  if (/\b\d+\s?GB\b/i.test(title)) {
+    const blocks = html.split(/₹/);
+    for (const block of blocks) {
+      if (!/emi|month|save|off|discount/i.test(block)) {
+        const p = block.match(/([\d,]{4,})/);
+        if (p) return Number(p[1].replace(/,/g,""));
+      }
+    }
   }
 
-  // 3️⃣ LAST fallback — take the LARGEST ₹ value (not first)
-  const matches = [...html.matchAll(/₹\s*([\d,]+)/g)];
-  if (matches.length) {
-    const values = matches.map(m => Number(m[1].replace(/,/g, "")));
-    return Math.max(...values);   // ✅ largest is usually actual price
-  }
+  /* =========================
+     5️⃣ FINAL SAFE FALLBACK
+     (ignore EMI & discounts)
+     ========================= */
+  const prices = [...html.matchAll(/₹\s*([\d,]+)/g)]
+    .map(m => Number(m[1].replace(/,/g,"")))
+    .filter(p => p > 1000); // ignore EMI/discount values
 
-  return null;
+  return prices.length ? prices[0] : null;
 }
 
-              
                 /* =====================================================
                       5) SAVE PRODUCT ENTRY
                 ===================================================== */
