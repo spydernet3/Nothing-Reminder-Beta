@@ -1340,10 +1340,12 @@
           📈 GOOOG TRENDS LIVE <span class="arrow">▼</span>
         </button>
         <div id="googleTrendsForm" class="form" aria-hidden="true">
+        <div id="trendsStatus" style="display:none;text-align:center;font-style:Italic;margin-bottom:100px;margin-top:100px;">
+        GOOOG TRENDS LIVE STOPPED NOW 🐒
+        </div>
             <!-- Trends iFrame -->
             <iframe 
                 id="googleTrendsFrame"
-                src="https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=p3"
                 style="width:100%;height:350px;border:0;border-radius:10px;margin-bottom:12px;">
             </iframe>
             <!-- Controls BELOW (no overlapping) -->
@@ -4947,20 +4949,32 @@
               document.getElementById("googleTrendsFrame").style.height = size + "px";
                });
               document.getElementById("trendsCheckNow").addEventListener("click", () => {
-              const region = document.getElementById("trendsRegion").value;
-              const ts = Date.now();
-          
-              // Remove stop mode because user is checking now
-              localStorage.setItem(TRENDS_STOP_KEY, "false");
-          
-              document.getElementById("googleTrendsFrame").src =
-                  `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}&_=${ts}`;
-              });
+  const region = document.getElementById("trendsRegion").value;
+  const frame = document.getElementById("googleTrendsFrame");
+  const status = document.getElementById("trendsStatus");
+
+  localStorage.setItem(TRENDS_STOP_KEY, "false");
+
+  status.style.display = "none";
+  frame.style.display = "block";
+
+  frame.src =
+    `https://trends.google.com/trends/hottrends/visualize?nrow=5&ncol=5&pn=${region}&_=${Date.now()}`;
+});
+
               // STOP button (hide iframe content)
               document.getElementById("trendsStop").addEventListener("click", () => {
-              localStorage.setItem(TRENDS_STOP_KEY, "true"); // save stopped state
-              document.getElementById("googleTrendsFrame").src = "about:blank";
-               });
+  localStorage.setItem(TRENDS_STOP_KEY, "true");
+
+  const frame = document.getElementById("googleTrendsFrame");
+  const status = document.getElementById("trendsStatus");
+
+  frame.style.display = "none";
+  frame.src = "";
+
+  status.style.display = "block";
+});
+
                if (localStorage.getItem("trends_stop_state") === null) {
               localStorage.setItem("trends_stop_state", "true");
               }
@@ -4977,10 +4991,13 @@
               sizeEl.value = savedSize;
               frame.style.height = savedSize + "px";
           
-              // 🔴 IMPORTANT: DO NOT AUTO LOAD
-              if (stopped) {
-                  frame.src = "about:blank";   // default + stopped
-              }
+              const status = document.getElementById("trendsStatus");
+
+if (stopped) {
+  frame.style.display = "none";
+  status.style.display = "block";
+}
+
               });
               // ---------- End Initial Render Code ----------
               })();
