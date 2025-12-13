@@ -1313,8 +1313,8 @@
         </button>
         <div id="priceTrackerForm" class="form" aria-hidden="true" >
           <label>PRODUCT LINK</label>
-          <label>i. For AMAZON =  Product Page 🌐 Link</label>
-          <label>ii. For Flipkart = Product Share 🔗 Link</label>
+          <label>⚠ For Amazon =  Product Page 🌐 Link</label>
+          <label>⚠ For Flipkart = Product Share 🔗 Link</label>
           <input id="trackUrl" type="text" placeholder="Paste Amazon Or Flipkart Link">
       
           <label>PRODUCT TITLE</label>
@@ -4869,28 +4869,12 @@
                   setTimeout(() => drawHistoryChart("priceChart", history), 50);
               
                   statusEl.innerHTML = "✔ Updated";
-              
-                  // Auto-save to list
-                  if(title){
-                    const exists = appData.priceTracker.some(x => x.url === url);
-                    if(!exists){
-                      appData.priceTracker.push({
-                        title,
-                        url,
-                        savedAt: formatDateDMYWithTime(new Date())
-                      });
-                      saveAll();
-                      renderPriceTrackerList();
-                    }
-                  }
-              
+
                 } catch(err){
                   statusEl.innerHTML = "❌ Error";
                   console.error(err);
                 }
-              }
-              
-              
+                }
                 trackBtn.addEventListener("click", trackPrice);
               // expose Price Tracker functions to global scope so other modules can call them
               window.renderPriceTrackerList = renderPriceTrackerList;
