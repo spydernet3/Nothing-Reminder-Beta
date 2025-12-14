@@ -1795,7 +1795,7 @@
           now.setHours(0,0,0,0);
           const diffDays = Math.floor((end - now) / (1000 * 60 * 60 * 24));
           // If end already passed, return 0 (no negative days)
-          return diffDays;
+          return Math.max(diffDays, 0);
           }
           function formatDMY(dateStr){
             if(!dateStr) return '';
@@ -5140,7 +5140,8 @@
               // ---------- End Initial Render Code ----------
               })();
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"><script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js">
+    <script>
   </script>
 </body>
 
