@@ -2802,8 +2802,7 @@
             if (appData.budget.length === 0) return "No active budgets to track.";
             appData.budget.forEach(b => {
                 const days = Math.max(0, daysLeft(b.endDate));
-
-                const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
+               const costPerDay = Math.max(0, calculateCostPerDay(b.amount, b.startDate, b.endDate));
                 if (days > 0 && costPerDay > 0) {
                     summary.push(`- ${b.title}: ₹${costPerDay}/day for ${days} days`);
                 }
