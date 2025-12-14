@@ -1795,7 +1795,7 @@
           now.setHours(0,0,0,0);
           const diffDays = Math.floor((end - now) / (1000 * 60 * 60 * 24));
           // If end already passed, return 0 (no negative days)
-          return Math.max(diffDays, 0);
+          return diffDays;
           }
           function formatDMY(dateStr){
             if(!dateStr) return '';
@@ -2107,7 +2107,8 @@
           
           const start = b.startDate ? new Date(b.startDate) : null;
           const end = b.endDate ? new Date(b.endDate) : null;
-          const days = daysLeft(b.endDate);
+          const days = Math.max(0, daysLeft(b.endDate));
+
           const remainingPerDay = days > 0 ? (remaining / days).toFixed(2) : remaining;
           const title = document.createElement('div');
           title.textContent = `Title: ${b.title}`;
@@ -2240,7 +2241,8 @@
             const remaining = b.amount - used;
             
             // Correct dynamic remaining days
-            const days = daysLeft(b.endDate);  
+            const days = Math.max(0, daysLeft(b.endDate));
+
             
             // Recalculate cost per day
             const costPerDay = days > 0 ? (remaining / days).toFixed(2) : 0;
@@ -2799,7 +2801,8 @@
             let summary = [];
             if (appData.budget.length === 0) return "No active budgets to track.";
             appData.budget.forEach(b => {
-                const days = daysLeft(b.endDate);
+                const days = Math.max(0, daysLeft(b.endDate));
+
                 const costPerDay = calculateCostPerDay(b.amount, b.startDate, b.endDate);
                 if (days > 0 && costPerDay > 0) {
                     summary.push(`- ${b.title}: ₹${costPerDay}/day for ${days} days`);
