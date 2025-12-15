@@ -4328,7 +4328,9 @@
               { from: 801, to: 1000, cost: 10.50 },
               { from: 1001, to: Infinity, cost: 11.55 }
             ];
-            
+            if (appData.ebSlabs) {
+            ebSlabs = appData.ebSlabs;
+             }
             /* Build editable tariff table */
               function renderEbTable() {
               const tbl = document.getElementById("ebTariffTable");
@@ -4356,6 +4358,12 @@
                 `;
             
                 tbl.appendChild(row);
+                const input = document.getElementById(`slab_${i}`);
+                input.addEventListener("change", () => {
+                  ebSlabs[i].cost = parseFloat(input.value) || 0;
+                  appData.ebSlabs = ebSlabs;
+                  saveAll();
+              });
               });
             }
             
@@ -4371,6 +4379,8 @@
                 { from: 1001, to: Infinity, cost: 11.55 }
               ];
               renderEbTable();
+              appData.ebSlabs = ebSlabs;
+              saveAll();
             });
             /* Calculate EB Amount */
             function calculateEbBill(units) {
@@ -4428,7 +4438,7 @@
               list.innerHTML = "";
             
               if (!appData.calculationHistory || appData.calculationHistory.length === 0) {
-                list.innerHTML = `<li>No calculation history yet.</li>`;
+                list.innerHTML = `<li>No History yet.</li>`;
                 return;
               }
             
