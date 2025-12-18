@@ -2876,13 +2876,13 @@
               // Build notification body
               // Build notification body
 // Build notification body (FINAL LOGIC)
+// Build notification body (NO LOGIC CHANGE)
 const body = (days === 0)
   ? `🎉 Congratulations! You've saved ₹${remaining}`
-  : `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days ?? "N/A"}`;
-
+  : `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
 
 registration.showNotification(
-  `Nothing Reminder - 💰 Budget Tracker (${b.title})`, // ✅ unique title
+  `Nothing Reminder - 💰 Budget Tracker)`, // ✅ unique title
   {
     body,
     icon: "assets/icon.png",
