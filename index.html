@@ -2875,18 +2875,25 @@
           
               // Inside your appData.budget.forEach((b) => { ... }) loop:
 
-// 1. Logic for the congrats message
-const congratsMsg = (days === 0) ? ` | congrats you saved ₹${remaining}` : "";
+// --- Inside your budget loop: appData.budget.forEach((b) => { ... }) ---
 
-// 2. The simple body format you requested
-const body = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}${congratsMsg}`;
+let notificationBody = "";
 
-// 3. SHOW NOTIFICATION
+if (days === 0) {
+    // 1. Separate Logic for Finished Budgets
+    notificationBody = `Budget: ${b.title} | congrats you saved ₹${remaining}`;
+} else {
+    // 2. Separate Logic for Active Budgets
+    notificationBody = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+}
+
+// 3. SHOW NOTIFICATION (Triggers separately for each item in the list)
 registration.showNotification("💰 Budget Tracker", {
-  body: body,
-  icon: "assets/icon.png",
-  // Unique tag per budget title ensures separate notifications show up
-  tag: `budget-item-${b.title}`, 
+    body: notificationBody,
+    icon: "assets/icon.png",
+    // Unique tag ensures separate notification for every budget item
+    tag: `budget-item-${b.title}`,
+    badge: "assets/icon.png"
 });
           
             });
