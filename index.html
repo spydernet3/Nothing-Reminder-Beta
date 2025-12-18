@@ -2877,9 +2877,13 @@
               // Build notification body
 // Build notification body (FINAL LOGIC)
 // Build notification body (NO LOGIC CHANGE)
-const body = (days === 0)
-  ? `🎉 Congratulations! You've saved ₹${remaining}`
-  : `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+// Build notification body (SAFE – does NOT break once-only logic)
+let body =
+`Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+
+if (Number(days) === 0) {
+  body += ` 🎉 Congratulations! You've saved ₹${remaining}`;
+}
 
 registration.showNotification(
   `Nothing Reminder - 💰 Budget Tracker)`, // ✅ unique title
