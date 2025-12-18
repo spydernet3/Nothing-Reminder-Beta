@@ -2873,28 +2873,28 @@
                   ? (remaining / days).toFixed(2)
                   : remaining;
           
-              // 1. Logic for the Milestone Message
-const milestoneMsg = (days === 0) ? `\n🎉 Congrats! You saved ₹${remaining}` : "";
-
-// 2. Fetch and Format All Saved Items
-// We map through the existing 'budgets' array to get a summary of all items
-const allSavedList = (typeof budgets !== 'undefined' && budgets.length > 0) 
+              // 1. Prepare the list of all saved items
+// This maps through the 'budgets' array to create a list of all titles and remaining amounts
+const allSavedList = budgets && budgets.length > 0 
   ? budgets.map(item => {
-      // Calculate remaining for each individual item in the list
       const itemRem = item.amount - (item.spent || 0);
       return `• ${item.title}: ₹${itemRem}`;
     }).join("\n")
   : "No other items";
 
-// 3. Build the final Notification Body
-const body = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}${milestoneMsg}\n\nAll Saved:\n${allSavedList}`;
+// 2. Logic for the "Congrats" message if current budget reaches day 0
+const milestoneMsg = (days === 0) ? `\n🎉 congrats you saved ₹${remaining}` : "";
 
-// 4. Trigger the Notification
+// 3. Build the final notification body
+// This combines your current budget details with the full list below it
+const body = `Current: ${b.title} | Rem: ₹${remaining} | Days Left: ${days !== null ? days : "N/A"}${milestoneMsg}\n\nALL SAVED ITEMS:\n${allSavedList}`;
+
+// 4. SHOW NOTIFICATION
 registration.showNotification("💰 Budget Tracker", {
   body: body,
   icon: "assets/icon.png",
-  tag: "budget-tracker-update",
-  badge: "assets/icon.png" // Helps show the icon on mobile status bars
+  tag: "budget-tracker-update", // Keeps it as one single notification that updates
+  badge: "assets/icon.png"
 });
           
             });
