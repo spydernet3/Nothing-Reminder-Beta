@@ -2874,7 +2874,7 @@
                   : remaining;
           
               // Build notification body
-              const body =
+              let body =
 `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
 if (Number(days) === 0) {
   body += ` 🎉 Congratulations! You've saved ₹${remaining}`;
