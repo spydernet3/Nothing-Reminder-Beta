@@ -2873,27 +2873,27 @@
                   ? (remaining / days).toFixed(2)
                   : remaining;
           
-              // 1. Logic for the "Congrats" message
-let milestoneMsg = "";
-if (days === 0) {
-  milestoneMsg = `\n🎉 Congrats! You saved ₹${remaining}`;
-}
+              // 1. Calculate the Milestone Message (Congrats)
+const milestoneMsg = (days === 0) ? `\n🎉 Congrats! You saved ₹${remaining}` : "";
 
-// 2. Get all saved items (assuming your array is named 'budgets')
-// This loops through all items to show their status
-const allSavedItems = budgets && budgets.length > 0 
-  ? budgets.map(item => `• ${item.title}: ₹${item.amount - item.spent}`).join("\n")
-  : "No other items";
+// 2. Fetch all saved items from your storage array
+// Assuming 'budgets' is the array you are iterating through or have globally
+const allSavedSummary = budgets && budgets.length > 0 
+    ? budgets.map(item => {
+        const itemRem = item.amount - (item.spent || 0);
+        return `• ${item.title}: ₹${itemRem}`;
+      }).join("\n")
+    : "No other items";
 
-// 3. Construct the body
-const body = `Current: ${b.title} | Rem: ₹${remaining} | Days: ${days !== null ? days : "N/A"}${milestoneMsg}\n\nTOTAL SAVED LIST:\n${allSavedItems}`;
+// 3. Build notification body (preserving your existing logic)
+const body = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}${milestoneMsg}\n\nAll Saved Items:\n${allSavedSummary}`;
 
-// SHOW NOTIFICATION
+// 4. SHOW NOTIFICATION
 registration.showNotification("💰 Budget Tracker", {
-  body: body,
-  icon: "assets/icon.png",
-  tag: "budget-tracker-update",
-  badge: "assets/icon.png" // Added for mobile support
+    body: body,
+    icon: "assets/icon.png",
+    tag: "budget-tracker-update",
+    badge: "assets/icon.png" // Ensures icon shows on Android status bar
 });
           
             });
