@@ -2879,10 +2879,10 @@
 const congratsMsg = (days === 0) ? ` | congrats you saved ₹${remaining}` : "";
 
 // 2. Build notification body for THIS specific item
-const body = `Budget: ${b.title} | Remaining: ₹${remaining}${congratsMsg}`;
+const body = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}${congratsMsg}`;
 
 // 3. SHOW NOTIFICATION
-registration.showNotification("Nothing Reminder - 💰 Budget Tracker", {
+registration.showNotification("💰 Budget Tracker", {
     body: body,
     icon: "assets/icon.png",
     // IMPORTANT: Using b.title as the tag ensures each budget 
