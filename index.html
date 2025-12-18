@@ -2873,14 +2873,14 @@
                   ? (remaining / days).toFixed(2)
                   : remaining;
           
-              // 1. Generate the list of all saved items using 'appData.budget'
+              // 1. Generate the list of all items in the format: "Budget: Title | Remaining: ₹Amount"
               const allSavedItems = appData.budget.map(item => {
-                  const usedAmount = item.expenses ? item.expenses.reduce((sum, e) => sum + Number(e.amount), 0) : 0;
-                  const remainingAmount = item.amount - usedAmount;
-                  return `• ${item.title}: ₹${remainingAmount}`;
+                  const itemUsed = item.expenses ? item.expenses.reduce((sum, e) => sum + Number(e.amount), 0) : 0;
+                  const itemRem = item.amount - itemUsed;
+                  return `Budget: ${item.title} | Remaining: ₹${itemRem}`;
               }).join('\n');
 
-              // 2. Create the congrats message if days is 0
+              // 2. Add Congrats message if days is 0
               const congratsMsg = (days === 0) ? ` congrats you saved ₹${remaining}` : "";
 
               // 3. Build notification body
