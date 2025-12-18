@@ -2875,9 +2875,11 @@
           
               // Build notification body
              // Build notification body
+// Build notification body
 let body =
 `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
 
+// ADD == 0 LOGIC (APPEND ONLY — SAFE)
 if (Number(days) === 0) {
   body += ` 🎉 Congratulations! You've saved ₹${remaining}`;
 }
@@ -2886,9 +2888,9 @@ if (Number(days) === 0) {
 registration.showNotification("💰 Budget Tracker", {
   body: body,
   icon: "assets/icon.png",
-tag: "budget-tracker-update-" + b.id,
-
+  tag: "budget-tracker-update-" + b.id, // ✅ works ONLY if id is unique
 });
+
 
           
             });
@@ -5162,4 +5164,4 @@ tag: "budget-tracker-update-" + b.id,
   </script>
 </body>
 
-            </html>
+</html>
