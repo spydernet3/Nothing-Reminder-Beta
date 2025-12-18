@@ -2875,8 +2875,11 @@
           
               // Build notification body
               // Build notification body
-const body =
-`Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days ?? "N/A"}`;
+// Build notification body (FINAL LOGIC)
+const body = (days === 0)
+  ? `🎉 Congratulations! You've saved ₹${remaining}`
+  : `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days ?? "N/A"}`;
+
 
 registration.showNotification(
   `Nothing Reminder - 💰 Budget Tracker (${b.title})`, // ✅ unique title
