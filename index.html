@@ -2873,24 +2873,24 @@
                   ? (remaining / days).toFixed(2)
                   : remaining;
           
-              // Build notification body
-// Build notification body
-let body =
-`Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+              // 1. Calculate the special message for days == 0
+const milestoneMsg = days === 0 ? `\n🎉 Congrats! You saved ₹${remaining}` : "";
 
-if (Number(days) === 0) {
-  body += ` 🎉 Congratulations! You've saved ₹${remaining}`;
-}
+// 2. Generate the list of all saved items (assuming 'budgets' is your array)
+// Adjust 'allBudgets' to whatever variable holds your list of budget objects
+const allItemsList = allBudgets
+  .map(item => `• ${item.title}: ₹${item.remaining}`)
+  .join("\n");
 
-// SHOW NOTIFICATION (ALL USERS)
+// 3. Build the final notification body
+const body = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}${milestoneMsg}\n\nAll Saved:\n${allItemsList}`;
+
+// SHOW NOTIFICATION
 registration.showNotification("💰 Budget Tracker", {
   body: body,
   icon: "assets/icon.png",
-  tag: "budget-tracker-" + b.id, // UNIQUE PER BUDGET
+  tag: "budget-tracker-update",
 });
-
-
-
           
             });
           }
