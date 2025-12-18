@@ -2872,30 +2872,25 @@
               const perDay = (days && days > 0)
                   ? (remaining / days).toFixed(2)
                   : remaining;
-          
-              // Inside your appData.budget.forEach((b) => { ... }) loop:
+                  
+              let notificationBody = "";
 
-// --- Inside your budget loop: appData.budget.forEach((b) => { ... }) ---
+              if (days === 0) {
+                  // 1. Separate Logic for Finished Budgets
+                  notificationBody = `Budget: ${b.title} |🎉 CONGRATS YOU SAVED ₹${remaining}`;
+              } else {
+                  // 2. Separate Logic for Active Budgets
+                  notificationBody = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+              }
 
-let notificationBody = "";
-
-if (days === 0) {
-    // 1. Separate Logic for Finished Budgets
-    notificationBody = `Budget: ${b.title} | congrats you saved ₹${remaining}`;
-} else {
-    // 2. Separate Logic for Active Budgets
-    notificationBody = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
-}
-
-// 3. SHOW NOTIFICATION (Triggers separately for each item in the list)
-registration.showNotification("💰 Budget Tracker", {
-    body: notificationBody,
-    icon: "assets/icon.png",
-    // Unique tag ensures separate notification for every budget item
-    tag: `budget-item-${b.title}`,
-    badge: "assets/icon.png"
-});
-          
+              // 3. SHOW NOTIFICATION (Triggers separately for each item in the list)
+              registration.showNotification("Nothing Reminder - 💰 Budget Tracker", {
+                  body: notificationBody,
+                  icon: "assets/icon.png",
+                  // Unique tag ensures separate notification for every budget item
+                  tag: `budget-item-${b.title}`,
+                  badge: "assets/icon.png"
+              });
             });
           }
           // NOTES Summary
