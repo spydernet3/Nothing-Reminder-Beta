@@ -749,7 +749,7 @@
       <button id="settingsBtn" class="icon-btn" aria-expanded="false">
           ⚙️ Settings ▼
         </button>
-      <div id="settingsPanel" class="settings-panel" aria-hidden="true">
+      <div id="settingsPanel" class="settings-panel">
         <button class="menu-btn" id="editNameBtn">✏️ Edit Name</button>
         <button class="icon-btn" id="darkModeBtn">🌙 Dark Mode</button>
         <button
@@ -798,27 +798,27 @@
         <button id="homeNotesToggle" class="add-btn" aria-expanded="false">
             📝 NOTES <span class="arrow">▼</span>
           </button>
-        <div id="homeNotesContainer" class="form" aria-hidden="true"></div>
+        <div id="homeNotesContainer" class="form"></div>
       </div>
       <div class="add-area">
         <button id="homeBudgetsToggle" class="add-btn" aria-expanded="false">
             💰 BUDGET OVERVIEW <span class="arrow">▼</span>
           </button>
-        <div id="homeBudgetsContainer" class="form" aria-hidden="true"></div>
+        <div id="homeBudgetsContainer" class="form"></div>
       </div>
 
       <div class="add-area">
         <button id="homeCheckToggle" class="add-btn" aria-expanded="false">
             ✒ CHECK LIST <span class="arrow">▼</span>
           </button>
-        <div id="homeCheckContainer" class="form" aria-hidden="true"></div>
+        <div id="homeCheckContainer" class="form"></div>
       </div>
       <div class="add-area">
         <button id="homeOverviewToggle" class="add-btn" aria-expanded="false">
             📊 REMINDERS OVERVIEW <span class="arrow">▼</span>
           </button>
 
-        <div id="homeOverviewContainer" class="form" aria-hidden="true">
+        <div id="homeOverviewContainer" class="form">
           <table style="width:100%; border-collapse: collapse; text-align:center;">
             <tr style="font-weight:600;">
               <td>TITLE</td>
@@ -851,7 +851,7 @@
         <button id="showAddFormBtn" class="add-btn" aria-expanded="false">
             ＋ ADD NEW REMINDER <span class="arrow">▼</span>
           </button>
-        <div id="reminderFormContainer" class="form" aria-hidden="true">
+        <div id="reminderFormContainer" class="form">
           <label
               >Title<input id="reminderTitle" type="text" placeholder="Title"
             /></label>
@@ -881,7 +881,7 @@
         <button id="showAddNoteBtn" class="add-btn" aria-expanded="false">
             ＋ ADD NEW NOTE <span class="arrow">▼</span>
           </button>
-        <div id="noteFormContainer" class="form" aria-hidden="true">
+        <div id="noteFormContainer" class="form">
           <label>
               Attach File
               <input
@@ -920,7 +920,7 @@
         <button id="showAddBudgetBtn" class="add-btn" aria-expanded="false">
             ＋ CREATE NEW BUDGET <span class="arrow">▼</span>
           </button>
-        <div id="budgetFormContainer" class="form" aria-hidden="true">
+        <div id="budgetFormContainer" class="form">
           <label
               >Title<input
                 id="budgetTitle"
@@ -954,7 +954,7 @@
         <button id="showAddCheckBtn" class="add-btn" aria-expanded="false">
             ＋ CREATE NEW CHECKLIST <span class="arrow">▼</span>
           </button>
-        <div id="checkFormContainer" class="form" aria-hidden="true">
+        <div id="checkFormContainer" class="form">
           <label>
               Title<input
                 id="checkTitle"
@@ -1086,8 +1086,8 @@
         <hr />
         <h3>Version Info!</h3>
         <ul>
-          <p>Version 13.6.9</p>
-          <p>Last Updated: 13-Dec-2025</p>
+          <p>Version 13.7</p>
+          <p>Last Updated: 15-Dec-2025</p>
           <p>Project Mode: Open source</p>
           <p>App Size : 7.0KB </p>
         </ul>
@@ -1205,7 +1205,7 @@
           >
             📅 MONTHLY CALENDAR <span class="arrow">▼</span>
           </button>
-        <div id="monthlyCalendarContainer" class="form" aria-hidden="true">
+        <div id="monthlyCalendarContainer" class="form">
           <div id="calendarDisplay" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <button id="prevMonthBtn" class="secondary">◀</button>
@@ -1235,7 +1235,7 @@
         <button id="calculatorToggle" class="add-btn" aria-expanded="false">
             🧮 CALCULATOR <span class="arrow">▼</span>
           </button>
-        <div id="calculatorContainer" class="form" aria-hidden="true">
+        <div id="calculatorContainer" class="form">
           <label>
               SELECT MODE:
               <select id="calculatorMode">
@@ -1409,7 +1409,7 @@
           🥇 GOLD RATE TODAY <span class="arrow">▼</span>
         </button>
 
-        <div id="goldRateForm" class="form" aria-hidden="true">
+        <div id="goldRateForm" class="form">
 
           <label>SELECT PLACE</label>
           <select id="goldPlace1"></select>
@@ -1431,7 +1431,7 @@
         ☁️ WEATHER FORECAST <span class="arrow">▼</span>
        </button>
 
-        <div id="weatherForm" class="form" aria-hidden="true">
+        <div id="weatherForm" class="form">
 
           <label>SELECT PLACE</label>
           <select id="weatherCity"></select>
@@ -1447,7 +1447,7 @@
         <button id="qrToggle" class="add-btn" aria-expanded="false">
           🔳 QR GENERATOR <span class="arrow">▼</span>
         </button>
-        <div id="qrForm" class="form" aria-hidden="true">
+        <div id="qrForm" class="form">
           <label>ENTER CONTENT</label>
           <textarea id="qrInput" rows="3" placeholder="Type text or URL"></textarea>
           <div style="display:flex; gap:20px; align-items:center; margin-top:10px;">
@@ -1470,7 +1470,7 @@
         <button id="priceTrackerToggle" class="add-btn" aria-expanded="false">
           🛒 PRICE TRACKER <span class="arrow">▼</span>
         </button>
-        <div id="priceTrackerForm" class="form" aria-hidden="true">
+        <div id="priceTrackerForm" class="form">
           <label>PRODUCT LINK</label>
           <label>⚠ For Amazon =  Product Page 🌐 Link</label>
           <label>⚠ For Flipkart = Product Share 🔗 Link</label>
@@ -1498,7 +1498,7 @@
         <button id="googleTrendsToggle" class="add-btn" aria-expanded="false">
           📈 GOOOG TRENDS LIVE <span class="arrow">▼</span>
         </button>
-        <div id="googleTrendsForm" class="form" aria-hidden="true">
+        <div id="googleTrendsForm" class="form">
           <div id="trendsStatus"
             style="display:none;text-align:center;font-style:Italic;margin-bottom:100px;margin-top:100px;">
             GOOOG TRENDS LIVE STOPPED NOW 🐒
@@ -1541,7 +1541,7 @@
         <button id="viewHistoryToggle" class="add-btn" aria-expanded="false">
             ⏳ VIEW HISTORY <span class="arrow">▼</span>
           </button>
-        <ul id="calculationHistoryList" class="list scrollable-list form" aria-hidden="true"></ul>
+        <ul id="calculationHistoryList" class="list scrollable-list form"></ul>
       </div>
     </div>
     <div id="trash" class="page hidden">
@@ -2874,14 +2874,17 @@
                   : remaining;
           
               // Build notification body
-              const body = 
-              `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} |Days Left: ${days !== null ? days : "N/A"}`;
-              // SHOW NOTIFICATION
-              registration.showNotification("💰 Budget Tracker", {
-                body: body,
-                icon: "assets/icon.png",
-                tag: "budget-tracker-update",
-              });
+              // Build notification body
+const body =
+`Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+
+// SHOW NOTIFICATION (ALL WILL APPEAR)
+registration.showNotification("Nothing Reminder - 💰 Budget Tracker", {
+  body: body,
+  icon: "assets/icon.png",
+  tag: `budget-tracker-${b.id}`, // ✅ UNIQUE TAG
+});
+
           
             });
           }
@@ -3417,50 +3420,49 @@
                   rerenderFor(type); // ⟵ live update the source page + home widgets
                 }
                 function restoreFromTrash(i) {
-  const t = appData.trash[i];
-  if (!t) return;
+                const t = appData.trash[i];
+                if (!t) return;
 
-  // 1️⃣ Restore data
-  if (Array.isArray(appData[t.type])) {
-    appData[t.type].unshift(t.item);
-  }
+                // 1️⃣ Restore data
+                if (Array.isArray(appData[t.type])) {
+                  appData[t.type].unshift(t.item);
+                }
 
-  // 2️⃣ Remove from trash
-  appData.trash.splice(i, 1);
-  saveAll();
+                // 2️⃣ Remove from trash
+                appData.trash.splice(i, 1);
+                saveAll();
 
-  // 3️⃣ Update trash UI
-  renderTrash();
+                // 3️⃣ Update trash UI
+                renderTrash();
 
-  // 4️⃣ Decide where to jump (single source of truth)
-  const jumpMap = {
-    calculationHistory: 'utilities',
-    utilities: 'utilities',
-    priceTracker: 'utilities',
-    checklists: 'Check',
-    notes: 'notes',
-    reminders: 'reminders'
-  };
+                // 4️⃣ Decide where to jump (single source of truth)
+                const jumpMap = {
+                  calculationHistory: 'utilities',
+                  utilities: 'utilities',
+                  priceTracker: 'utilities',
+                  checklists: 'Check',
+                  notes: 'notes',
+                  reminders: 'reminders'
+                };
 
-  const targetPage = jumpMap[t.type] || t.type;
+                const targetPage = jumpMap[t.type] || t.type;
 
-  // 5️⃣ Navigate FIRST
-  if (document.getElementById(targetPage)) {
-    showPage(targetPage);
-  }
+                // 5️⃣ Navigate FIRST
+                if (document.getElementById(targetPage)) {
+                  showPage(targetPage);
+                }
 
-  // 6️⃣ Render AFTER navigation
-  if (targetPage === 'utilities') {
-    renderCalculationHistory();
-    if (typeof renderPriceTrackerList === 'function') {
-      renderPriceTrackerList();
-    }
-  } else {
-    rerenderFor(t.type);
-  }
-}
+                // 6️⃣ Render AFTER navigation
+                if (targetPage === 'utilities') {
+                  renderCalculationHistory();
+                  if (typeof renderPriceTrackerList === 'function') {
+                    renderPriceTrackerList();
+                  }
+                } else {
+                  rerenderFor(t.type);
+                }
+              }
 
-                
                 // New delete versions
                 function deleteReminder(i){ moveToTrash('reminders', appData.reminders[i], i); renderReminders(); renderHomeReminders(); }
                 function deleteNote(i){ moveToTrash('notes', appData.notes[i], i); renderNotes(); renderHomeNotes(); }
@@ -3754,7 +3756,7 @@
               }
               window.addEventListener('load', () => setTimeout(updateStorageUsage, 80));
               window.updateStorageUsage = updateStorageUsage;
-             function renderHomeOverview() {
+              function renderHomeOverview() {
               // --- Reminders Count ---
               let activeRem = 0;
               let inactiveRem = 0;
@@ -3893,15 +3895,13 @@
                     retail22k: Math.round(retail24 * 0.916),
                     retail18k: Math.round(retail24 * 0.750)
                 };
-            }
-            
-            
+             }
+
             const perGram24K = (xauUSD * usdToInr) / 31.1035; // 31.1035 grams in a troy ounce
             
             return Math.round(perGram24K);
             }
-            
-            
+
               /* ---------------- GENERATE PURITY VALUES ---------------- */
              function purityRates(spot, place){
                 const adj = CITY_ADJUST[place] || 0; 
