@@ -2874,25 +2874,26 @@
                   : remaining;
           
               // 1. Generate the list of all items in the format: "Budget: Title | Remaining: ₹Amount"
-              const allSavedItems = appData.budget.map(item => {
-                  const itemUsed = item.expenses ? item.expenses.reduce((sum, e) => sum + Number(e.amount), 0) : 0;
-                  const itemRem = item.amount - itemUsed;
-                  return `Budget: ${item.title} | Remaining: ₹${itemRem}`;
-              }).join('\n');
+              // 1. Generate the list where EVERY item follows your specific format
+const allSavedItems = appData.budget.map(item => {
+    const itemUsed = item.expenses ? item.expenses.reduce((sum, e) => sum + Number(e.amount), 0) : 0;
+    const itemRem = item.amount - itemUsed;
+    // This matches the format of your main body
+    return `Budget: ${item.title} | Remaining: ₹${itemRem}`;
+}).join('\n');
 
-              // 2. Add Congrats message if days is 0
-              const congratsMsg = (days === 0) ? ` congrats you saved ₹${remaining}` : "";
+// 2. Logic for the "congrats" message
+const congratsMsg = (days === 0) ? ` congrats you saved ₹${remaining}` : "";
 
-              // 3. Build notification body
-              const body = 
-              `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} |Days Left: ${days !== null ? days : "N/A"}${congratsMsg}\n\nAll Saved:\n${allSavedItems}`;
+// 3. Final Notification Body
+const body = `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} |Days Left: ${days !== null ? days : "N/A"}${congratsMsg}\n\n${allSavedItems}`;
 
-              // SHOW NOTIFICATION
-              registration.showNotification("💰 Budget Tracker", {
-                body: body,
-                icon: "assets/icon.png",
-                tag: "budget-tracker-update",
-              });
+// SHOW NOTIFICATION
+registration.showNotification("💰 Budget Tracker", {
+    body: body,
+    icon: "assets/icon.png",
+    tag: "budget-tracker-update",
+});
           
             });
           }
