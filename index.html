@@ -2874,18 +2874,21 @@
                   : remaining;
           
               // Build notification body
-              let body =
+             // Build notification body
+let body =
 `Budget: ${b.title} | Remaining: ₹${remaining} | Per Day: ₹${perDay} | Days Left: ${days !== null ? days : "N/A"}`;
+
 if (Number(days) === 0) {
   body += ` 🎉 Congratulations! You've saved ₹${remaining}`;
 }
 
-              // SHOW NOTIFICATION
-              registration.showNotification("💰 Budget Tracker", {
-                body: body,
-                icon: "assets/icon.png",
-                tag: "budget-tracker-update",
-              });
+// SHOW NOTIFICATION (ALL WILL SHOW)
+registration.showNotification("💰 Budget Tracker", {
+  body: body,
+  icon: "assets/icon.png",
+  tag: "budget-tracker-update-" + b.id, // ✅ ONLY REQUIRED CHANGE
+});
+
           
             });
           }
