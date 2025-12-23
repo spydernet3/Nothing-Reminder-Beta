@@ -1514,9 +1514,8 @@
         </button>
         <div id="priceTrackerForm" class="form">
           <label>PRODUCT LINK</label>
-          <label>⚠ For Amazon =  Product Page 🌐 Link</label>
-          <label>⚠ For Flipkart = Product Share 🔗 Link</label>
-          <input id="trackUrl" type="text" placeholder="Paste Amazon Or Flipkart Link">
+          <label>⚠ Amazon =  Product Page 🌐 Link</label>
+          <input id="trackUrl" type="text" placeholder="Paste Amazon Link">
 
           <label>PRODUCT TITLE</label>
           <input id="trackTitle" type="text" placeholder="Enter a name">
@@ -3720,7 +3719,7 @@
                     }
                     else if (phase === "amavasai") {
                         registration.showNotification("🌑 Amavasai Today!", {
-                            body: "New Moon (Amavasai) Is Happening.",
+                            body: "New Moon (Amavasai) is today.",
                             icon: "assets/icon.png",
                             requireInteraction: true,
                             tag: "moon-phase"
@@ -4651,439 +4650,145 @@
                  • Save items → appData.priceTracker
                  • Delete → Global Trash Bin
               ===================================================== */
-              
-              (function(){
-                const $ = id => document.getElementById(id);
-              
-                const toggleBtn = $("priceTrackerToggle");
-                const formDiv = $("priceTrackerForm");
-                const urlInput = $("trackUrl");
-                const titleInput = $("trackTitle");
-                const saveBtn = $("saveTrackItem");
-                const trackBtn = $("trackNowBtn");
+              (function() {
+              const $ = id => document.getElementById(id);
 
-              
-                /* ---------------------- UI Toggle ---------------------- */
-                toggleBtn.addEventListener("click", () => {
-                  formDiv.classList.toggle("visible");
-                  toggleBtn.classList.toggle("open");
+              /* --- 1. PROXY FETCH (Mimics Search Engine) --- */
+              async function proxyFetch(url) {
+                // We use a specific reader mode that extracts text and meta tags reliably
+                const fetchUrl = `https://r.jina.ai/${url}`;
+                const res = await fetch(fetchUrl, {
+                  headers: { "X-Return-Format": "html" } // Forces HTML return for meta-tag parsing
                 });
-              
-                /* =====================================================
-                      1) EXPAND AMAZON SHORT LINKS
-                ===================================================== */
-                async function expandAmazonUrl(url){
-                  if (!url.includes("amzn.in")) return url;
-              
-                  try {
-                    // Attempt to get redirected full URL
-                    const res = await fetch(url, { method: "HEAD", redirect: "manual" });
-                    const loc = res.headers.get("location");
-                    if (loc) return loc;
-                  } catch(e){}
-              
-                  // Fallback: Jina text extractor
-                  try {
-                    const proxyUrl = "https://r.jina.ai/" + url.replace(/^https?:\/\//,'');
-                    const txt = await fetch(proxyUrl).then(r => r.text());
-              
-                    let m = txt.match(/https?:\/\/www\.amazon\.in\/[^\s"]+/i);
-                    if (m) return m[0];
-              
-                    m = txt.match(/\/dp\/[A-Z0-9]{8,12}/i);
-                    if (m) return "https://www.amazon.in" + m[0];
-                  } catch(e){}
-              
-                  return url;
-                }
-              
-                /* =====================================================
-                      2) CONVERT AMAZON / FLIPKART → MOBILE PAGES
-                ===================================================== */
-                function convertAmazonToMobile(url){
-                  const m = url.match(/\/dp\/([A-Z0-9]{8,12})/i);
-                  if (!m) return url;
-                  return `https://www.amazon.in/gp/aw/d/${m[1]}`;
-                }
-              
-                function convertFlipkart(url){
-                  const m = url.match(/pid=([A-Z0-9]+)/i);
-                  if (!m) return url;
-                  return `https://www.flipkart.com/m/item?pid=${m[1]}`;
-                }
-              
-                /* =====================================================
-                      3) FETCH PAGE USING RELIABLE PROXY
-                ===================================================== */
-                async function proxyFetch(url){
-                  const fetchUrl = "https://r.jina.ai/" + url.replace(/^https?:\/\//,'');
-                  const res = await fetch(fetchUrl, { cache: "no-store" });
-                  return await res.text();
-                }
-              try {
-                const jsonld = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/i);
-                if(jsonld && jsonld[1]){
-                  const j = JSON.parse(jsonld[1]);
-                  const offers = j.offers || (Array.isArray(j) && j.find(x=>x.offers)?.offers);
-                  if (offers && (offers.price || (offers.priceSpecification && offers.priceSpecification.price))) {
-                    const p = offers.price || offers.priceSpecification.price;
-                    return Number(String(p).replace(/[^0-9.]/g,''));
-                  }
-                }
-              } catch(e){}
-              
-              /* =====================================================
-                      4) PRICE EXTRACTION
-                ===================================================== */
-                  function extractPrice(html) {
-                    try {
-                      const scripts = html.match(
-                        /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-                      );
-                      if (scripts) {
-                        for (const s of scripts) {
-                          const json = JSON.parse(s.replace(/<[^>]+>/g, ""));
-                          const items = Array.isArray(json) ? json : [json];
-
-                          for (const item of items) {
-                            if (
-                              item &&
-                              item['@type'] === 'Product' &&
-                              item.offers &&
-                              item.offers.price
-                            ) {
-                              return Number(String(item.offers.price).replace(/,/g, ""));
-                            }
-                          }
-                        }
-                      }
-                    } catch {}
-
-                    // 2️⃣ Amazon "priceToPay" block (very strong signal)
-                    const amazonPrice = html.match(
-                      /id=["']priceToPay["'][\s\S]*?a-price-whole[^>]*>([\d,]+)/i
-                    );
-                    if (amazonPrice) {
-                      return Number(amazonPrice[1].replace(/,/g, ""));
-                    }
-
-                    /* =========================
-                      FLIPKART — VERIFIED SOURCE
-                      ========================= */
-
-                    // 3️⃣ Flipkart highlighted selling price ONLY
-                    const flipkartPrice = html.match(
-                      /_30jeq3\s+_16Jk6d[^>]*>\s*₹?\s*([\d,]+)/i
-                    );
-                    if (flipkartPrice) {
-                      return Number(flipkartPrice[1].replace(/,/g, ""));
-                    }
-
-                    /* =========================
-                      NO VERIFIED PRICE FOUND
-                      ========================= */
-
-                    // ❌ DO NOT GUESS
-                    // ❌ DO NOT FALLBACK
-                    return null;
-                  }
-
-                  function extractAllCandidatePrices(html) {
-                    const rawMatches = [...html.matchAll(/₹\s*([\d,]+)/g)];
-
-                    const prices = rawMatches
-                      .map(m => Number(m[1].replace(/,/g, "")))
-                      .filter(p =>
-                        p > 1000 &&          // remove EMI / discounts
-                        p < 1000000          // sanity upper limit
-                      );
-
-                    // Remove duplicates & sort ascending
-                    return [...new Set(prices)].sort((a, b) => a - b);
-                  }
-
-                /* =====================================================
-                      5) SAVE PRODUCT ENTRY
-                ===================================================== */
-                saveBtn.addEventListener("click", async () => {
-                const rawUrl = urlInput.value.trim();
-                const title = titleInput.value.trim();
-                if (!rawUrl || !title) return alert("Enter title and URL");
-              
-                // normalize and compute key (use expand/convert helpers used in trackPrice)
-                let normalizedUrl = await expandAmazonUrl(rawUrl);
-                if (normalizedUrl.includes("amazon")) normalizedUrl = convertAmazonToMobile(normalizedUrl);
-                if (normalizedUrl.includes("flipkart")) normalizedUrl = convertFlipkart(normalizedUrl);
-                const key = btoa(normalizedUrl);
-              
-                appData.priceTracker.push({
-                  title,
-                  url: normalizedUrl,
-                  key,
-                  savedAt: formatDateDMYWithTime(new Date())
-                });
-              
-                saveAll();
-                renderPriceTrackerList();
-              });
-              
-              
-                /* =====================================================
-                      6) RENDER SAVED PRODUCT LIST
-                ===================================================== */
-                function renderPriceTrackerList(){
-                  const list = $("priceTrackList");
-                  list.innerHTML = "";
-              
-                  if (!appData.priceTracker.length){
-                    list.innerHTML = `<li style="opacity:0.7;">No saved products</li>`;
-                    return;
-                  }
-              
-                  appData.priceTracker.forEach((item, i) => {
-                    const li = document.createElement("li");
-              
-                    li.innerHTML = `
-                      <div class="item-left">
-                        <a href="#" class="trackLink">${item.title}</a>
-                        <br><small>${item.savedAt}</small>
-                      </div>
-                      <button class="icon-small deleteBtn">🗑️</button>
-                    `;
-              
-                    // CLICK TITLE → track price
-                    li.querySelector(".trackLink").addEventListener("click", async () => {
-                      urlInput.value = item.url;
-                      titleInput.value = item.title;
-                      await trackPrice();
-                    });
-              
-                    // DELETE → moveToTrash()
-                    li.querySelector(".deleteBtn").addEventListener("click", () => {
-                      moveToTrash("priceTracker", item, i);
-                      renderPriceTrackerList();
-                    });
-              
-                    list.appendChild(li);
-                  });
-                }
-              /* -------------------------------------------------
-                 GET LAST 7 DAYS HISTORY FOR ONE PRODUCT
-              ------------------------------------------------- */
-              function getLast7DaysHistory(urlKey){
-                if(!appData.priceSnapshots) return [];
-              
-                const history = [];
-                const today = new Date();
-              
-                for(let i=0; i<7; i++){
-                  const d = new Date(today);
-                  d.setDate(today.getDate() - i);
-                  const key = d.toISOString().slice(0,10);
-              
-                  if(appData.priceSnapshots[key] && appData.priceSnapshots[key][urlKey]){
-                    history.push({
-                      date: key,
-                      price: appData.priceSnapshots[key][urlKey].price
-                    });
-                  }
-                }
-              
-                return history.reverse(); // oldest → newest
+                if (!res.ok) throw new Error("Connection failed. Try again.");
+                return await res.text();
               }
-              /* -------------------------------------------------
-                 BUILD 7-DAY HISTORY TABLE (HTML)
-              ------------------------------------------------- */
-              function buildHistoryTable(history){
-                if(!history.length) return "<p>No history available.</p>";
-              
-                let rows = history.map(h => `
-                  <tr>
-                    <td>${h.date}</td>
-                    <td>₹${h.price.toLocaleString("en-IN")}</td>
-                  </tr>
-                `).join("");
-              
-                return `
-                  <table style="width:100%;border-collapse:collapse;margin-top:10px;">
-                    <tr style="background:#f3f3f3;font-weight:bold;">
-                      <td>Date</td><td>Price</td>
-                    </tr>
-                    ${rows}
-                  </table>
-                `;
+
+              /* --- 2. THE EXTRACTION ENGINE (Multi-Layer) --- */
+              function extractPrice(html) {
+                // LAYER 1: Meta Tags (Flipkart's strongest identifier)
+                const metaMatch = html.match(/<meta\s+(?:property="og:price:amount"|itemprop="price")\s+content="([\d,.]+)"/i);
+                if (metaMatch) return Number(metaMatch[1].replace(/,/g, ''));
+
+                // LAYER 2: Amazon Mobile Price Pattern
+                const amzMatch = html.match(/class="a-price-whole">([\d,]+)/i);
+                if (amzMatch) return Number(amzMatch[1].replace(/,/g, ''));
+
+                // LAYER 3: Cleaning Text for Regex (Removes EMI/Discounts)
+                // We remove common distraction numbers before searching for the price
+                const filteredText = html.replace(/(EMI|Discount|Save|Off|Original|M\.?R\.?P)\s?:?\s?₹?[\d,.]+/gi, "");
+                const genericMatch = filteredText.match(/₹\s?([\d,]{2,})/);
+                if (genericMatch) return Number(genericMatch[1].replace(/,/g, ''));
+
+                return null;
               }
-              /* -------------------------------------------------
-                 DRAW SIMPLE LINE CHART FOR PRICE HISTORY
-              ------------------------------------------------- */
-              function drawHistoryChart(canvasId, history){
-                const canvas = document.getElementById(canvasId);
-                const ctx = canvas.getContext("2d");
-                canvas.width = canvas.offsetWidth;
-                canvas.height = 180;
-              
-                ctx.clearRect(0,0,canvas.width,canvas.height);
-              
-                if(history.length < 2){
-                  ctx.fillText("Not enough data for chart", 10, 20);
-                  return;
-                }
-              
-                // Extract values
-                const prices = history.map(h => h.price);
-                const min = Math.min(...prices);
-                const max = Math.max(...prices);
-              
-                const stepX = canvas.width / (history.length - 1);
-              
-                ctx.strokeStyle = "#007bff";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-              
-                history.forEach((h, i) => {
-                  const x = i * stepX;
-                  const y = canvas.height - ((h.price - min) / (max - min)) * (canvas.height - 20) - 10;
-              
-                  if(i === 0) ctx.moveTo(x, y);
-                  else ctx.lineTo(x, y);
-                });
-              
-                ctx.stroke();
-              
-                // Plot points
-                ctx.fillStyle = "#ff0000";
-                history.forEach((h, i) => {
-                  const x = i * stepX;
-                  const y = canvas.height - ((h.price - min) / (max - min)) * (canvas.height - 20) - 10;
-                  ctx.beginPath();
-                  ctx.arc(x, y, 4, 0, Math.PI * 2);
-                  ctx.fill();
-                });
-              }
-              /* -------------------------------------------------
-                 AUTO ALERT WHEN PRICE DROPS
-              ------------------------------------------------- */
-              function checkPriceDrop(todayPrice, yesterdayPrice, title){
-                if(yesterdayPrice == null) return;
-              
-                if(todayPrice < yesterdayPrice){
-                  alert(`🔻 Price Drop Alert!\n${title}\nYesterday: ₹${yesterdayPrice.toLocaleString("en-IN")}\nToday: ₹${todayPrice.toLocaleString("en-IN")}`);
-                }
-              }
-                /* =====================================================
-                      7) PRICE TRACKING FUNCTION
-                ===================================================== */
+
+              /* --- 3. UI & PERSISTENCE --- */
               async function trackPrice() {
                 let url = $("trackUrl").value.trim();
                 const title = $("trackTitle").value.trim();
+                if (!url) return alert("Please enter a URL");
 
-                if (!url) {
-                  alert("Enter URL");
-                  return;
-                }
+                $("trackStatus").innerHTML = "⏳ Scanning Secure Server...";
 
                 try {
-                  statusEl.innerHTML = "⏳ Processing…";
-                  outputEl.innerHTML = "";
-
-                  // Expand + normalize URL
-                  url = await expandAmazonUrl(url);
-                  if (url.includes("amazon")) url = convertAmazonToMobile(url);
-                  if (url.includes("flipkart")) url = convertFlipkart(url);
-
-                  statusEl.innerHTML = "⏳ Fetching page…";
+                  // Normalizing URL for Amazon/Flipkart
+                  if (url.includes("amzn.in") || url.includes("amazon.in")) {
+                    const asinMatch = url.match(/\/dp\/([A-Z0-9]{10})/i);
+                    if (asinMatch) url = `https://www.amazon.in/dp/${asinMatch[1]}`;
+                  }
 
                   const html = await proxyFetch(url);
-
-                  // 1️⃣ Try confident auto extraction
                   const price = extractPrice(html);
 
-                  // 2️⃣ If auto extraction FAILED → show selection UI
-                  if (!price) {
-                    const candidates = extractAllCandidatePrices(html);
-
-                    if (!candidates || !candidates.length) {
-                      statusEl.innerHTML = "❌ Unable to detect product price reliably";
-                      return;
+                  if (!price || isNaN(price)) {
+                    // Fallback for direct text search if HTML tags fail
+                    const bodyText = html.replace(/<[^>]*>/g, " ");
+                    const fallbackMatch = bodyText.match(/₹\s?([\d,]+)/);
+                    if (fallbackMatch) {
+                        const finalPrice = Number(fallbackMatch[1].replace(/,/g, ''));
+                        handleSuccess(finalPrice, url, title);
+                    } else {
+                        $("trackStatus").innerHTML = "❌ Detection Failed. Product might be Out of Stock.";
                     }
-
-                    // Let user choose – DO NOT continue further
-                    showPriceSelection(candidates);
-                    return;
+                  } else {
+                    handleSuccess(price, url, title);
                   }
-
-                  // 3️⃣ From here → price is CONFIRMED
-                  const key = btoa(url);
-
-                  // Save today snapshot
-                  savePriceSnapshot(key, price);
-
-                  // Yesterday comparison
-                  const yesterdayPrice = getYesterdayPrice(key);
-
-                  // Price drop alert
-                  checkPriceDrop(price, yesterdayPrice, title);
-
-                  // History
-                  const history = getLast7DaysHistory(key);
-                  const tableHTML = buildHistoryTable(history);
-
-                  // UI render
-                  outputEl.innerHTML = `
-                    <div style="border:1px solid #ddd;padding:12px;background:white;border-radius:8px;">
-                      <h3>${title || "Product Price"}</h3>
-                      <p><b>Today:</b> ₹${price.toLocaleString("en-IN")}</p>
-                      <p><b>Yesterday:</b> ${
-                        yesterdayPrice ? "₹" + yesterdayPrice.toLocaleString("en-IN") : "—"
-                      }</p>
-                    </div>
-
-                    <h3>7-Day Price History</h3>
-                    ${tableHTML}
-
-                    <h3>Price Chart</h3>
-                    <canvas id="priceChart"
-                      style="width:100%;height:180px;border:1px solid #ccc;border-radius:6px;">
-                    </canvas>
-                  `;
-
-                  // Draw chart after DOM update
-                  if (history && history.length > 1) {
-                    setTimeout(() => drawHistoryChart("priceChart", history), 50);
-                  }
-
-                  statusEl.innerHTML = "✔ Updated";
-
                 } catch (err) {
-                  console.error(err);
-                  statusEl.innerHTML = "❌ Error: " + (err.message || "Something went wrong");
+                  $("trackStatus").innerHTML = "❌ Network Error. Try again.";
                 }
               }
-                trackBtn.addEventListener("click", trackPrice);
-              // expose Price Tracker functions to global scope so other modules can call them
-              window.renderPriceTrackerList = renderPriceTrackerList;
-              window.trackPrice = trackPrice;
-              
-                /* RUN ON LOAD */
+
+              function handleSuccess(price, url, title) {
+                const key = btoa(url).substring(0, 16);
+                const now = formatDateDMYWithTime(new Date());
+
+                // 1. Update the appData list (PERSISTENCE FIX)
+                const idx = appData.priceTracker.findIndex(i => i.title === title);
+                if (idx > -1) {
+                  appData.priceTracker[idx].lastPrice = price;
+                  appData.priceTracker[idx].lastChecked = now;
+                  appData.priceTracker[idx].url = url;
+                } else {
+                  appData.priceTracker.push({ title, url, lastPrice: price, lastChecked: now, savedAt: now });
+                }
+
+                // 2. Save to Local Storage
+                saveAll(); 
                 renderPriceTrackerList();
-              })();
-              // ---------------- PRICE SNAPSHOT HELPERS ----------------
-              function savePriceSnapshot(urlKey, price){
-                // ensure structure exists
-                if(!appData.priceSnapshots) appData.priceSnapshots = {};
-                const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
-                if(!appData.priceSnapshots[today]) appData.priceSnapshots[today] = {};
-                appData.priceSnapshots[today][urlKey] = { price, time: new Date().getTime() };
-                saveAll(); // persist with existing app save (keeps behavior consistent). :contentReference[oaicite:3]{index=3}
+
+                // 3. Update UI
+                $("trackStatus").innerHTML = "✔ Price Updated & Saved!";
+                $("trackOutput").innerHTML = `
+                  <div style="background:#f9f9f9; padding:15px; border-radius:10px; text-align:center; border:2px solid #4CAF50;">
+                    <h4 style="margin:0; color:#666;">Current Price</h4>
+                    <h1 style="margin:10px 0; color:#000;">₹${price.toLocaleString("en-IN")}</h1>
+                    <small>Last Check: ${now}</small>
+                  </div>
+                `;
               }
+
+              /* --- 4. LIST RENDERING --- */
+              function renderPriceTrackerList() {
+                const list = $("priceTrackList");
+                list.innerHTML = "";
+                appData.priceTracker.forEach((item, i) => {
+                  const li = document.createElement("li");
+                  li.innerHTML = `
+                    <div style="flex-grow:1;">
+                      <strong class="trackLink" style="cursor:pointer; color:#007bff;">${item.title}</strong><br>
+                      <small>₹${item.lastPrice ? item.lastPrice.toLocaleString("en-IN") : "---"}</small>
+                    </div>
+                    <button class="deleteBtn icon-small">🗑️</button>
+                  `;
+                  li.querySelector(".trackLink").onclick = () => {
+                    $("trackUrl").value = item.url;
+                    $("trackTitle").value = item.title;
+                    trackPrice();
+                  };
+                  li.querySelector(".deleteBtn").onclick = () => {
+                    appData.priceTracker.splice(i, 1);
+                    saveAll();
+                    renderPriceTrackerList();
+                  };
+                  list.appendChild(li);
+                });
+              }
+
+              // Bind Buttons
+              $("saveTrackItem").onclick = () => {
+                  if (!$("trackUrl").value || !$("trackTitle").value) return alert("Fill all fields");
+                  handleSuccess(0, $("trackUrl").value, $("trackTitle").value);
+                  $("trackStatus").innerHTML = "✔ Product Added to List";
+              };
               
-              function getYesterdayPrice(urlKey){
-                if(!appData.priceSnapshots) return null;
-                const d = new Date(); d.setDate(d.getDate()-1);
-                const y = d.toISOString().slice(0,10);
-                return appData.priceSnapshots[y]?.[urlKey]?.price || null;
-              }
-              const TRENDS_REGION_KEY = "trends_region";
+              $("trackNowBtn").onclick = trackPrice;
+              $("priceTrackerToggle").onclick = () => $("priceTrackerForm").classList.toggle("visible");
+
+              // Initial Load
+              renderPriceTrackerList();
+            })();      
+                const TRENDS_REGION_KEY = "trends_region";
                 const TRENDS_SIZE_KEY = "trends_size";
                 const TRENDS_STOP_KEY = "trends_stop_state";
                 // OPEN / CLOSE TRENDS
