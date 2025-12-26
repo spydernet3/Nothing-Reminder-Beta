@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nothing Reminder</title>
   <link rel="icon" type="image/png" href="assets/icon.png" />
   <link rel="manifest" href="manifest.json" />
-  
   <style>
     html,
     body {
@@ -5136,6 +5135,7 @@ function renderSafeTableFromText(tableText) {
                 /* RUN ON LOAD */
                 renderPriceTrackerList();
               })();
+
               // ---------------- PRICE SNAPSHOT HELPERS ----------------
               function savePriceSnapshot(urlKey, price){
                 // ensure structure exists
@@ -5153,9 +5153,44 @@ function renderSafeTableFromText(tableText) {
                 return appData.priceSnapshots[y]?.[urlKey]?.price || null;
               }
 
-              // GOOGLE TRENDS 
+              function showPriceSelection(prices) {
+              statusEl.innerHTML = "⚠️ Multiple prices detected. Please select the correct product price:";
 
-              const TRENDS_REGION_KEY = "trends_region";
+              outputEl.innerHTML = `
+                <div style="margin-top:10px;">
+                  ${prices.map(p => `
+                    <button
+                      style="display:block;width:100%;margin:6px 0;padding:8px;border-radius:6px;"
+                      onclick="confirmSelectedPrice(${p})">
+                      ₹${p.toLocaleString("en-IN")}
+                    </button>
+                  `).join("")}
+                </div>
+              `;
+            }
+            // Your existing JavaScript code that uses $
+            function confirmSelectedPrice(price) {
+            outputEl.innerHTML = `
+              <div style="padding:10px;border:1px solid #ccc;border-radius:6px;">
+                <b>Selected Price:</b> ₹${price.toLocaleString("en-IN")}
+              </div>
+            `;
+
+            statusEl.innerHTML = "✔ Price confirmed and saved";
+
+            // 🔐 Save as today's snapshot
+            // Original: const url = $("trackUrl").value.trim();
+            const url = document.getElementById("trackUrl").value.trim(); // Changed line
+            const key = btoa(url);
+            savePriceSnapshot(key, price);
+            }
+            // ===== GLOBAL PRICE TRACKER ELEMENTS =====
+            const statusEl = document.getElementById("trackStatus");
+            const outputEl = document.getElementById("trackOutput");
+            window.confirmSelectedPrice = confirmSelectedPrice;
+
+            // ========= GOOGLE TRENDS ================
+            const TRENDS_REGION_KEY = "trends_region";
                 const TRENDS_SIZE_KEY = "trends_size";
                 const TRENDS_STOP_KEY = "trends_stop_state";
                 // OPEN / CLOSE TRENDS
@@ -5234,43 +5269,10 @@ function renderSafeTableFromText(tableText) {
                 status.style.display = "block";
               }
               });
-              function showPriceSelection(prices) {
-              statusEl.innerHTML = "⚠️ Multiple prices detected. Please select the correct product price:";
-
-              outputEl.innerHTML = `
-                <div style="margin-top:10px;">
-                  ${prices.map(p => `
-                    <button
-                      style="display:block;width:100%;margin:6px 0;padding:8px;border-radius:6px;"
-                      onclick="confirmSelectedPrice(${p})">
-                      ₹${p.toLocaleString("en-IN")}
-                    </button>
-                  `).join("")}
-                </div>
-              `;
-            }
-            function confirmSelectedPrice(price) {
-              outputEl.innerHTML = `
-                <div style="padding:10px;border:1px solid #ccc;border-radius:6px;">
-                  <b>Selected Price:</b> ₹${price.toLocaleString("en-IN")}
-                </div>
-              `;
-
-              statusEl.innerHTML = "✔ Price confirmed and saved";
-
-              // 🔐 Save as today's snapshot
-              const url = $("trackUrl").value.trim();
-              const key = btoa(url);
-              savePriceSnapshot(key, price);
-            }
-            // ===== GLOBAL PRICE TRACKER ELEMENTS =====
-            const statusEl = document.getElementById("trackStatus");
-            const outputEl = document.getElementById("trackOutput");
-            window.confirmSelectedPrice = confirmSelectedPrice;
-            window.showPriceSelection = showPriceSelection;
               // ---------- End Initial Render Code ----------
               })();
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </body>
 </html>
