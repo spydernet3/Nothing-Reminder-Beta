@@ -3627,7 +3627,7 @@ function renderSafeTableFromText(tableText) {
                     deleteExpense(b, e);
                   });
                 });
-                function deleteCheck(i){ moveToTrash('checklists', appData.checklists[i], i); renderChecklists(); renderHomeCheck(); }
+                function deleteCheck(i){ moveToTrash('checklists', appData.checklists[i], i); renderChecklists(); renderHomeOverview(); }
                 function deleteHistory(i){moveToTrash('calculationHistory', appData.calculationHistory[i], i); renderCalculationHistory();}
                 function rerenderBudget() { renderBudgets(); renderHomeBudgets(); }
 
