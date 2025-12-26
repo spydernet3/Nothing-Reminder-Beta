@@ -2583,7 +2583,7 @@ function renderSafeTableFromText(tableText) {
 
           if(appData.checklists.length === 0){
             const li = document.createElement('li');
-            li.textContent = 'No checklists yet.';
+            li.textContent = 'No Checklists Yet.';
             li.style.opacity = '0.7';
             container.appendChild(li);
             return;
@@ -3101,7 +3101,7 @@ function renderSafeTableFromText(tableText) {
                   const result = `Age as of ${formatDMY(asOfStr)}: ${age_years} years, ${age_months} months, and ${age_days} days.`;
                   resultEl.textContent = result;
 
-                  saveHistory(`Age as of: ${age_years} years & ${age_months} months, & ${age_days} days.`, result);
+                  saveHistory(`Age as of: ${age_years} years & ${age_months} months & ${age_days} days.`, result);
                 }
                 // ---------- Date Difference Calculator Logic ----------
                 function calculateDateDifference() {
@@ -4539,8 +4539,8 @@ function renderSafeTableFromText(tableText) {
             `;
               // -------------- SAVE TO HISTORY --------------
               appData.calculationHistory.push({
-                type: name || "New Calculation",
-                title: `Old(${oldR}) - New(${newR}) = Units(${units})`,
+                title: name || "New Calculation",
+                type: `Old(${oldR}) - New(${newR}) = Units(${units})`,
                 value: `₹${amount}`,
                 timestamp: formatDateDMYWithTime(new Date())
               });
@@ -4580,8 +4580,8 @@ function renderSafeTableFromText(tableText) {
                 left.className = "item-left";
             
                 left.innerHTML = `
-                  <div><b>${type}</b></div>
-                  <div>${title}</div>
+                  <div><b>${title}</b></div>
+                  <div>${type}</div>
                   <div>${value}</div>
                   <small style="opacity:0.7;">${formattedDate}</small>
                 `;
